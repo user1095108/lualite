@@ -22,23 +22,21 @@ namespace lualite
 namespace detail
 {
 
-inline void set_result(lua_State* const L,
-  point && point)
+inline void set_result(lua_State* const L, point && p)
 {
   lua_createtable(L, 2, 0);
 
   lua_pushliteral(L, "x");
-  set_result(L, point.x);
+  set_result(L, p.x);
 
   lua_pushliteral(L, "y");
-  set_result(L, point.y);
+  set_result(L, p.y);
 
   lua_rawset(L, -3);
 }
 
 template <std::size_t I>
-inline point get_arg(lua_State* const L,
-  point const)
+inline point get_arg(lua_State* const L, point const)
 {
   assert(lua_istable(L, I));
 
