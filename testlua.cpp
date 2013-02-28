@@ -16,7 +16,8 @@ struct point
   int y;
 };
 
-inline void set_result(lua_State* const L, point && p)
+inline void set_result(lua_State* const L,
+  point && p)
 {
   lua_createtable(L, 2, 0);
 
@@ -32,7 +33,8 @@ inline void set_result(lua_State* const L, point && p)
 }
 
 template <std::size_t I>
-inline point get_arg(lua_State* const L, point const)
+inline point get_arg(lua_State* const L,
+  point const)
 {
   assert(lua_istable(L, I));
 
@@ -53,7 +55,7 @@ point testfunc(int i)
 {
   std::cout << "testfunc(): " << i << std::endl;
 
-  return point{1, 2};
+  return point{-1, -2};
 }
 
 struct testclass
