@@ -16,22 +16,18 @@ struct point
   int y;
 };
 
-namespace lualite
-{
-
-namespace detail
-{
-
 inline void set_result(lua_State* const L, point && p)
 {
   lua_createtable(L, 2, 0);
 
   lua_pushliteral(L, "x");
-  set_result(L, p.x);
+  lualite::detail::set_result(L, p.x);
+  assert(lua_istable(L, -3));
+  lua_rawset(L, -3);
 
   lua_pushliteral(L, "y");
-  set_result(L, p.y);
-
+  lualite::detail::set_result(L, p.y);
+  assert(lua_istable(L, -3));
   lua_rawset(L, -3);
 }
 
@@ -53,15 +49,11 @@ inline point get_arg(lua_State* const L, point const)
   return p;
 }
 
-}
-
-}
-
-std::map<std::string, int> testfunc(int i)
+point testfunc(int i)
 {
   std::cout << "testfunc(): " << i << std::endl;
 
-  return std::map<std::string, int>{{"bla", 4}};
+  return point{1, 2};
 }
 
 struct testclass
@@ -116,7 +108,7 @@ int main(int argc, char* argv[])
   luaL_dostring(
     L,
     "local a = testfunc(3)\n"
-    "print(a[\"bla\"])\n"
+    "print(a.y)\n"
     "print(apple)\n"
     "print(testclass.__classname)\n"
     "print(testclass.smell)\n"
