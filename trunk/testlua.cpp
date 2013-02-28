@@ -21,12 +21,12 @@ inline void set_result(lua_State* const L, point && p)
   lua_createtable(L, 2, 0);
 
   lua_pushliteral(L, "x");
-  lualite::detail::set_result(L, p.x);
+  ::lualite::detail::set_result(L, p.x);
   assert(lua_istable(L, -3));
   lua_rawset(L, -3);
 
   lua_pushliteral(L, "y");
-  lualite::detail::set_result(L, p.y);
+  ::lualite::detail::set_result(L, p.y);
   assert(lua_istable(L, -3));
   lua_rawset(L, -3);
 }
