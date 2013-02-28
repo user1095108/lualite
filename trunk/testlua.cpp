@@ -10,6 +10,55 @@ extern "C" {
 
 #include "lualite/lualite.hpp"
 
+struct point
+{
+  int x;
+  int y;
+};
+
+namespace lualite
+{
+
+namespace detail
+{
+
+inline void set_result(lua_State* const L,
+  point && point)
+{
+  lua_createtable(L, 2, 0);
+
+  lua_pushliteral(L, "x");
+  set_result(L, point.x);
+
+  lua_pushliteral(L, "y");
+  set_result(L, point.y);
+
+  lua_rawset(L, -3);
+}
+
+template <std::size_t I>
+inline point get_arg(lua_State* const L,
+  point const)
+{
+  assert(lua_istable(L, I));
+
+  struct point p;
+
+  lua_pushliteral(L, "x");
+  lua_rawget(L, -2);
+  p.x = lua_tointeger(L, -1);
+
+  lua_pushliteral(L, "y");
+  lua_rawget(L, -2);
+  p.y = lua_tointeger(L, -1);
+
+  return p;
+}
+
+}
+
+}
+
 std::map<std::string, int> testfunc(int i)
 {
   std::cout << "testfunc(): " << i << std::endl;

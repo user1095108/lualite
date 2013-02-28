@@ -380,7 +380,7 @@ inline long long get_arg(lua_State* const L,
   long long const)
 {
   assert(lua_isnumber(L, I));
-  return std::round(lua_tonumber(L, I));
+  return lua_tointeger(L, I);
 }
 
 template <std::size_t I>
@@ -388,7 +388,7 @@ inline unsigned long long get_arg(lua_State* const L,
   unsigned long long const)
 {
   assert(lua_isnumber(L, I));
-  return std::round(lua_tonumber(L, I));
+  return lua_tointeger(L, I);
 }
 
 template <std::size_t I>
@@ -396,7 +396,7 @@ inline long get_arg(lua_State* const L,
   long const)
 {
   assert(lua_isnumber(L, I));
-  return std::round(lua_tonumber(L, I));
+  return lua_tointeger(L, I);
 }
 
 template <std::size_t I>
@@ -412,7 +412,7 @@ inline int get_arg(lua_State* const L,
   int const)
 {
   assert(lua_isnumber(L, I));
-  return std::round(lua_tonumber(L, I));
+  return lua_tointeger(L, I);
 }
 
 template <std::size_t I>
@@ -428,7 +428,7 @@ inline signed char get_arg(lua_State* const L,
   signed char const)
 {
   assert(lua_isnumber(L, I));
-  return std::round(lua_tonumber(L, I));
+  return lua_tointeger(L, I);
 }
 
 template <std::size_t I>
@@ -444,7 +444,7 @@ inline char get_arg(lua_State* const L,
   char const)
 {
   assert(lua_isnumber(L, I));
-  return std::round(lua_tonumber(L, I));
+  return lua_tointeger(L, I);
 }
 
 template <std::size_t I>
