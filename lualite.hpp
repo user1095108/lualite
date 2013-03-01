@@ -594,12 +594,6 @@ member_stub(lua_State* const L)
   return 1;
 }
 
-template <typename ...A>
-inline void set_parent_iteration(scope* const s, A&& ...args)
-{
-  [](...){}((args.set_parent_scope(s), 0)...);
-}
-
 }
 
 class scope
@@ -617,7 +611,7 @@ public:
   : name_(name),
     scope_create_(true)
   {
-    detail::set_parent_iteration(this, std::forward<A>(args)...);
+    [](...){ }((args.set_parent_scope(this), 0)...);
   }
 
   scope(scope const&) = delete;
@@ -784,7 +778,7 @@ public:
     : scope(0),
       L_(L)
   {
-    detail::set_parent_iteration(this, std::forward<A>(args)...);
+    [](...){ }((args.set_parent_scope(this), 0)...);
 
     scope::apply(L);
   }
@@ -794,7 +788,7 @@ public:
     : scope(name),
       L_(L)
   {
-    detail::set_parent_iteration(this, std::forward<A>(args)...);
+    [](...){ }((args.set_parent_scope(this), 0)...);
 
     scope::apply(L);
   }
@@ -869,6 +863,7 @@ public:
     scope::apply(L);
 
     scope::get_scope(L);
+    assert(lua_istable(L, -1));
 
     for (auto const& i: constructors_)
     {
