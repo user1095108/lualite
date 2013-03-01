@@ -746,9 +746,9 @@ public:
 
     lua_remove(L, -1);
 
-    members_.shrink_to_fit();
-
     assert(!lua_gettop(L));
+
+    members_.shrink_to_fit();
   }
 
   template <class ...A>
