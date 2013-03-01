@@ -161,7 +161,7 @@ inline void set_result(lua_State* const L,
 
 template <std::size_t I>
 inline std::string get_arg(lua_State* const L,
-  std::string &&)
+  std::string)
 {
   assert(lua_isstring(L, I));
 
