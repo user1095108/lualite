@@ -43,6 +43,8 @@
 
 #include <utility>
 
+#include <array>
+
 #include <deque>
 
 #include <forward_list>
@@ -213,6 +215,23 @@ inline void set_result(lua_State* const L,
   char const* const value)
 {
   lua_pushstring(L, value);
+}
+
+template <typename T, std::size_t N>
+inline void set_result(lua_State* const L,
+  std::array<T, N> && a)
+{
+  lua_createtable(L, N, 0);
+
+  auto const end(a.cend());
+
+  for (auto i(a.cbegin()); i != end; ++i)
+  {
+    lua_pushunsigned(L, i - a.cbegin() + 1);
+    set_result(L, *i);
+
+    lua_rawset(L, -3);
+  }
 }
 
 template <typename T, class Alloc>
