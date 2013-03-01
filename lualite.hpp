@@ -602,6 +602,7 @@ public:
   scope(char const* const name)
   : name_(name),
     parent_scope_(0),
+    next_(0),
     scope_create_(true)
   {
   }
@@ -657,9 +658,13 @@ public:
       }
     }
 
-    for (auto a: apply_instances_)
+    scope* next(next_);
+
+    while (next)
     {
-      a->apply(L);
+      next->apply(L);
+
+      next = next->next_;
     }
 
     assert(!lua_gettop(L));
@@ -667,7 +672,16 @@ public:
 
   void set_apply_instance(scope* instance)
   {
-    apply_instances_.emplace_back(std::move(instance));
+    if (next_)
+    {
+      last_->next_ = instance;
+    }
+    else
+    {
+      next_ = instance;
+    }
+
+    last_ = instance;
   }
 
   void set_parent_scope(scope* const parent_scope)
@@ -760,7 +774,8 @@ protected:
 
   scope* parent_scope_;
 
-  std::vector<scope*> apply_instances_;
+  scope* last_;
+  scope* next_;
 
 private:
   bool scope_create_;
