@@ -744,9 +744,9 @@ public:
     lua_pushstring(L, name_);
     lua_setfield(L, -2, "__classname");
 
-    members_.shrink_to_fit();
-
     lua_remove(L, -1);
+
+    members_.shrink_to_fit();
 
     assert(!lua_gettop(L));
   }
