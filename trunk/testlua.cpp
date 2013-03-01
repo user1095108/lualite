@@ -8,6 +8,8 @@ extern "C" {
 
 }
 
+#include "lualite/lualite_stdcontainers.hpp"
+
 #include "lualite/lualite.hpp"
 
 struct point
@@ -34,7 +36,7 @@ inline void set_result(lua_State* const L,
 
 template <std::size_t I>
 inline point get_arg(lua_State* const L,
-  point const)
+  point &&)
 {
   assert(lua_istable(L, I));
 
@@ -55,7 +57,7 @@ point testfunc(int i)
 {
   std::cout << "testfunc(): " << i << std::endl;
 
-  return point{-1, -2};
+  return point{-1, -222};
 }
 
 struct testclass
