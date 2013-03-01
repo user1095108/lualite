@@ -506,7 +506,7 @@ public:
         lua_setglobal(L, i.first);
       }
 
-      scope* next(next_);
+      auto next(next_);
 
       while (next)
       {
@@ -521,7 +521,7 @@ public:
 
   void set_apply_instance(scope* const instance)
   {
-    scope* next(next_);
+    auto next(next_);
 
     if (next)
     {
