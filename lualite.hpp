@@ -197,7 +197,7 @@ inline void set_result(lua_State* const L,
   lua_pushlightuserdata(L, value);
 }
 
-template <std::size_t I>
+template <int I>
 inline long double get_arg(lua_State* const L,
   long double const)
 {
@@ -205,7 +205,7 @@ inline long double get_arg(lua_State* const L,
   return lua_tonumber(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline double get_arg(lua_State* const L,
   double const)
 {
@@ -213,7 +213,7 @@ inline double get_arg(lua_State* const L,
   return lua_tonumber(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline float get_arg(lua_State* const L,
   float const)
 {
@@ -221,7 +221,7 @@ inline float get_arg(lua_State* const L,
   return lua_tonumber(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline long long get_arg(lua_State* const L,
   long long const)
 {
@@ -229,7 +229,7 @@ inline long long get_arg(lua_State* const L,
   return lua_tointeger(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline unsigned long long get_arg(lua_State* const L,
   unsigned long long const)
 {
@@ -237,7 +237,7 @@ inline unsigned long long get_arg(lua_State* const L,
   return lua_tointeger(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline long get_arg(lua_State* const L,
   long const)
 {
@@ -245,7 +245,7 @@ inline long get_arg(lua_State* const L,
   return lua_tointeger(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline unsigned long get_arg(lua_State* const L,
   unsigned long const)
 {
@@ -253,7 +253,7 @@ inline unsigned long get_arg(lua_State* const L,
   return lua_tounsigned(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline int get_arg(lua_State* const L,
   int const)
 {
@@ -261,7 +261,7 @@ inline int get_arg(lua_State* const L,
   return lua_tointeger(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline unsigned int get_arg(lua_State* const L,
   unsigned int const)
 {
@@ -269,7 +269,7 @@ inline unsigned int get_arg(lua_State* const L,
   return lua_tounsigned(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline signed char get_arg(lua_State* const L,
   signed char const)
 {
@@ -277,7 +277,7 @@ inline signed char get_arg(lua_State* const L,
   return lua_tointeger(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline unsigned char get_arg(lua_State* const L,
   unsigned char const)
 {
@@ -285,7 +285,7 @@ inline unsigned char get_arg(lua_State* const L,
   return lua_tounsigned(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline char get_arg(lua_State* const L,
   char const)
 {
@@ -293,7 +293,7 @@ inline char get_arg(lua_State* const L,
   return lua_tointeger(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline bool get_arg(lua_State* const L,
   bool const)
 {
@@ -301,7 +301,7 @@ inline bool get_arg(lua_State* const L,
   return lua_toboolean(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline char const* get_arg(lua_State* const L,
   char const* const)
 {
@@ -309,7 +309,7 @@ inline char const* get_arg(lua_State* const L,
   return lua_tostring(L, I);
 }
 
-template <std::size_t I>
+template <int I>
 inline void* get_arg(lua_State* const L,
   void* const)
 {
@@ -486,7 +486,7 @@ public:
         lua_setfield(L, -2, i.first);
       }
 
-      lua_remove(L, -1);
+      lua_pop(L, 1);
     }
     else
     {
@@ -677,7 +677,7 @@ public:
       lua_pushcfunction(L_, (detail::func_stub<&fmi, R, A...>));
       lua_setfield(L_, -2, name);
 
-      lua_remove(L_, -1);
+      lua_pop(L_, 1);
     }
     else
     {
@@ -697,7 +697,7 @@ public:
       lua_pushinteger(L_, value);
       lua_setfield(L_, -2, name);
 
-      lua_remove(L_, -1);
+      lua_pop(L_, 1);
     }
     else
     {
@@ -740,7 +740,7 @@ public:
     lua_pushstring(L, name_);
     lua_setfield(L, -2, "__classname");
 
-    lua_remove(L, -1);
+    lua_pop(L, 1);
 
     assert(!lua_gettop(L));
 
