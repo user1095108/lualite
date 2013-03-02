@@ -317,10 +317,6 @@ inline void* get_arg(lua_State* const L,
   return lua_touserdata(L, I);
 }
 
-#ifdef LUALITE_STDCONTAINERS_HPP
-using namespace ::lualite::detail::stdcontainers;
-#endif // LUALITE_STDCONTAINERS_HPP
-
 template <std::size_t O, typename C, typename ...A, std::size_t ...I>
 inline C* forward(lua_State* const L, indices<I...>)
 {

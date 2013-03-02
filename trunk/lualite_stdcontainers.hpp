@@ -26,9 +26,6 @@ namespace lualite
 namespace detail
 {
 
-namespace stdcontainers
-{
-
 inline void set_result(lua_State* const  L,
   std::string const& value)
 {
@@ -170,8 +167,6 @@ inline std::string get_arg(lua_State* const L,
 
   return std::string(val, len);
 }
-
-} // containers
 
 } // detail
 
