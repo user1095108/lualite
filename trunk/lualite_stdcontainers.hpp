@@ -156,9 +156,9 @@ inline void set_result(lua_State* const L,
   }
 }
 
-template <std::size_t I>
+template <int I>
 inline std::string get_arg(lua_State* const L,
-  std::string)
+  std::string const)
 {
   assert(lua_isstring(L, I));
 
@@ -166,6 +166,156 @@ inline std::string get_arg(lua_State* const L,
   char const* const val(lua_tolstring(L, I, &len));
 
   return std::string(val, len);
+}
+
+template<int I, class T, std::size_t N>
+inline std::array<T, N> get_arg(lua_State* const L,
+  std::array<T, N> const)
+{
+  assert(lua_istable(L, I));
+
+  std::array<T, N> result;
+
+  auto const end(lua_rawlen(L, I) + 1);
+
+  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result[i - 1] = get_arg<I + 1>(L, T());
+
+    lua_pop(L, 1);
+  }
+
+  return result;
+}
+
+template <int I, typename T, class Alloc>
+inline std::deque<T, Alloc> get_arg(lua_State* const L,
+  std::deque<T, Alloc> const)
+{
+  assert(lua_istable(L, I));
+
+  std::deque<T, Alloc> result;
+
+  auto const end(lua_rawlen(L, I) + 1);
+
+  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result.emplace_back(get_arg<I + 1>(L, T()));
+
+    lua_pop(L, 1);
+  }
+
+  return result;
+}
+
+template <int I, typename T, class Alloc>
+inline std::forward_list<T, Alloc> get_arg(lua_State* const L,
+  std::forward_list<T, Alloc> const)
+{
+  assert(lua_istable(L, I));
+
+  std::list<T, Alloc> result;
+
+  static decltype(lua_rawlen(L, I)) const end(0);
+
+  for (decltype(lua_rawlen(L, I)) i(lua_rawlen(L, I)); i != end; --i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result.emplace_front(get_arg<I + 1>(L, T()));
+
+    lua_pop(L, 1);
+  }
+
+  return result;
+}
+
+template <int I, typename T, class Alloc>
+inline std::list<T, Alloc> get_arg(lua_State* const L,
+  std::list<T, Alloc> const)
+{
+  assert(lua_istable(L, I));
+
+  std::list<T, Alloc> result;
+
+  auto const end(lua_rawlen(L, I) + 1);
+
+  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result.emplace_back(get_arg<I + 1>(L, T()));
+
+    lua_pop(L, 1);
+  }
+
+  return result;
+}
+
+template <int I, typename T, class Alloc>
+inline std::vector<T, Alloc> get_arg(lua_State* const L,
+  std::vector<T, Alloc> const)
+{
+  assert(lua_istable(L, I));
+
+  std::vector<T, Alloc> result;
+
+  auto const end(lua_rawlen(L, I) + 1);
+
+  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result.emplace_back(get_arg<I + 1>(L, T()));
+
+    lua_pop(L, 1);
+  }
+
+  return result;
+}
+
+template <int I, class Key, class T, class Compare, class Alloc>
+inline std::map<Key, T, Compare, Alloc> get_arg(lua_State* const L,
+  std::map<Key, T, Compare, Alloc> const)
+{
+  assert(lua_istable(L, I));
+
+  std::map<Key, T, Compare, Alloc> result;
+
+  lua_pushnil(L);
+
+  while (lua_next(L, I))
+  {
+    result.emplace(get_arg<I + 1>(L, Key()), get_arg<I + 2>(L, T()));
+
+    lua_pop(L, 1);
+  }
+
+  return result;
+}
+
+template <int I, class Key, class T, class Hash, class Pred, class Alloc>
+inline std::unordered_map<Key, T, Hash, Pred, Alloc> get_arg(
+  lua_State* const L, std::unordered_map<Key, T, Hash, Pred, Alloc> const)
+{
+  assert(lua_istable(L, I));
+
+  std::unordered_map<Key, T, Hash, Pred, Alloc> result;
+
+  lua_pushnil(L);
+
+  while (lua_next(L, I))
+  {
+    result.emplace(get_arg<I + 1>(L, Key()), get_arg<I + 2>(L, T()));
+
+    lua_pop(L, 1);
+  }
+
+  return result;
 }
 
 } // detail
