@@ -736,6 +736,8 @@ public:
   {
     assert(parent_scope_);
 
+    std::cout << first_->next << std::endl;
+
     scope::apply(L);
 
     scope::get_scope(L);
@@ -785,25 +787,28 @@ public:
     static_assert(sizeof(ptr_to_member) <= sizeof(mmi.ptr_to_member),
       "pointer size mismatch");
 
-    *static_cast<decltype(ptr_to_member)*>(
-      static_cast<void*>(&mmi.ptr_to_member))
-      = ptr_to_member;
-
     static detail::member_info_type mi{name,
       detail::member_stub<&mmi, C, R, A...>,
       0};
 
-    if (last_)
+    if (!mi.next)
     {
-      last_->next = &mi;
+      *static_cast<decltype(ptr_to_member)*>(
+        static_cast<void*>(&mmi.ptr_to_member))
+        = ptr_to_member;
+
+      if (last_)
+      {
+        last_->next = &mi;
+      }
+      else
+      {
+        first_ = &mi;
+      }
     }
-    else
-    {
-      first_ = &mi;
-    }
+    // else do nothing
 
     last_ = &mi;
-
     return *this;
   }
 
@@ -815,25 +820,28 @@ public:
     static_assert(sizeof(ptr_to_member) <= sizeof(mmi.ptr_to_member),
       "pointer size mismatch");
 
-    *static_cast<decltype(ptr_to_member)*>(
-      static_cast<void*>(&mmi.ptr_to_member))
-      = ptr_to_member;
-
     static detail::member_info_type mi{name,
       detail::member_stub<&mmi, C, R, A...>,
       0};
 
-    if (last_)
+    if (!mi.next)
     {
-      last_->next = &mi;
+      *static_cast<decltype(ptr_to_member)*>(
+        static_cast<void*>(&mmi.ptr_to_member))
+        = ptr_to_member;
+
+      if (last_)
+      {
+        last_->next = &mi;
+      }
+      else
+      {
+        first_ = &mi;
+      }
     }
-    else
-    {
-      first_ = &mi;
-    }
+    // else do nothing
 
     last_ = &mi;
-
     return *this;
   }
 
