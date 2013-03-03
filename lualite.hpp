@@ -330,7 +330,7 @@ inline C* forward(lua_State* const L, indices<I...>)
   return new C(get_arg<I + O>(L, A())...);
 }
 
-template <class_meta_info const* cmi, class C, class ...A>
+template <class_meta_info const* cmi_ptr, class C, class ...A>
 inline int constructor_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
@@ -341,7 +341,7 @@ inline int constructor_stub(lua_State* const L)
 
   lua_createtable(L, 0, 1);
 
-  detail::member_info_type* mi_ptr(*cmi->first);
+  detail::member_info_type* mi_ptr(*cmi_ptr->first);
 
   while (mi_ptr)
   {
@@ -357,7 +357,7 @@ inline int constructor_stub(lua_State* const L)
 
   assert(lua_istable(L, -1));
 
-  lua_pushstring(L, cmi->class_name);
+  lua_pushstring(L, cmi_ptr->class_name);
   lua_setfield(L, -2, "__instanceof");
 
   assert(lua_istable(L, -1));
@@ -370,7 +370,7 @@ inline R forward(lua_State* const L, R (*f)(A...), indices<I...>)
   return (*f)(get_arg<I + O>(L, A())...);
 }
 
-template <func_meta_info const* fmi, class R, class ...A>
+template <func_meta_info const* fmi_ptr, class R, class ...A>
 inline typename std::enable_if<std::is_same<void, R>::value, int>::type
 func_stub(lua_State* const L)
 {
@@ -382,12 +382,12 @@ func_stub(lua_State* const L)
 
   forward<1, R, A...>(L,
     *static_cast<ptr_to_func_type const*>(
-      static_cast<void const*>(&fmi->ptr_to_func)),
+      static_cast<void const*>(&fmi_ptr->ptr_to_func)),
     indices_type());
   return 0;
 }
 
-template <func_meta_info const* fmi, class R, class ...A>
+template <func_meta_info const* fmi_ptr, class R, class ...A>
 inline typename std::enable_if<!std::is_same<void, R>::value, int>::type
 func_stub(lua_State* const L)
 {
@@ -399,7 +399,7 @@ func_stub(lua_State* const L)
 
   set_result(L, forward<1, R, A...>(L,
     *static_cast<ptr_to_func_type const*>(
-      static_cast<void const*>(&fmi->ptr_to_func)),
+      static_cast<void const*>(&fmi_ptr->ptr_to_func)),
     indices_type()));
   return 1;
 }
