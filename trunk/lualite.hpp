@@ -79,9 +79,16 @@ struct make_indices<0>
 
 typedef std::vector<std::pair<char const*, int> > enum_info_type;
 
-typedef std::vector<std::pair<char const*, lua_CFunction> > member_info_type;
+struct member_info_type
+{
+  char const* name;
 
-typedef member_info_type func_info_type;
+  lua_CFunction func;
+
+  member_info_type* next;
+};
+
+typedef std::vector<std::pair<char const*, lua_CFunction> > func_info_type;
 
 void dummy();
 
@@ -94,7 +101,7 @@ struct class_meta_info
 {
   char const* class_name;
 
-  member_info_type* members;
+  member_info_type** first;
 };
 
 struct func_meta_info
@@ -334,14 +341,18 @@ inline int constructor_stub(lua_State* const L)
 
   lua_createtable(L, 0, 1);
 
-  for (auto const& i: *cmi->members)
+  detail::member_info_type* mi_ptr(*cmi->first);
+
+  while (mi_ptr)
   {
     assert(lua_istable(L, -1));
 
     lua_pushlightuserdata(L, instance);
-    lua_pushcclosure(L, i.second, 1);
+    lua_pushcclosure(L, mi_ptr->func, 1);
+  
+    lua_setfield(L, -2, mi_ptr->name);
 
-    lua_setfield(L, -2, i.first);
+    mi_ptr = mi_ptr->next;
   }
 
   assert(lua_istable(L, -1));
@@ -716,7 +727,8 @@ class class_ : public scope
 {
 public:
   class_(char const* const name)
-    : scope(name)
+    : scope(name),
+      last_(0)
   {
   }
   
@@ -743,8 +755,6 @@ public:
     lua_pop(L, 1);
 
     assert(!lua_gettop(L));
-
-    members_.shrink_to_fit();
   }
 
   template <class ...A>
@@ -752,7 +762,7 @@ public:
   {
     static detail::class_meta_info const cmi {
       name_,
-      &members_
+      &first_
     };
 
     constructors_.emplace_back(std::make_pair("new",
@@ -779,8 +789,21 @@ public:
       static_cast<void*>(&mmi.ptr_to_member))
       = ptr_to_member;
 
-    members_.emplace_back(std::make_pair(name,
-      detail::member_stub<&mmi, C, R, A...>));
+    static detail::member_info_type mi{name,
+      detail::member_stub<&mmi, C, R, A...>,
+      0};
+
+    if (last_)
+    {
+      last_->next = &mi;
+    }
+    else
+    {
+      first_ = &mi;
+    }
+
+    last_ = &mi;
+
     return *this;
   }
 
@@ -796,8 +819,21 @@ public:
       static_cast<void*>(&mmi.ptr_to_member))
       = ptr_to_member;
 
-    members_.emplace_back(std::make_pair(name,
-      detail::member_stub<&mmi, C, R, A...>));
+    static detail::member_info_type mi{name,
+      detail::member_stub<&mmi, C, R, A...>,
+      0};
+
+    if (last_)
+    {
+      last_->next = &mi;
+    }
+    else
+    {
+      first_ = &mi;
+    }
+
+    last_ = &mi;
+
     return *this;
   }
 
@@ -808,13 +844,14 @@ public:
   }
 
 private:
-  detail::member_info_type constructors_;
+  detail::func_info_type constructors_;
 
-  static detail::member_info_type members_;
+  static detail::member_info_type* first_;
+  detail::member_info_type* last_;
 };
 
 template <class C>
-detail::member_info_type class_<C>::members_;
+detail::member_info_type* class_<C>::first_;
 
 } // lualite
 
