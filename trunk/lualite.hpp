@@ -736,8 +736,6 @@ public:
   {
     assert(parent_scope_);
 
-    std::cout << first_->next << std::endl;
-
     scope::apply(L);
 
     scope::get_scope(L);
