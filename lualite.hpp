@@ -340,7 +340,7 @@ inline C* forward(lua_State* const L, indices<I...>)
   return new C(get_arg<I + O>(L, A())...);
 }
 
-template <class_meta_info const* cmi_ptr, class C, class ...A>
+template <class_meta_info* cmi_ptr, class C, class ...A>
 inline int constructor_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
@@ -398,6 +398,9 @@ inline int constructor_stub(lua_State* const L)
   lua_setmetatable(L, -2);
 
   assert(lua_istable(L, -1));
+
+  lua_pushlightuserdata(L, cmi_ptr);
+  lua_setfield(L, -2, "__cmi_ptr");
 
   lua_pushstring(L, cmi_ptr->class_name);
   lua_setfield(L, -2, "__instanceof");
@@ -487,6 +490,85 @@ member_stub(lua_State* const L)
     *static_cast<ptr_to_member_type const*>(
     static_cast<void const*>(&mmi->ptr_to_member)),
     indices_type()));
+  return 1;
+}
+
+template <member_meta_info const* mmi, class C, class R, class ...A>
+inline typename std::enable_if<
+  std::is_pointer<R>::value
+  && std::is_class<
+    typename std::remove_const<
+      typename std::remove_pointer<R>::type
+    >::type
+  >::value, int>::type
+member_stub(lua_State* const L)
+{
+  assert(sizeof...(A) + 1 == lua_gettop(L));
+
+  typedef typename std::remove_const<
+    typename std::remove_pointer<R>::type
+  >::type T;
+
+  typedef R (C::*ptr_to_member_type)(A...);
+
+  auto instance(const_cast<T*>(lua_touserdata(L, lua_upvalueindex(1))));
+
+  typedef typename make_indices<sizeof...(A)>::type indices_type;
+
+  T* result(const_cast<T*>(forward<2, C, R, A...>(L,
+    static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
+      *static_cast<ptr_to_member_type const*>(
+        static_cast<void const*>(&mmi->ptr_to_member)),
+    indices_type())));
+
+  lua_pushliteral(L, "cmi_ptr");
+  lua_rawget(L, -2);
+
+  auto const cmi_ptr(static_cast<class_meta_info*>(lua_touserdata(L, -1)));
+
+  detail::member_info_type* mi_ptr(*cmi_ptr->firstdef);
+
+  while (mi_ptr)
+  {
+    assert(lua_istable(L, -1));
+
+    lua_pushlightuserdata(L, result);
+    lua_pushcclosure(L, mi_ptr->func, 1);
+  
+    lua_setfield(L, -2, mi_ptr->name);
+
+    mi_ptr = mi_ptr->next;
+  }
+
+  // metatable
+  mi_ptr = *cmi_ptr->firstmetadef;
+
+  if (mi_ptr)
+  {
+    lua_createtable(L, 0, 1);
+
+    while (mi_ptr)
+    {
+      assert(lua_istable(L, -1));
+
+      lua_pushlightuserdata(L, result);
+      lua_pushcclosure(L, mi_ptr->func, 1);
+    
+      lua_setfield(L, -2, mi_ptr->name);
+
+      mi_ptr = mi_ptr->next;
+    }
+
+    lua_setmetatable(L, -2);
+  }
+  // else do nothing
+
+  assert(lua_istable(L, -1));
+
+  lua_pushstring(L, cmi_ptr->class_name);
+  lua_setfield(L, -2, "__instanceof");
+
+  assert(lua_istable(L, -1));
   return 1;
 }
 
@@ -803,7 +885,7 @@ public:
   template <class ...A>
   class_& constructor()
   {
-    static detail::class_meta_info const cmi {
+    static detail::class_meta_info cmi {
       name_,
       &firstdef_,
       &firstmetadef_
