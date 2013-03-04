@@ -967,8 +967,6 @@ private:
 
   static detail::member_info_type* firstmetadef_;
   detail::member_info_type* lastmetadef_;
-
-  bool has_gc_;
 };
 
 template <class C>
