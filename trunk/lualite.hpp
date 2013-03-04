@@ -516,7 +516,7 @@ member_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  T* result(const_cast<T*>(forward<2, C, R, A...>(L,
+  T* const result(const_cast<T*>(forward<2, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
       *static_cast<ptr_to_member_type const*>(
         static_cast<void const*>(&mmi->ptr_to_member)),
@@ -536,16 +536,14 @@ member_stub(lua_State* const L)
 
     lua_pushlightuserdata(L, result);
     lua_pushcclosure(L, mi_ptr->func, 1);
-  
+
     lua_setfield(L, -2, mi_ptr->name);
 
     mi_ptr = mi_ptr->next;
   }
 
   // metatable
-  mi_ptr = *cmi_ptr->firstmetadef;
-
-  if (mi_ptr)
+  if ((mi_ptr = *cmi_ptr->firstmetadef))
   {
     lua_createtable(L, 0, 1);
 
@@ -557,7 +555,7 @@ member_stub(lua_State* const L)
       {
         lua_pushlightuserdata(L, result);
         lua_pushcclosure(L, mi_ptr->func, 1);
-      
+
         lua_setfield(L, -2, mi_ptr->name);
       }
       // else do nothing
@@ -592,14 +590,13 @@ member_stub(lua_State* const L)
   assert(lua_istable(L, -1));
 
   typedef typename std::remove_const<
-    typename std::remove_reference<R>::type
-  >::type T;
+    typename std::remove_reference<R>::type >::type T;
 
   typedef R (C::*ptr_to_member_type)(A...);
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  T* result(&const_cast<T&>(forward<2, C, R, A...>(L,
+  T* const result(&const_cast<T&>(forward<2, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
       *static_cast<ptr_to_member_type const*>(
         static_cast<void const*>(&mmi->ptr_to_member)),
@@ -617,18 +614,20 @@ member_stub(lua_State* const L)
   {
     assert(lua_istable(L, -1));
 
-    lua_pushlightuserdata(L, result);
-    lua_pushcclosure(L, mi_ptr->func, 1);
-  
-    lua_setfield(L, -2, mi_ptr->name);
+    if (std::strcmp("__gc", mi_ptr->name))
+    {
+      lua_pushlightuserdata(L, result);
+      lua_pushcclosure(L, mi_ptr->func, 1);
+
+      lua_setfield(L, -2, mi_ptr->name);
+    }
+    // else do nothing
 
     mi_ptr = mi_ptr->next;
   }
 
   // metatable
-  mi_ptr = *cmi_ptr->firstmetadef;
-
-  if (mi_ptr)
+  if ((mi_ptr = *cmi_ptr->firstmetadef))
   {
     lua_createtable(L, 0, 1);
 
@@ -638,7 +637,7 @@ member_stub(lua_State* const L)
 
       lua_pushlightuserdata(L, result);
       lua_pushcclosure(L, mi_ptr->func, 1);
-    
+
       lua_setfield(L, -2, mi_ptr->name);
 
       mi_ptr = mi_ptr->next;
