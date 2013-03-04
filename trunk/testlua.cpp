@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
     "local a = subscope.testclass.new(1111)\n"
     "print(subscope.testclass.smell)\n"
     "subscope.testclass.testfunc(200)\n"
-    "local c = a:print_()\n"
+    "local c = a:reference():print_()\n"
     "print(c[10])\n"
   );
 
