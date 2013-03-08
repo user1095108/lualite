@@ -344,7 +344,7 @@ inline C* forward(lua_State* const L, indices<I...>)
   return new C(get_arg<I + O>(L, A())...);
 }
 
-template <class_meta_info* cmi_ptr, std::size_t O, class C, class ...A>
+template <class_meta_info const* cmi_ptr, std::size_t O, class C, class ...A>
 inline int constructor_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
@@ -455,7 +455,8 @@ inline int constructor_stub(lua_State* const L)
 
   assert(lua_istable(L, -1));
 
-  lua_pushlightuserdata(L, cmi_ptr);
+  lua_pushlightuserdata(L, const_cast<void*>(
+    static_cast<void const*>(cmi_ptr)));
   lua_setfield(L, -2, "__cmi_ptr");
 
   lua_pushstring(L, cmi_ptr->class_name);
@@ -1107,7 +1108,7 @@ public:
   template <class ...A>
   class_& constructor()
   {
-    static detail::class_meta_info cmi {
+    static detail::class_meta_info const cmi {
       name_,
       &firstdef_,
       &firstmetadef_,
