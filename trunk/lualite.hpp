@@ -344,14 +344,14 @@ inline C* forward(lua_State* const L, indices<I...>)
   return new C(get_arg<I + O>(L, A())...);
 }
 
-template <class_meta_info* cmi_ptr, class C, class ...A>
+template <class_meta_info* cmi_ptr, std::size_t O, class C, class ...A>
 inline int constructor_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  C* const instance(forward<1, C, A...>(L, indices_type()));
+  C* const instance(forward<O, C, A...>(L, indices_type()));
 
   // table
   lua_createtable(L, 0, 1);
@@ -471,7 +471,7 @@ inline R forward(lua_State* const L, R (*f)(A...), indices<I...>)
   return (*f)(get_arg<I + O>(L, A())...);
 }
 
-template <func_meta_info const* fmi_ptr, class R, class ...A>
+template <func_meta_info const* fmi_ptr, std::size_t O, class R, class ...A>
 inline typename std::enable_if<std::is_same<void, R>::value, int>::type
 func_stub(lua_State* const L)
 {
@@ -481,14 +481,14 @@ func_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  forward<1, R, A...>(L,
+  forward<O, R, A...>(L,
     *static_cast<ptr_to_func_type const*>(
       static_cast<void const*>(&fmi_ptr->ptr_to_func)),
     indices_type());
   return 0;
 }
 
-template <func_meta_info const* fmi_ptr, class R, class ...A>
+template <func_meta_info const* fmi_ptr, std::size_t O, class R, class ...A>
 inline typename std::enable_if<!std::is_same<void, R>::value, int>::type
 func_stub(lua_State* const L)
 {
@@ -498,7 +498,7 @@ func_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  set_result(L, forward<1, R, A...>(L,
+  set_result(L, forward<O, R, A...>(L,
     *static_cast<ptr_to_func_type const*>(
       static_cast<void const*>(&fmi_ptr->ptr_to_func)),
     indices_type()));
@@ -513,7 +513,7 @@ inline R forward(lua_State* const L, C* c,
   return (c->*ptr_to_member)(get_arg<I + O>(L, A())...);
 }
 
-template <member_meta_info const* mmi, class C, class R, class ...A>
+template <member_meta_info const* mmi, std::size_t O, class C, class R, class ...A>
 inline typename std::enable_if<std::is_same<void, R>::value
   && !std::is_pointer<R>::value && !std::is_reference<R>::value, int>::type
 member_stub(lua_State* const L)
@@ -524,7 +524,7 @@ member_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  forward<2, C, R, A...>(L,
+  forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
       *static_cast<ptr_to_member_type const*>(
         static_cast<void const*>(&mmi->ptr_to_member)),
@@ -532,7 +532,7 @@ member_stub(lua_State* const L)
   return 0;
 }
 
-template <member_meta_info const* mmi, class C, class R, class ...A>
+template <member_meta_info const* mmi, std::size_t O, class C, class R, class ...A>
 inline typename std::enable_if<!std::is_same<void, R>::value
   && !std::is_pointer<R>::value && !std::is_reference<R>::value, int>::type
 member_stub(lua_State* const L)
@@ -543,7 +543,7 @@ member_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  set_result(L, forward<2, C, R, A...>(L,
+  set_result(L, forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
     *static_cast<ptr_to_member_type const*>(
       static_cast<void const*>(&mmi->ptr_to_member)),
@@ -551,7 +551,7 @@ member_stub(lua_State* const L)
   return 1;
 }
 
-template <member_meta_info const* mmi, class C, class R, class ...A>
+template <member_meta_info const* mmi, std::size_t O, class C, class R, class ...A>
 inline typename std::enable_if<
   std::is_pointer<R>::value
   && std::is_class<
@@ -572,7 +572,7 @@ member_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  T* const result(const_cast<T*>(forward<2, C, R, A...>(L,
+  T* const result(const_cast<T*>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
       *static_cast<ptr_to_member_type const*>(
         static_cast<void const*>(&mmi->ptr_to_member)),
@@ -672,7 +672,7 @@ member_stub(lua_State* const L)
   return 1;
 }
 
-template <member_meta_info const* mmi, class C, class R, class ...A>
+template <member_meta_info const* mmi, std::size_t O, class C, class R, class ...A>
 inline typename std::enable_if<
   std::is_reference<R>::value
   && std::is_class<
@@ -692,7 +692,7 @@ member_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  T* const result(&const_cast<T&>(forward<2, C, R, A...>(L,
+  T* const result(&const_cast<T&>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
       *static_cast<ptr_to_member_type const*>(
         static_cast<void const*>(&mmi->ptr_to_member)),
@@ -909,7 +909,7 @@ public:
       = ptr_to_func;
 
     functions_.emplace_back(
-      std::make_pair(name, detail::func_stub<&fmi, R, A...>));
+      std::make_pair(name, detail::func_stub<&fmi, 1, R, A...>));
     return *this;
   }
 
@@ -1029,14 +1029,14 @@ public:
       scope::get_scope(L_);
       assert(lua_istable(L_, -1));
 
-      lua_pushcfunction(L_, (detail::func_stub<&fmi, R, A...>));
+      lua_pushcfunction(L_, (detail::func_stub<&fmi, 1, R, A...>));
       lua_setfield(L_, -2, name);
 
       lua_pop(L_, 1);
     }
     else
     {
-      lua_pushcfunction(L_, (detail::func_stub<&fmi, R, A...>));
+      lua_pushcfunction(L_, (detail::func_stub<&fmi, 1, R, A...>));
       lua_setglobal(L_, name);
     }
     return *this;
@@ -1116,7 +1116,7 @@ public:
     };
 
     constructors_.emplace_back(std::make_pair("new",
-      detail::constructor_stub<&cmi, C, A...>));
+      detail::constructor_stub<&cmi, 1, C, A...>));
     return *this;
   }
 
@@ -1138,7 +1138,7 @@ public:
       "pointer size mismatch");
 
     static detail::member_info_type mi{name,
-      detail::member_stub<&mmi, C, R, A...>,
+      detail::member_stub<&mmi, 2, C, R, A...>,
       0};
 
     if (!mi.next)
@@ -1172,7 +1172,7 @@ public:
       "pointer size mismatch");
 
     static detail::member_info_type mi{name,
-      detail::member_stub<&mmi, C, R, A...>,
+      detail::member_stub<&mmi, 2, C, R, A...>,
       0};
 
     if (!mi.next)
