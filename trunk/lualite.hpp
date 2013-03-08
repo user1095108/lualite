@@ -619,6 +619,46 @@ member_stub(lua_State* const L)
       mi_ptr = mi_ptr->next;
     }
 
+    if ((mi_ptr = *cmi_ptr->firstgetterdef))
+    {
+      lua_createtable(L, 0, 1);
+
+      while (mi_ptr)
+      {
+        assert(lua_istable(L, -1));
+
+        lua_pushlightuserdata(L, result);
+        lua_pushcclosure(L, mi_ptr->func, 1);
+
+        lua_setfield(L, -2, mi_ptr->name);
+
+        mi_ptr = mi_ptr->next;
+      }
+
+      lua_setfield(L, -2, "__index");
+    }
+    // else do nothing
+
+    if ((mi_ptr = *cmi_ptr->firstsetterdef))
+    {
+      lua_createtable(L, 0, 1);
+
+      while (mi_ptr)
+      {
+        assert(lua_istable(L, -1));
+
+        lua_pushlightuserdata(L, result);
+        lua_pushcclosure(L, mi_ptr->func, 1);
+
+        lua_setfield(L, -2, mi_ptr->name);
+
+        mi_ptr = mi_ptr->next;
+      }
+
+      lua_setfield(L, -2, "__newindex");
+    }
+    // else do nothing
+
     lua_setmetatable(L, -2);
   }
   // else do nothing
@@ -698,6 +738,46 @@ member_stub(lua_State* const L)
 
       mi_ptr = mi_ptr->next;
     }
+
+    if ((mi_ptr = *cmi_ptr->firstgetterdef))
+    {
+      lua_createtable(L, 0, 1);
+
+      while (mi_ptr)
+      {
+        assert(lua_istable(L, -1));
+
+        lua_pushlightuserdata(L, result);
+        lua_pushcclosure(L, mi_ptr->func, 1);
+
+        lua_setfield(L, -2, mi_ptr->name);
+
+        mi_ptr = mi_ptr->next;
+      }
+
+      lua_setfield(L, -2, "__index");
+    }
+    // else do nothing
+
+    if ((mi_ptr = *cmi_ptr->firstsetterdef))
+    {
+      lua_createtable(L, 0, 1);
+
+      while (mi_ptr)
+      {
+        assert(lua_istable(L, -1));
+
+        lua_pushlightuserdata(L, result);
+        lua_pushcclosure(L, mi_ptr->func, 1);
+
+        lua_setfield(L, -2, mi_ptr->name);
+
+        mi_ptr = mi_ptr->next;
+      }
+
+      lua_setfield(L, -2, "__newindex");
+    }
+    // else do nothing
 
     lua_setmetatable(L, -2);
   }
