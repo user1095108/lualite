@@ -104,7 +104,11 @@ struct class_meta_info
   char const* class_name;
 
   member_info_type** firstdef;
+
   member_info_type** firstmetadef;
+
+  member_info_type** firstgetterdef;
+  member_info_type** firstsetterdef;
 };
 
 struct func_meta_info
@@ -371,8 +375,44 @@ inline int constructor_stub(lua_State* const L)
 
   mi_ptr = *cmi_ptr->firstmetadef;
 
+  assert(mi_ptr);
+
+  bool has_gc(false);
+
+  while (mi_ptr)
+  {
+    assert(lua_istable(L, -1));
+
+    lua_pushlightuserdata(L, instance);
+    lua_pushcclosure(L, mi_ptr->func, 1);
+  
+    lua_setfield(L, -2, mi_ptr->name);
+
+    if (!has_gc)
+    {
+      has_gc = !std::strcmp("__gc", mi_ptr->name);
+    }
+    // else do nothing
+
+    mi_ptr = mi_ptr->next;
+  }
+
+  if (!has_gc)
+  {
+    assert(lua_istable(L, -1));
+
+    lua_pushlightuserdata(L, instance);
+    lua_pushcclosure(L, default_finalizer<C>, 1);
+
+    lua_setfield(L, -2, "__gc");
+  }
+
+  mi_ptr = *cmi_ptr->firstgetterdef;
+
   if (mi_ptr)
   {
+    lua_createtable(L, 0, 1);
+
     while (mi_ptr)
     {
       assert(lua_istable(L, -1));
@@ -384,16 +424,32 @@ inline int constructor_stub(lua_State* const L)
 
       mi_ptr = mi_ptr->next;
     }
+
+    lua_setfield(L, -2, "__index");
   }
-  else
+  // else do nothing
+
+  mi_ptr = *cmi_ptr->firstsetterdef;
+
+  if (mi_ptr)
   {
-    assert(lua_istable(L, -1));
+    lua_createtable(L, 0, 1);
 
-    lua_pushlightuserdata(L, instance);
-    lua_pushcclosure(L, default_finalizer<C>, 1);
+    while (mi_ptr)
+    {
+      assert(lua_istable(L, -1));
 
-    lua_setfield(L, -2, "__gc");
+      lua_pushlightuserdata(L, instance);
+      lua_pushcclosure(L, mi_ptr->func, 1);
+    
+      lua_setfield(L, -2, mi_ptr->name);
+
+      mi_ptr = mi_ptr->next;
+    }
+
+    lua_setfield(L, -2, "__newindex");
   }
+  // else do nothing
 
   lua_setmetatable(L, -2);
 
@@ -937,7 +993,9 @@ public:
   class_(char const* const name)
     : scope(name),
       lastdef_(0),
-      lastmetadef_(0)
+      lastmetadef_(0),
+      lastgetterdef_(0),
+      lastsetterdef_(0)
   {
   }
   
@@ -972,7 +1030,9 @@ public:
     static detail::class_meta_info cmi {
       name_,
       &firstdef_,
-      &firstmetadef_
+      &firstmetadef_,
+      &firstgetterdef_,
+      &firstsetterdef_
     };
 
     constructors_.emplace_back(std::make_pair("new",
@@ -988,7 +1048,9 @@ public:
   }
 
   template <class R, class ...A>
-  class_& def(char const* const name, R (C::*ptr_to_member)(A...))
+  void member_function(detail::member_info_type*& first,
+    detail::member_info_type*& last, char const* const name,
+    R (C::*ptr_to_member)(A...))
   {
     static detail::member_meta_info mmi;
 
@@ -1005,51 +1067,65 @@ public:
         static_cast<void*>(&mmi.ptr_to_member))
         = ptr_to_member;
 
-      if (lastdef_)
+      if (last)
       {
-        lastdef_->next = &mi;
+        last->next = &mi;
       }
       else
       {
-        firstdef_ = &mi;
+        first = &mi;
       }
     }
     // else do nothing
 
-    lastdef_ = &mi;
+    last = &mi;
+  }
+
+  template <class R, class ...A>
+  void const_member_function(detail::member_info_type*& first,
+    detail::member_info_type*& last, char const* const name,
+    R (C::*ptr_to_member)(A...) const)
+  {
+    static detail::member_meta_info mmi;
+
+    static_assert(sizeof(ptr_to_member) <= sizeof(mmi.ptr_to_member),
+      "pointer size mismatch");
+
+    static detail::member_info_type mi{name,
+      detail::member_stub<&mmi, C, R, A...>,
+      0};
+
+    if (!mi.next)
+    {
+      *static_cast<decltype(ptr_to_member)*>(
+        static_cast<void*>(&mmi.ptr_to_member))
+        = ptr_to_member;
+
+      if (last)
+      {
+        last->next = &mi;
+      }
+      else
+      {
+        first = &mi;
+      }
+    }
+    // else do nothing
+
+    last = &mi;
+  }
+
+  template <class R, class ...A>
+  class_& def(char const* const name, R (C::*ptr_to_member)(A...))
+  {
+    member_function(firstdef_, lastdef_, name, ptr_to_member);
     return *this;
   }
 
   template <class R, class ...A>
   class_& def(char const* const name, R (C::*ptr_to_member)(A...) const)
   {
-    static detail::member_meta_info mmi;
-
-    static_assert(sizeof(ptr_to_member) <= sizeof(mmi.ptr_to_member),
-      "pointer size mismatch");
-
-    static detail::member_info_type mi{name,
-      detail::member_stub<&mmi, C, R, A...>,
-      0};
-
-    if (!mi.next)
-    {
-      *static_cast<decltype(ptr_to_member)*>(
-        static_cast<void*>(&mmi.ptr_to_member))
-        = ptr_to_member;
-
-      if (lastdef_)
-      {
-        lastdef_->next = &mi;
-      }
-      else
-      {
-        firstdef_ = &mi;
-      }
-    }
-    // else do nothing
-
-    lastdef_ = &mi;
+    const_member_function(firstdef_, lastdef_, name, ptr_to_member);
     return *this;
   }
 
@@ -1062,66 +1138,15 @@ public:
   template <class R, class ...A>
   class_& metadef(char const* const name, R (C::*ptr_to_member)(A...))
   {
-    static detail::member_meta_info mmi;
-
-    static_assert(sizeof(ptr_to_member) <= sizeof(mmi.ptr_to_member),
-      "pointer size mismatch");
-
-    static detail::member_info_type mi{name,
-      detail::member_stub<&mmi, C, R, A...>,
-      0};
-
-    if (!mi.next)
-    {
-      *static_cast<decltype(ptr_to_member)*>(
-        static_cast<void*>(&mmi.ptr_to_member))
-        = ptr_to_member;
-
-      if (lastmetadef_)
-      {
-        lastmetadef_->next = &mi;
-      }
-      else
-      {
-        firstmetadef_ = &mi;
-      }
-    }
-    // else do nothing
-
-    lastmetadef_ = &mi;
+    member_function(firstmetadef_, lastmetadef_, name, ptr_to_member);
     return *this;
   }
 
   template <class R, class ...A>
   class_& metadef(char const* const name, R (C::*ptr_to_member)(A...) const)
   {
-    static detail::member_meta_info mmi;
-
-    static_assert(sizeof(ptr_to_member) <= sizeof(mmi.ptr_to_member),
-      "pointer size mismatch");
-
-    static detail::member_info_type mi{name,
-      detail::member_stub<&mmi, C, R, A...>,
-      0};
-
-    if (!mi.next)
-    {
-      *static_cast<decltype(ptr_to_member)*>(
-        static_cast<void*>(&mmi.ptr_to_member))
-        = ptr_to_member;
-
-      if (lastmetadef_)
-      {
-        lastmetadef_->next = &mi;
-      }
-      else
-      {
-        firstmetadef_ = &mi;
-      }
-    }
-    // else do nothing
-
-    lastmetadef_ = &mi;
+    const_member_function(firstmetadef_, lastmetadef_, name,
+      ptr_to_member);
     return *this;
   }
 
@@ -1133,6 +1158,12 @@ private:
 
   static detail::member_info_type* firstmetadef_;
   detail::member_info_type* lastmetadef_;
+
+  static detail::member_info_type* firstgetterdef_;
+  detail::member_info_type* lastgetterdef_;
+
+  static detail::member_info_type* firstsetterdef_;
+  detail::member_info_type* lastsetterdef_;
 };
 
 template <class C>
@@ -1141,6 +1172,11 @@ detail::member_info_type* class_<C>::firstdef_;
 template <class C>
 detail::member_info_type* class_<C>::firstmetadef_;
 
+template <class C>
+detail::member_info_type* class_<C>::firstgetterdef_;
+
+template <class C>
+detail::member_info_type* class_<C>::firstsetterdef_;
 
 } // lualite
 
