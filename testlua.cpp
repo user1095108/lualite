@@ -84,6 +84,11 @@ struct testclass
     std::cout << i << std::endl;
   }
 
+  int a() const
+  {
+    return 777;
+  }
+
   testclass const* pointer()
   {
     return this;
@@ -108,7 +113,8 @@ int main(int argc, char* argv[])
       .def("print", (void (testclass::*)(int))&testclass::print)
       .def("print_", (std::vector<std::string> (testclass::*)() const)&testclass::print)
       .def("pointer", &testclass::pointer)
-      .def("reference", &testclass::reference),
+      .def("reference", &testclass::reference)
+      .property("a", &testclass::a),
     lualite::scope("subscope",
       lualite::class_<testclass>("testclass")
         .constructor<int>()
@@ -129,6 +135,7 @@ int main(int argc, char* argv[])
     "print(testclass.__classname)\n"
     "print(testclass.smell)\n"
     "local b = testclass.new(1000)\n"
+    "print(b.a)\n"
     "b:pointer():print(100)\n"
     "b:reference():print_()\n"
     "local a = subscope.testclass.new(1111)\n"

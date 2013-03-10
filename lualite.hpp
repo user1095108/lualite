@@ -106,9 +106,6 @@ struct class_meta_info
   member_info_type** firstdef;
 
   member_info_type** firstmetadef;
-
-  member_info_type** firstgetterdef;
-  member_info_type** firstsetterdef;
 };
 
 struct func_meta_info
@@ -373,11 +370,9 @@ inline int constructor_stub(lua_State* const L)
   // metatable
   lua_createtable(L, 0, 1);
 
-  mi_ptr = *cmi_ptr->firstmetadef;
-
-  assert(mi_ptr);
-
   bool has_gc(false);
+
+  mi_ptr = *cmi_ptr->firstmetadef;
 
   while (mi_ptr)
   {
@@ -406,51 +401,9 @@ inline int constructor_stub(lua_State* const L)
 
     lua_setfield(L, -2, "__gc");
   }
-
-  mi_ptr = *cmi_ptr->firstgetterdef;
-
-  if (mi_ptr)
-  {
-    lua_createtable(L, 0, 1);
-
-    while (mi_ptr)
-    {
-      assert(lua_istable(L, -1));
-
-      lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi_ptr->func, 1);
-    
-      lua_setfield(L, -2, mi_ptr->name);
-
-      mi_ptr = mi_ptr->next;
-    }
-
-    lua_setfield(L, -2, "__index");
-  }
   // else do nothing
 
-  mi_ptr = *cmi_ptr->firstsetterdef;
-
-  if (mi_ptr)
-  {
-    lua_createtable(L, 0, 1);
-
-    while (mi_ptr)
-    {
-      assert(lua_istable(L, -1));
-
-      lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi_ptr->func, 1);
-    
-      lua_setfield(L, -2, mi_ptr->name);
-
-      mi_ptr = mi_ptr->next;
-    }
-
-    lua_setfield(L, -2, "__newindex");
-  }
-  // else do nothing
-
+  assert(lua_istable(L, -2));
   lua_setmetatable(L, -2);
 
   assert(lua_istable(L, -1));
@@ -519,7 +472,7 @@ inline typename std::enable_if<std::is_same<void, R>::value
   && !std::is_pointer<R>::value && !std::is_reference<R>::value, int>::type
 member_stub(lua_State* const L)
 {
-  assert(sizeof...(A) + 1 == lua_gettop(L));
+  assert(sizeof...(A) + O - 1 == lua_gettop(L));
 
   typedef R (C::*ptr_to_member_type)(A...);
 
@@ -538,7 +491,8 @@ inline typename std::enable_if<!std::is_same<void, R>::value
   && !std::is_pointer<R>::value && !std::is_reference<R>::value, int>::type
 member_stub(lua_State* const L)
 {
-  assert(sizeof...(A) + 1 == lua_gettop(L));
+//std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << std::endl;
+  assert(sizeof...(A) + O - 1 == lua_gettop(L));
 
   typedef R (C::*ptr_to_member_type)(A...);
 
@@ -562,7 +516,7 @@ inline typename std::enable_if<
   >::value, int>::type
 member_stub(lua_State* const L)
 {
-  assert(sizeof...(A) + 1 == lua_gettop(L));
+  assert(sizeof...(A) + O - 1 == lua_gettop(L));
   assert(lua_istable(L, -1));
 
   typedef typename std::remove_const<
@@ -620,46 +574,6 @@ member_stub(lua_State* const L)
       mi_ptr = mi_ptr->next;
     }
 
-    if ((mi_ptr = *cmi_ptr->firstgetterdef))
-    {
-      lua_createtable(L, 0, 1);
-
-      while (mi_ptr)
-      {
-        assert(lua_istable(L, -1));
-
-        lua_pushlightuserdata(L, result);
-        lua_pushcclosure(L, mi_ptr->func, 1);
-
-        lua_setfield(L, -2, mi_ptr->name);
-
-        mi_ptr = mi_ptr->next;
-      }
-
-      lua_setfield(L, -2, "__index");
-    }
-    // else do nothing
-
-    if ((mi_ptr = *cmi_ptr->firstsetterdef))
-    {
-      lua_createtable(L, 0, 1);
-
-      while (mi_ptr)
-      {
-        assert(lua_istable(L, -1));
-
-        lua_pushlightuserdata(L, result);
-        lua_pushcclosure(L, mi_ptr->func, 1);
-
-        lua_setfield(L, -2, mi_ptr->name);
-
-        mi_ptr = mi_ptr->next;
-      }
-
-      lua_setfield(L, -2, "__newindex");
-    }
-    // else do nothing
-
     lua_setmetatable(L, -2);
   }
   // else do nothing
@@ -683,7 +597,7 @@ inline typename std::enable_if<
   >::value, int>::type
 member_stub(lua_State* const L)
 {
-  assert(sizeof...(A) + 1 == lua_gettop(L));
+  assert(sizeof...(A) + O - 1 == lua_gettop(L));
   assert(lua_istable(L, -1));
 
   typedef typename std::remove_const<
@@ -739,46 +653,6 @@ member_stub(lua_State* const L)
 
       mi_ptr = mi_ptr->next;
     }
-
-    if ((mi_ptr = *cmi_ptr->firstgetterdef))
-    {
-      lua_createtable(L, 0, 1);
-
-      while (mi_ptr)
-      {
-        assert(lua_istable(L, -1));
-
-        lua_pushlightuserdata(L, result);
-        lua_pushcclosure(L, mi_ptr->func, 1);
-
-        lua_setfield(L, -2, mi_ptr->name);
-
-        mi_ptr = mi_ptr->next;
-      }
-
-      lua_setfield(L, -2, "__index");
-    }
-    // else do nothing
-
-    if ((mi_ptr = *cmi_ptr->firstsetterdef))
-    {
-      lua_createtable(L, 0, 1);
-
-      while (mi_ptr)
-      {
-        assert(lua_istable(L, -1));
-
-        lua_pushlightuserdata(L, result);
-        lua_pushcclosure(L, mi_ptr->func, 1);
-
-        lua_setfield(L, -2, mi_ptr->name);
-
-        mi_ptr = mi_ptr->next;
-      }
-
-      lua_setfield(L, -2, "__newindex");
-    }
-    // else do nothing
 
     lua_setmetatable(L, -2);
   }
@@ -1074,9 +948,7 @@ public:
   class_(char const* const name)
     : scope(name),
       lastdef_(0),
-      lastmetadef_(0),
-      lastgetterdef_(0),
-      lastsetterdef_(0)
+      lastmetadef_(0)
   {
   }
   
@@ -1111,9 +983,7 @@ public:
     static detail::class_meta_info const cmi {
       name_,
       &firstdef_,
-      &firstmetadef_,
-      &firstgetterdef_,
-      &firstsetterdef_
+      &firstmetadef_
     };
 
     constructors_.emplace_back(std::make_pair("new",
@@ -1128,7 +998,7 @@ public:
     return *this;
   }
 
-  template <class R, class ...A>
+  template <std::size_t O = 2, class R, class ...A>
   void member_function(detail::member_info_type*& first,
     detail::member_info_type*& last, char const* const name,
     R (C::*ptr_to_member)(A...))
@@ -1139,7 +1009,7 @@ public:
       "pointer size mismatch");
 
     static detail::member_info_type mi{name,
-      detail::member_stub<&mmi, 2, C, R, A...>,
+      detail::member_stub<&mmi, O, C, R, A...>,
       0};
 
     if (!mi.next)
@@ -1162,7 +1032,7 @@ public:
     last = &mi;
   }
 
-  template <class R, class ...A>
+  template <std::size_t O = 2, class R, class ...A>
   void const_member_function(detail::member_info_type*& first,
     detail::member_info_type*& last, char const* const name,
     R (C::*ptr_to_member)(A...) const)
@@ -1173,7 +1043,7 @@ public:
       "pointer size mismatch");
 
     static detail::member_info_type mi{name,
-      detail::member_stub<&mmi, 2, C, R, A...>,
+      detail::member_stub<&mmi, O, C, R, A...>,
       0};
 
     if (!mi.next)
@@ -1226,8 +1096,48 @@ public:
   template <class R, class ...A>
   class_& metadef(char const* const name, R (C::*ptr_to_member)(A...) const)
   {
-    const_member_function(firstmetadef_, lastmetadef_, name,
-      ptr_to_member);
+    const_member_function(firstmetadef_, lastmetadef_, name, ptr_to_member);
+    return *this;
+  }
+
+  template <class R, class ...A>
+  class_& property(char const* const name,
+    R (C::*ptr_to_const_member)(A...) const)
+  {
+    const_member_function(firstdef_, lastdef_,
+      (std::string("__g__") + name).c_str(), ptr_to_const_member);
+    return *this;
+  }
+
+  template <class R, class ...A>
+  class_& property(char const* const name,
+    R (C::*ptr_to_member)(A...))
+  {
+    member_function(firstdef_, lastdef_,
+      (std::string("__g__") + name).c_str(), ptr_to_member);
+    return *this;
+  }
+
+  template <class R, class ...A>
+  class_& property(char const* const name,
+    R (C::*ptr_to_const_member)(A...) const,
+    R (C::*ptr_to_member)(A...))
+  {
+    const_member_function(firstdef_, lastdef_,
+      (std::string("__g__") + name).c_str(), ptr_to_const_member);
+    member_function(firstdef_, lastdef_,
+      (std::string("__s__") + name).c_str(), ptr_to_member);
+    return *this;
+  }
+
+  template <class R, class ...A>
+  class_& property(char const* const name, R (C::*ptr_to_membera)(A...),
+    R (C::*ptr_to_memberb)(A...))
+  {
+    member_function(firstdef_, lastdef_,
+      (std::string("__g__") + name).c_str(), ptr_to_membera);
+    member_function(firstdef_, lastdef_,
+      (std::string("__s__") + name).c_str(), ptr_to_memberb);
     return *this;
   }
 
@@ -1239,12 +1149,6 @@ private:
 
   static detail::member_info_type* firstmetadef_;
   detail::member_info_type* lastmetadef_;
-
-  static detail::member_info_type* firstgetterdef_;
-  detail::member_info_type* lastgetterdef_;
-
-  static detail::member_info_type* firstsetterdef_;
-  detail::member_info_type* lastsetterdef_;
 };
 
 template <class C>
@@ -1252,12 +1156,6 @@ detail::member_info_type* class_<C>::firstdef_;
 
 template <class C>
 detail::member_info_type* class_<C>::firstmetadef_;
-
-template <class C>
-detail::member_info_type* class_<C>::firstgetterdef_;
-
-template <class C>
-detail::member_info_type* class_<C>::firstsetterdef_;
 
 } // lualite
 
