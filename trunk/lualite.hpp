@@ -448,12 +448,14 @@ inline int constructor_stub(lua_State* const L)
   // else do nothing
 
   assert(lua_istable(L, -1));
-  lua_pushcfunction(L, default_getter<C>);
+  lua_pushlightuserdata(L, instance);
+  lua_pushcclosure(L, default_getter<C>, 1);
 
   lua_setfield(L, -2, "__index");
 
   assert(lua_istable(L, -1));
-  lua_pushcfunction(L, default_setter<C>);
+  lua_pushlightuserdata(L, instance);
+  lua_pushcclosure(L, default_setter<C>, 1);
 
   lua_setfield(L, -2, "__newindex");
 
@@ -1155,8 +1157,7 @@ public:
       static_cast<void*>(&mmi.ptr_to_member))
       = ptr_to_const_member;
 
-    getters_[name]
-      = detail::member_stub<&mmi, 3, C, R, A...>;
+    getters_.emplace(name, detail::member_stub<&mmi, 3, C, R, A...>);
     return *this;
   }
 
@@ -1170,15 +1171,14 @@ public:
       static_cast<void*>(&mmi.ptr_to_member))
       = ptr_to_member;
 
-    getters_[name]
-      = detail::member_stub<&mmi, 3, C, R, A...>;
+    getters_.emplace(name, detail::member_stub<&mmi, 3, C, R, A...>);
     return *this;
   }
 
-  template <class R, class ...A>
+  template <class RA, class ...A, class RB, class ...B>
   class_& property(char const* const name,
-    R (C::*ptr_to_const_member)(A...) const,
-    R (C::*ptr_to_member)(A...))
+    RA (C::*ptr_to_const_member)(A...) const,
+    RB (C::*ptr_to_member)(B...))
   {
     static detail::member_meta_info mmia;
 
@@ -1186,8 +1186,7 @@ public:
       static_cast<void*>(&mmia.ptr_to_member))
       = ptr_to_const_member;
 
-    getters_[name]
-      = detail::member_stub<&mmia, 3, C, R, A...>;
+    getters_.emplace(name, detail::member_stub<&mmia, 3, C, RA, A...>);
 
     static detail::member_meta_info mmib;
 
@@ -1195,14 +1194,13 @@ public:
       static_cast<void*>(&mmib.ptr_to_member))
       = ptr_to_member;
 
-    setters_[name]
-      = detail::member_stub<&mmib, 3, C, R, A...>;
+    setters_.emplace(name, detail::member_stub<&mmib, 3, C, RB, B...>);
     return *this;
   }
 
-  template <class R, class ...A>
-  class_& property(char const* const name, R (C::*ptr_to_membera)(A...),
-    R (C::*ptr_to_memberb)(A...))
+  template <class RA, class ...A, class RB, class ...B>
+  class_& property(char const* const name, RA (C::*ptr_to_membera)(A...),
+    RB (C::*ptr_to_memberb)(B...))
   {
     static detail::member_meta_info mmia;
 
@@ -1210,8 +1208,7 @@ public:
       static_cast<void*>(&mmia.ptr_to_member))
       = ptr_to_membera;
 
-    getters_[name]
-      = detail::member_stub<&mmia, 3, C, R, A...>;
+    getters_.emplace(name, detail::member_stub<&mmia, 3, C, RA, A...>);
 
     static detail::member_meta_info mmib;
 
@@ -1219,8 +1216,7 @@ public:
       static_cast<void*>(&mmib.ptr_to_member))
       = ptr_to_memberb;
 
-    setters_[name]
-      = detail::member_stub<&mmib, 3, C, R, A...>;
+    setters_.emplace(name, detail::member_stub<&mmib, 3, C, RB, B...>);
     return *this;
   }
 
