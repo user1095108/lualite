@@ -63,11 +63,13 @@ point testfunc(int i)
 struct testclass
 {
   testclass()
+    : a_(777)
   {
     std::cout << "testclass::testclass()" << std::endl;
   }
 
   testclass(int i)
+    : a_(777)
   {
     std::cout << "testclass::testclass(int):" << i << std::endl;
   }
@@ -86,7 +88,12 @@ struct testclass
 
   int a() const
   {
-    return 777;
+    return a_;
+  }
+
+  void set_a(int i)
+  {
+    a_ = i;
   }
 
   testclass const* pointer()
@@ -98,6 +105,9 @@ struct testclass
   {
     return *this;
   }
+
+private:
+  int a_;
 };
 
 int main(int argc, char* argv[])
@@ -114,7 +124,7 @@ int main(int argc, char* argv[])
       .def("print_", (std::vector<std::string> (testclass::*)() const)&testclass::print)
       .def("pointer", &testclass::pointer)
       .def("reference", &testclass::reference)
-      .property("a", &testclass::a),
+      .property("a", &testclass::a, &testclass::set_a),
     lualite::scope("subscope",
       lualite::class_<testclass>("testclass")
         .constructor<int>()
@@ -136,6 +146,8 @@ int main(int argc, char* argv[])
     "print(testclass.smell)\n"
     "local b = testclass.new(1000)\n"
     "print(\"---\")\n"
+    "print(b.a)\n"
+    "b.a = 888\n"
     "print(b.a)\n"
     "b:pointer():print(100)\n"
     "b:reference():print_()\n"
