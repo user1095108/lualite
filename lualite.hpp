@@ -58,6 +58,9 @@ namespace lualite
 
 class scope;
 
+template <class C>
+class class_;
+
 namespace detail
 {
 
@@ -329,6 +332,40 @@ inline void* get_arg(lua_State* const L,
 }
 
 template <class C>
+int default_getter(lua_State* const L)
+{
+  assert(2 == lua_gettop(L));
+
+  auto i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
+
+  if (i == lualite::class_<C>::getters_.end())
+  {
+    return 0;
+  }
+  else
+  {
+    return (i->second)(L);
+  }
+}
+
+template <class C>
+int default_setter(lua_State* const L)
+{
+  assert(3 == lua_gettop(L));
+
+  auto i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
+
+  if (i != lualite::class_<C>::setters_.end())
+  {
+    (i->second)(L);
+  }
+  // else do nothing
+
+  return 0;
+}
+
+
+template <class C>
 int default_finalizer(lua_State* const L)
 {
   delete static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1)));
@@ -367,6 +404,13 @@ inline int constructor_stub(lua_State* const L)
     mi_ptr = mi_ptr->next;
   }
 
+  lua_pushlightuserdata(L, const_cast<void*>(
+    static_cast<void const*>(cmi_ptr)));
+  lua_setfield(L, -2, "__cmi_ptr");
+
+  lua_pushstring(L, cmi_ptr->class_name);
+  lua_setfield(L, -2, "__instanceof");
+
   // metatable
   lua_createtable(L, 0, 1);
 
@@ -403,17 +447,18 @@ inline int constructor_stub(lua_State* const L)
   }
   // else do nothing
 
-  assert(lua_istable(L, -2));
-  lua_setmetatable(L, -2);
+  assert(lua_istable(L, -1));
+  lua_pushcfunction(L, default_getter<C>);
+
+  lua_setfield(L, -2, "__index");
 
   assert(lua_istable(L, -1));
+  lua_pushcfunction(L, default_setter<C>);
 
-  lua_pushlightuserdata(L, const_cast<void*>(
-    static_cast<void const*>(cmi_ptr)));
-  lua_setfield(L, -2, "__cmi_ptr");
+  lua_setfield(L, -2, "__newindex");
 
-  lua_pushstring(L, cmi_ptr->class_name);
-  lua_setfield(L, -2, "__instanceof");
+  assert(lua_istable(L, -2));
+  lua_setmetatable(L, -2);
 
   assert(lua_istable(L, -1));
   return 1;
@@ -1104,8 +1149,14 @@ public:
   class_& property(char const* const name,
     R (C::*ptr_to_const_member)(A...) const)
   {
-    const_member_function(firstdef_, lastdef_,
-      (std::string("__g__") + name).c_str(), ptr_to_const_member);
+    static detail::member_meta_info mmi;
+
+    *static_cast<decltype(ptr_to_const_member)*>(
+      static_cast<void*>(&mmi.ptr_to_member))
+      = ptr_to_const_member;
+
+    getters_[name]
+      = detail::member_stub<&mmi, 3, C, R, A...>;
     return *this;
   }
 
@@ -1113,8 +1164,14 @@ public:
   class_& property(char const* const name,
     R (C::*ptr_to_member)(A...))
   {
-    member_function(firstdef_, lastdef_,
-      (std::string("__g__") + name).c_str(), ptr_to_member);
+    static detail::member_meta_info mmi;
+
+    *static_cast<decltype(ptr_to_member)*>(
+      static_cast<void*>(&mmi.ptr_to_member))
+      = ptr_to_member;
+
+    getters_[name]
+      = detail::member_stub<&mmi, 3, C, R, A...>;
     return *this;
   }
 
@@ -1123,10 +1180,23 @@ public:
     R (C::*ptr_to_const_member)(A...) const,
     R (C::*ptr_to_member)(A...))
   {
-    const_member_function(firstdef_, lastdef_,
-      (std::string("__g__") + name).c_str(), ptr_to_const_member);
-    member_function(firstdef_, lastdef_,
-      (std::string("__s__") + name).c_str(), ptr_to_member);
+    static detail::member_meta_info mmia;
+
+    *static_cast<decltype(ptr_to_const_member)*>(
+      static_cast<void*>(&mmia.ptr_to_member))
+      = ptr_to_const_member;
+
+    getters_[name]
+      = detail::member_stub<&mmia, 3, C, R, A...>;
+
+    static detail::member_meta_info mmib;
+
+    *static_cast<decltype(ptr_to_member)*>(
+      static_cast<void*>(&mmib.ptr_to_member))
+      = ptr_to_member;
+
+    setters_[name]
+      = detail::member_stub<&mmib, 3, C, R, A...>;
     return *this;
   }
 
@@ -1134,10 +1204,23 @@ public:
   class_& property(char const* const name, R (C::*ptr_to_membera)(A...),
     R (C::*ptr_to_memberb)(A...))
   {
-    member_function(firstdef_, lastdef_,
-      (std::string("__g__") + name).c_str(), ptr_to_membera);
-    member_function(firstdef_, lastdef_,
-      (std::string("__s__") + name).c_str(), ptr_to_memberb);
+    static detail::member_meta_info mmia;
+
+    *static_cast<decltype(ptr_to_membera)*>(
+      static_cast<void*>(&mmia.ptr_to_member))
+      = ptr_to_membera;
+
+    getters_[name]
+      = detail::member_stub<&mmia, 3, C, R, A...>;
+
+    static detail::member_meta_info mmib;
+
+    *static_cast<decltype(ptr_to_memberb)*>(
+      static_cast<void*>(&mmib.ptr_to_member))
+      = ptr_to_memberb;
+
+    setters_[name]
+      = detail::member_stub<&mmib, 3, C, R, A...>;
     return *this;
   }
 
@@ -1149,6 +1232,10 @@ private:
 
   static detail::member_info_type* firstmetadef_;
   detail::member_info_type* lastmetadef_;
+
+public:
+  static std::unordered_map<std::string, lua_CFunction> getters_;
+  static std::unordered_map<std::string, lua_CFunction> setters_;
 };
 
 template <class C>
@@ -1156,6 +1243,12 @@ detail::member_info_type* class_<C>::firstdef_;
 
 template <class C>
 detail::member_info_type* class_<C>::firstmetadef_;
+
+template <class C>
+std::unordered_map<std::string, lua_CFunction> class_<C>::getters_;
+
+template <class C>
+std::unordered_map<std::string, lua_CFunction> class_<C>::setters_;
 
 } // lualite
 
