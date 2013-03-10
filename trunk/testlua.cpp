@@ -135,6 +135,7 @@ int main(int argc, char* argv[])
     "print(testclass.__classname)\n"
     "print(testclass.smell)\n"
     "local b = testclass.new(1000)\n"
+    "print(\"---\")\n"
     "print(b.a)\n"
     "b:pointer():print(100)\n"
     "b:reference():print_()\n"
