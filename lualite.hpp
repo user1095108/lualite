@@ -64,6 +64,30 @@ class class_;
 namespace detail
 {
 
+struct unordered_eq
+{
+  bool operator()(const char* const s1, const char* const s2) const
+  {
+    return !std::strcmp(s1, s2);
+  }
+};
+
+struct unordered_hash
+{
+  std::size_t operator()(char const* s) const
+  {
+    std::size_t h(0);
+
+    while (*s)
+    {
+      h ^= (h << 5) + (h >> 2) + static_cast<unsigned char>(*s++);
+    }
+
+    return h;
+//  return std::hash<std::string>()(s);
+  }
+};
+
 template <std::size_t ...Ns>
 struct indices
 {
@@ -336,11 +360,7 @@ int default_getter(lua_State* const L)
 {
   assert(2 == lua_gettop(L));
 
-  std::size_t len;
-
-  char const* const key(lua_tolstring(L, 2, &len));
-
-  auto i(lualite::class_<C>::getters_.find(std::string(key, len)));
+  auto i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
   if (i == lualite::class_<C>::getters_.end())
   {
@@ -357,11 +377,7 @@ int default_setter(lua_State* const L)
 {
   assert(3 == lua_gettop(L));
 
-  std::size_t len;
-
-  char const* const key(lua_tolstring(L, 2, &len));
-
-  auto i(lualite::class_<C>::setters_.find(std::string(key, len)));
+  auto i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
 
   if (i != lualite::class_<C>::setters_.end())
   {
@@ -1238,8 +1254,10 @@ private:
   detail::member_info_type* lastmetadef_;
 
 public:
-  static std::unordered_map<std::string, lua_CFunction> getters_;
-  static std::unordered_map<std::string, lua_CFunction> setters_;
+  static std::unordered_map<char const*, lua_CFunction,
+    detail::unordered_hash, detail::unordered_eq> getters_;
+  static std::unordered_map<char const*, lua_CFunction,
+    detail::unordered_hash, detail::unordered_eq> setters_;
 };
 
 template <class C>
@@ -1249,10 +1267,12 @@ template <class C>
 detail::member_info_type* class_<C>::firstmetadef_;
 
 template <class C>
-std::unordered_map<std::string, lua_CFunction> class_<C>::getters_;
+std::unordered_map<char const*, lua_CFunction,
+  detail::unordered_hash, detail::unordered_eq> class_<C>::getters_;
 
 template <class C>
-std::unordered_map<std::string, lua_CFunction> class_<C>::setters_;
+std::unordered_map<char const*, lua_CFunction,
+  detail::unordered_hash, detail::unordered_eq> class_<C>::setters_;
 
 } // lualite
 
