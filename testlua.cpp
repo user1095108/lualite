@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
     "local b = testclass.new(1000)\n"
     "print(\"---\")\n"
     "print(b.a)\n"
-    "b.a = 888\n"
+    "b:reference().a = 888\n"
     "print(b.a)\n"
     "b:pointer():print(100)\n"
     "b:reference():print_()\n"

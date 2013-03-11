@@ -596,7 +596,7 @@ member_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  T* const result(const_cast<T*>(forward<O, C, R, A...>(L,
+  T* const instance(const_cast<T*>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
       *static_cast<ptr_to_member_type const*>(
         static_cast<void const*>(&mmi->ptr_to_member)),
@@ -614,7 +614,7 @@ member_stub(lua_State* const L)
   {
     assert(lua_istable(L, -1));
 
-    lua_pushlightuserdata(L, result);
+    lua_pushlightuserdata(L, instance);
     lua_pushcclosure(L, mi_ptr->func, 1);
 
     lua_setfield(L, -2, mi_ptr->name);
@@ -628,7 +628,6 @@ member_stub(lua_State* const L)
 
   // metatable
   mi_ptr = *cmi_ptr->firstmetadef;
-  assert(mi_ptr);
 
   lua_createtable(L, 0, 1);
 
@@ -638,7 +637,7 @@ member_stub(lua_State* const L)
 
     if (std::strcmp("__gc", mi_ptr->name))
     {
-      lua_pushlightuserdata(L, result);
+      lua_pushlightuserdata(L, instance);
       lua_pushcclosure(L, mi_ptr->func, 1);
 
       lua_setfield(L, -2, mi_ptr->name);
@@ -649,18 +648,20 @@ member_stub(lua_State* const L)
   }
 
   assert(lua_istable(L, -1));
-  lua_pushlightuserdata(L, result);
+  lua_pushlightuserdata(L, instance);
   lua_pushcclosure(L, default_getter<C>, 1);
 
   lua_setfield(L, -2, "__index");
 
   assert(lua_istable(L, -1));
-  lua_pushlightuserdata(L, result);
+  lua_pushlightuserdata(L, instance);
   lua_pushcclosure(L, default_setter<C>, 1);
 
   lua_setfield(L, -2, "__newindex");
 
   lua_setmetatable(L, -2);
+
+  assert(lua_istable(L, -1));
   return 1;
 }
 
@@ -695,6 +696,10 @@ member_stub(lua_State* const L)
 
   auto const cmi_ptr(static_cast<class_meta_info*>(lua_touserdata(L, -1)));
   lua_pop(L, 1);
+
+  assert(lua_istable(L, -1));
+  lua_pushstring(L, cmi_ptr->class_name);
+  lua_setfield(L, -2, "__instanceof");
 
   detail::member_info_type* mi_ptr(*cmi_ptr->firstdef);
 
@@ -736,9 +741,16 @@ member_stub(lua_State* const L)
   // else do nothing
 
   assert(lua_istable(L, -1));
+  lua_pushlightuserdata(L, instance);
+  lua_pushcclosure(L, default_getter<C>, 1);
 
-  lua_pushstring(L, cmi_ptr->class_name);
-  lua_setfield(L, -2, "__instanceof");
+  lua_setfield(L, -2, "__index");
+
+  assert(lua_istable(L, -1));
+  lua_pushlightuserdata(L, instance);
+  lua_pushcclosure(L, default_setter<C>, 1);
+
+  lua_setfield(L, -2, "__newindex");
 
   assert(lua_istable(L, -1));
   return 1;
