@@ -439,6 +439,8 @@ inline int constructor_stub(lua_State* const L)
   lua_createtable(L, 0, 1);
 
   bool has_gc(false);
+  bool has_index(false);
+  bool has_newindex(false);
 
   mi_ptr = *cmi_ptr->firstmetadef;
 
@@ -457,6 +459,18 @@ inline int constructor_stub(lua_State* const L)
     }
     // else do nothing
 
+    if (!has_index)
+    {
+      has_index = !std::strcmp("__index", mi_ptr->name);
+    }
+    // else do nothing
+
+    if (!has_newindex)
+    {
+      has_newindex = !std::strcmp("__newindex", mi_ptr->name);
+    }
+    // else do nothing
+
     mi_ptr = mi_ptr->next;
   }
 
@@ -471,17 +485,25 @@ inline int constructor_stub(lua_State* const L)
   }
   // else do nothing
 
-  assert(lua_istable(L, -1));
-  lua_pushlightuserdata(L, instance);
-  lua_pushcclosure(L, default_getter<C>, 1);
+  if (!has_index)
+  {
+    assert(lua_istable(L, -1));
+    lua_pushlightuserdata(L, instance);
+    lua_pushcclosure(L, default_getter<C>, 1);
 
-  lua_setfield(L, -2, "__index");
+    lua_setfield(L, -2, "__index");
+  }
+  // else do nothing
 
-  assert(lua_istable(L, -1));
-  lua_pushlightuserdata(L, instance);
-  lua_pushcclosure(L, default_setter<C>, 1);
+  if (!has_newindex)
+  {
+    assert(lua_istable(L, -1));
+    lua_pushlightuserdata(L, instance);
+    lua_pushcclosure(L, default_setter<C>, 1);
 
-  lua_setfield(L, -2, "__newindex");
+    lua_setfield(L, -2, "__newindex");
+  }
+  // else do nothing
 
   assert(lua_istable(L, -2));
   lua_setmetatable(L, -2);
@@ -627,9 +649,12 @@ member_stub(lua_State* const L)
   lua_setfield(L, -2, "__instanceof");
 
   // metatable
-  mi_ptr = *cmi_ptr->firstmetadef;
-
   lua_createtable(L, 0, 1);
+
+  bool has_index(false);
+  bool has_newindex(false);
+
+  mi_ptr = *cmi_ptr->firstmetadef;
 
   while (mi_ptr)
   {
@@ -644,20 +669,40 @@ member_stub(lua_State* const L)
     }
     // else do nothing
 
+    if (!has_index)
+    {
+      has_index = !std::strcmp("__index", mi_ptr->name);
+    }
+    // else do nothing
+
+    if (!has_newindex)
+    {
+      has_newindex = !std::strcmp("__newindex", mi_ptr->name);
+    }
+    // else do nothing
+
     mi_ptr = mi_ptr->next;
   }
 
-  assert(lua_istable(L, -1));
-  lua_pushlightuserdata(L, instance);
-  lua_pushcclosure(L, default_getter<C>, 1);
+  if (!has_index)
+  {
+    assert(lua_istable(L, -1));
+    lua_pushlightuserdata(L, instance);
+    lua_pushcclosure(L, default_getter<C>, 1);
 
-  lua_setfield(L, -2, "__index");
+    lua_setfield(L, -2, "__index");
+  }
+  // else do nothing
 
-  assert(lua_istable(L, -1));
-  lua_pushlightuserdata(L, instance);
-  lua_pushcclosure(L, default_setter<C>, 1);
+  if (!has_newindex)
+  {
+    assert(lua_istable(L, -1));
+    lua_pushlightuserdata(L, instance);
+    lua_pushcclosure(L, default_setter<C>, 1);
 
-  lua_setfield(L, -2, "__newindex");
+    lua_setfield(L, -2, "__newindex");
+  }
+  // else do nothing
 
   lua_setmetatable(L, -2);
 
