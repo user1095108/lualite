@@ -411,7 +411,7 @@ inline C* forward(lua_State* const L, indices<I...>)
 }
 
 template <class_meta_info const* cmi_ptr, std::size_t O, class C, class ...A>
-inline int constructor_stub(lua_State* const L)
+int constructor_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
 
@@ -503,7 +503,7 @@ inline R forward(lua_State* const L, R (*f)(A...), indices<I...>)
 }
 
 template <func_meta_info const* fmi_ptr, std::size_t O, class R, class ...A>
-inline typename std::enable_if<std::is_same<void, R>::value, int>::type
+typename std::enable_if<std::is_same<void, R>::value, int>::type
 func_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
@@ -520,7 +520,7 @@ func_stub(lua_State* const L)
 }
 
 template <func_meta_info const* fmi_ptr, std::size_t O, class R, class ...A>
-inline typename std::enable_if<!std::is_same<void, R>::value, int>::type
+typename std::enable_if<!std::is_same<void, R>::value, int>::type
 func_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
@@ -545,7 +545,7 @@ inline R forward(lua_State* const L, C* c,
 }
 
 template <member_meta_info const* mmi, std::size_t O, class C, class R, class ...A>
-inline typename std::enable_if<std::is_same<void, R>::value
+typename std::enable_if<std::is_same<void, R>::value
   && !std::is_pointer<R>::value && !std::is_reference<R>::value, int>::type
 member_stub(lua_State* const L)
 {
@@ -564,7 +564,7 @@ member_stub(lua_State* const L)
 }
 
 template <member_meta_info const* mmi, std::size_t O, class C, class R, class ...A>
-inline typename std::enable_if<!std::is_same<void, R>::value
+typename std::enable_if<!std::is_same<void, R>::value
   && !std::is_pointer<R>::value && !std::is_reference<R>::value, int>::type
 member_stub(lua_State* const L)
 {
@@ -584,7 +584,7 @@ member_stub(lua_State* const L)
 }
 
 template <member_meta_info const* mmi, std::size_t O, class C, class R, class ...A>
-inline typename std::enable_if<
+typename std::enable_if<
   std::is_pointer<R>::value
   && std::is_class<
     typename std::remove_const<
@@ -682,7 +682,7 @@ member_stub(lua_State* const L)
 }
 
 template <member_meta_info const* mmi, std::size_t O, class C, class R, class ...A>
-inline typename std::enable_if<
+typename std::enable_if<
   std::is_reference<R>::value
   && std::is_class<
     typename std::remove_const<
@@ -1296,7 +1296,13 @@ private:
         typename std::remove_pointer<R>::type
       >::type
     >::value, int>::type
-  friend detail::member_stub(lua_State* const);
+  friend detail::member_stub(lua_State*);
+
+  template <class C_>
+  friend int detail::default_getter(lua_State*);
+
+  template <class C_>
+  friend int detail::default_setter(lua_State*);
 
   static bool has_gc;
   static bool has_index;
@@ -1310,7 +1316,6 @@ private:
   static detail::member_info_type* firstmetadef_;
   detail::member_info_type* lastmetadef_;
 
-public:
   static std::unordered_map<char const*, lua_CFunction,
     detail::unordered_hash, detail::unordered_eq> getters_;
   static std::unordered_map<char const*, lua_CFunction,
