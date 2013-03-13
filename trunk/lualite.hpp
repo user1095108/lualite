@@ -64,6 +64,13 @@ class class_;
 namespace detail
 {
 
+void rawsetfield(lua_State* const L, int const index, char const* const key)
+{
+  lua_pushstring(L, key);
+  lua_insert(L, -2);
+  lua_rawset(L, index >= 0 ? index : index - 1);
+}
+
 struct unordered_eq
 {
   bool operator()(const char* const s1, const char* const s2) const
@@ -423,17 +430,17 @@ inline int constructor_stub(lua_State* const L)
     lua_pushlightuserdata(L, instance);
     lua_pushcclosure(L, mi_ptr->func, 1);
   
-    lua_setfield(L, -2, mi_ptr->name);
+    rawsetfield(L, -2, mi_ptr->name);
 
     mi_ptr = mi_ptr->next;
   }
 
   lua_pushlightuserdata(L, const_cast<void*>(
     static_cast<void const*>(cmi_ptr)));
-  lua_setfield(L, -2, "__cmi_ptr");
+  rawsetfield(L, -2, "__cmi_ptr");
 
   lua_pushstring(L, cmi_ptr->class_name);
-  lua_setfield(L, -2, "__instanceof");
+  rawsetfield(L, -2, "__instanceof");
 
   // metatable
   lua_createtable(L, 0, 1);
@@ -447,7 +454,7 @@ inline int constructor_stub(lua_State* const L)
     lua_pushlightuserdata(L, instance);
     lua_pushcclosure(L, mi_ptr->func, 1);
   
-    lua_setfield(L, -2, mi_ptr->name);
+    rawsetfield(L, -2, mi_ptr->name);
 
     mi_ptr = mi_ptr->next;
   }
@@ -459,7 +466,7 @@ inline int constructor_stub(lua_State* const L)
     lua_pushlightuserdata(L, instance);
     lua_pushcclosure(L, default_finalizer<C>, 1);
 
-    lua_setfield(L, -2, "__gc");
+    rawsetfield(L, -2, "__gc");
   }
   // else do nothing
 
@@ -469,7 +476,7 @@ inline int constructor_stub(lua_State* const L)
     lua_pushlightuserdata(L, instance);
     lua_pushcclosure(L, default_getter<C>, 1);
 
-    lua_setfield(L, -2, "__index");
+    rawsetfield(L, -2, "__index");
   }
   // else do nothing
 
@@ -479,7 +486,7 @@ inline int constructor_stub(lua_State* const L)
     lua_pushlightuserdata(L, instance);
     lua_pushcclosure(L, default_setter<C>, 1);
 
-    lua_setfield(L, -2, "__newindex");
+    rawsetfield(L, -2, "__newindex");
   }
   // else do nothing
 
@@ -617,14 +624,14 @@ member_stub(lua_State* const L)
     lua_pushlightuserdata(L, instance);
     lua_pushcclosure(L, mi_ptr->func, 1);
 
-    lua_setfield(L, -2, mi_ptr->name);
+    rawsetfield(L, -2, mi_ptr->name);
 
     mi_ptr = mi_ptr->next;
   }
 
   assert(lua_istable(L, -1));
   lua_pushstring(L, cmi_ptr->class_name);
-  lua_setfield(L, -2, "__instanceof");
+  rawsetfield(L, -2, "__instanceof");
 
   // metatable
   lua_createtable(L, 0, 1);
@@ -640,7 +647,7 @@ member_stub(lua_State* const L)
       lua_pushlightuserdata(L, instance);
       lua_pushcclosure(L, mi_ptr->func, 1);
 
-      lua_setfield(L, -2, mi_ptr->name);
+      rawsetfield(L, -2, mi_ptr->name);
     }
     // else do nothing
 
@@ -653,7 +660,7 @@ member_stub(lua_State* const L)
     lua_pushlightuserdata(L, instance);
     lua_pushcclosure(L, default_getter<C>, 1);
 
-    lua_setfield(L, -2, "__index");
+    rawsetfield(L, -2, "__index");
   }
   // else do nothing
 
@@ -663,7 +670,7 @@ member_stub(lua_State* const L)
     lua_pushlightuserdata(L, instance);
     lua_pushcclosure(L, default_setter<C>, 1);
 
-    lua_setfield(L, -2, "__newindex");
+    rawsetfield(L, -2, "__newindex");
   }
   // else do nothing
 
@@ -707,7 +714,7 @@ member_stub(lua_State* const L)
 
   assert(lua_istable(L, -1));
   lua_pushstring(L, cmi_ptr->class_name);
-  lua_setfield(L, -2, "__instanceof");
+  rawsetfield(L, -2, "__instanceof");
 
   detail::member_info_type* mi_ptr(*cmi_ptr->firstdef);
 
@@ -720,7 +727,7 @@ member_stub(lua_State* const L)
       lua_pushlightuserdata(L, instance);
       lua_pushcclosure(L, mi_ptr->func, 1);
 
-      lua_setfield(L, -2, mi_ptr->name);
+      rawsetfield(L, -2, mi_ptr->name);
     }
     // else do nothing
 
@@ -739,7 +746,7 @@ member_stub(lua_State* const L)
       lua_pushlightuserdata(L, instance);
       lua_pushcclosure(L, mi_ptr->func, 1);
 
-      lua_setfield(L, -2, mi_ptr->name);
+      rawsetfield(L, -2, mi_ptr->name);
 
       mi_ptr = mi_ptr->next;
     }
@@ -752,13 +759,13 @@ member_stub(lua_State* const L)
   lua_pushlightuserdata(L, instance);
   lua_pushcclosure(L, default_getter<C>, 1);
 
-  lua_setfield(L, -2, "__index");
+  rawsetfield(L, -2, "__index");
 
   assert(lua_istable(L, -1));
   lua_pushlightuserdata(L, instance);
   lua_pushcclosure(L, default_setter<C>, 1);
 
-  lua_setfield(L, -2, "__newindex");
+  rawsetfield(L, -2, "__newindex");
 
   assert(lua_istable(L, -1));
   return 1;
@@ -802,7 +809,7 @@ public:
         assert(lua_istable(L, -1));
 
         lua_pushinteger(L, i.second);
-        lua_setfield(L, -2, i.first);
+        detail::rawsetfield(L, -2, i.first);
       }
 
       for (auto const& i: functions_)
@@ -810,7 +817,7 @@ public:
         assert(lua_istable(L, -1));
 
         lua_pushcfunction(L, i.second);
-        lua_setfield(L, -2, i.first);
+        detail::rawsetfield(L, -2, i.first);
       }
 
       lua_pop(L, 1);
@@ -907,7 +914,7 @@ protected:
         if (lua_gettop(L) && lua_istable(L, -1))
         {
           lua_createtable(L, 0, 1);
-          lua_setfield(L, -2, name_);
+          detail::rawsetfield(L, -2, name_);
         }
         else
         {
@@ -1002,7 +1009,7 @@ public:
       assert(lua_istable(L_, -1));
 
       lua_pushcfunction(L_, (detail::func_stub<&fmi, 1, R, A...>));
-      lua_setfield(L_, -2, name);
+      detail::rawsetfield(L_, -2, name);
 
       lua_pop(L_, 1);
     }
@@ -1022,7 +1029,7 @@ public:
       assert(lua_istable(L_, -1));
 
       lua_pushinteger(L_, value);
-      lua_setfield(L_, -2, name);
+      detail::rawsetfield(L_, -2, name);
 
       lua_pop(L_, 1);
     }
@@ -1063,11 +1070,11 @@ public:
       assert(lua_istable(L, -1));
 
       lua_pushcfunction(L, i.second);
-      lua_setfield(L, -2, i.first);
+      detail::rawsetfield(L, -2, i.first);
     }
 
     lua_pushstring(L, name_);
-    lua_setfield(L, -2, "__classname");
+    detail::rawsetfield(L, -2, "__classname");
 
     lua_pop(L, 1);
 
