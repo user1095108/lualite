@@ -64,7 +64,8 @@ class class_;
 namespace detail
 {
 
-void rawsetfield(lua_State* const L, int const index, char const* const key)
+inline void rawsetfield(lua_State* const L, int const index,
+  char const* const key)
 {
   lua_pushstring(L, key);
   lua_insert(L, -2);
