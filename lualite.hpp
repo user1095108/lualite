@@ -368,9 +368,9 @@ int default_getter(lua_State* const L)
 {
   assert(2 == lua_gettop(L));
 
-  auto i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
+  auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
-  if (i == lualite::class_<C>::getters_.end())
+  if (i == lualite::class_<C>::getters_.cend())
   {
     return 0;
   }
@@ -385,9 +385,9 @@ int default_setter(lua_State* const L)
 {
   assert(3 == lua_gettop(L));
 
-  auto i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
+  auto const i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
 
-  if (i != lualite::class_<C>::setters_.end())
+  if (i != lualite::class_<C>::setters_.cend())
   {
     (i->second)(L);
   }
