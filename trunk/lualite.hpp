@@ -396,7 +396,6 @@ int default_setter(lua_State* const L)
   return 0;
 }
 
-
 template <class C>
 int default_finalizer(lua_State* const L)
 {
