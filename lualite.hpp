@@ -438,10 +438,6 @@ inline int constructor_stub(lua_State* const L)
   // metatable
   lua_createtable(L, 0, 1);
 
-  bool has_gc(false);
-  bool has_index(false);
-  bool has_newindex(false);
-
   mi_ptr = *cmi_ptr->firstmetadef;
 
   while (mi_ptr)
@@ -453,28 +449,10 @@ inline int constructor_stub(lua_State* const L)
   
     lua_setfield(L, -2, mi_ptr->name);
 
-    if (!has_gc)
-    {
-      has_gc = !std::strcmp("__gc", mi_ptr->name);
-    }
-    // else do nothing
-
-    if (!has_index)
-    {
-      has_index = !std::strcmp("__index", mi_ptr->name);
-    }
-    // else do nothing
-
-    if (!has_newindex)
-    {
-      has_newindex = !std::strcmp("__newindex", mi_ptr->name);
-    }
-    // else do nothing
-
     mi_ptr = mi_ptr->next;
   }
 
-  if (!has_gc)
+  if (!lualite::class_<C>::has_gc)
   {
     assert(lua_istable(L, -1));
 
@@ -485,7 +463,7 @@ inline int constructor_stub(lua_State* const L)
   }
   // else do nothing
 
-  if (!has_index)
+  if (!lualite::class_<C>::has_index)
   {
     assert(lua_istable(L, -1));
     lua_pushlightuserdata(L, instance);
@@ -495,7 +473,7 @@ inline int constructor_stub(lua_State* const L)
   }
   // else do nothing
 
-  if (!has_newindex)
+  if (!lualite::class_<C>::has_newindex)
   {
     assert(lua_istable(L, -1));
     lua_pushlightuserdata(L, instance);
@@ -651,9 +629,6 @@ member_stub(lua_State* const L)
   // metatable
   lua_createtable(L, 0, 1);
 
-  bool has_index(false);
-  bool has_newindex(false);
-
   mi_ptr = *cmi_ptr->firstmetadef;
 
   while (mi_ptr)
@@ -669,22 +644,10 @@ member_stub(lua_State* const L)
     }
     // else do nothing
 
-    if (!has_index)
-    {
-      has_index = !std::strcmp("__index", mi_ptr->name);
-    }
-    // else do nothing
-
-    if (!has_newindex)
-    {
-      has_newindex = !std::strcmp("__newindex", mi_ptr->name);
-    }
-    // else do nothing
-
     mi_ptr = mi_ptr->next;
   }
 
-  if (!has_index)
+  if (!lualite::class_<C>::has_index)
   {
     assert(lua_istable(L, -1));
     lua_pushlightuserdata(L, instance);
@@ -694,7 +657,7 @@ member_stub(lua_State* const L)
   }
   // else do nothing
 
-  if (!has_newindex)
+  if (!lualite::class_<C>::has_newindex)
   {
     assert(lua_istable(L, -1));
     lua_pushlightuserdata(L, instance);
@@ -1230,6 +1193,24 @@ public:
   template <class R, class ...A>
   class_& metadef(char const* const name, R (C::*ptr_to_member)(A...) const)
   {
+    if (!has_gc)
+    {
+      has_gc = !std::strcmp("__gc", name);
+    }
+    // else do nothing
+
+    if (!has_index)
+    {
+      has_index = !std::strcmp("__index", name);
+    }
+    // else do nothing
+
+    if (!has_newindex)
+    {
+      has_newindex = !std::strcmp("__newindex", name);
+    }
+    // else do nothing
+
     const_member_function(firstmetadef_, lastmetadef_, name, ptr_to_member);
     return *this;
   }
@@ -1307,6 +1288,11 @@ public:
     return *this;
   }
 
+public:
+  static bool has_gc;
+  static bool has_index;
+  static bool has_newindex;
+
 private:
   detail::func_info_type constructors_;
 
@@ -1322,6 +1308,15 @@ public:
   static std::unordered_map<char const*, lua_CFunction,
     detail::unordered_hash, detail::unordered_eq> setters_;
 };
+
+template <class C>
+bool class_<C>::has_gc;
+
+template <class C>
+bool class_<C>::has_index;
+
+template <class C>
+bool class_<C>::has_newindex;
 
 template <class C>
 detail::member_info_type* class_<C>::firstdef_;
