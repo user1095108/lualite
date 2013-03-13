@@ -1193,23 +1193,11 @@ public:
   template <class R, class ...A>
   class_& metadef(char const* const name, R (C::*ptr_to_member)(A...) const)
   {
-    if (!has_gc)
-    {
-      has_gc = !std::strcmp("__gc", name);
-    }
-    // else do nothing
+    has_gc = has_gc || !std::strcmp("__gc", name);
 
-    if (!has_index)
-    {
-      has_index = !std::strcmp("__index", name);
-    }
-    // else do nothing
+    has_index = has_index || !std::strcmp("__index", name);
 
-    if (!has_newindex)
-    {
-      has_newindex = !std::strcmp("__newindex", name);
-    }
-    // else do nothing
+    has_newindex = has_newindex || !std::strcmp("__newindex", name);
 
     const_member_function(firstmetadef_, lastmetadef_, name, ptr_to_member);
     return *this;
