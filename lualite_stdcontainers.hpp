@@ -29,6 +29,10 @@
 #ifndef LUALITE_STDCONTAINERS_HPP
 # define LUALITE_STDCONTAINERS_HPP
 
+#if __cplusplus < 201103L
+# error "You need a C++11 compiler to use lualite"
+#endif // __cplusplus
+
 #include <cassert>
 
 #include <array>
