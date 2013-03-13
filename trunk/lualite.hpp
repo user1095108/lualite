@@ -1288,12 +1288,24 @@ public:
     return *this;
   }
 
-public:
+private:
+  template <detail::class_meta_info const* cmi_ptr, std::size_t O, class C_, class ...A>
+  friend int detail::constructor_stub(lua_State* const);
+
+  template <detail::member_meta_info const* mmi, std::size_t O, class C_, class R, class ...A>
+  typename std::enable_if<
+    std::is_pointer<R>::value
+    && std::is_class<
+      typename std::remove_const<
+        typename std::remove_pointer<R>::type
+      >::type
+    >::value, int>::type
+  friend detail::member_stub(lua_State* const);
+
   static bool has_gc;
   static bool has_index;
   static bool has_newindex;
 
-private:
   static detail::func_info_type constructors_;
 
   static detail::member_info_type* firstdef_;
