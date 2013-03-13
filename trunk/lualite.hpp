@@ -1294,7 +1294,7 @@ public:
   static bool has_newindex;
 
 private:
-  detail::func_info_type constructors_;
+  static detail::func_info_type constructors_;
 
   static detail::member_info_type* firstdef_;
   detail::member_info_type* lastdef_;
@@ -1317,6 +1317,9 @@ bool class_<C>::has_index;
 
 template <class C>
 bool class_<C>::has_newindex;
+
+template <class C>
+detail::func_info_type class_<C>::constructors_;
 
 template <class C>
 detail::member_info_type* class_<C>::firstdef_;
