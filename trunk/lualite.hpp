@@ -72,6 +72,15 @@ inline void rawsetfield(lua_State* const L, int const index,
   lua_rawset(L, index >= 0 ? index : index - 1);
 }
 
+inline void rawgetfield(lua_State* const L, int const index,
+  char const* const key)
+{
+  lua_pushstring(L, key);
+  lua_insert(L, -2);
+  lua_rawget(L, index >= 0 ? index : index - 1);
+}
+
+
 struct unordered_eq
 {
   bool operator()(char const* const s1, char const* const s2) const
@@ -355,14 +364,7 @@ int default_getter(lua_State* const L)
 
   auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
-  if (i == lualite::class_<C>::getters_.cend())
-  {
-    return 0;
-  }
-  else
-  {
-    return (i->second)(L);
-  }
+  return i == lualite::class_<C>::getters_.cend() ? 0 : (i->second)(L);
 }
 
 template <class C>
@@ -377,7 +379,6 @@ int default_setter(lua_State* const L)
     (i->second)(L);
   }
   // else do nothing
-
   return 0;
 }
 
@@ -406,7 +407,7 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  detail::member_info_type* mi_ptr(lualite::class_<C>::firstdef_);
+  auto mi_ptr(lualite::class_<C>::firstdef_);
 
   while (mi_ptr)
   {
@@ -593,7 +594,7 @@ member_stub(lua_State* const L)
         static_cast<void const*>(mmi_ptr)),
     indices_type())));
 
-  detail::member_info_type* mi_ptr(class_<C>::firstdef_);
+  auto mi_ptr(class_<C>::firstdef_);
 
   while (mi_ptr)
   {
@@ -683,7 +684,7 @@ member_stub(lua_State* const L)
         static_cast<void const*>(mmi_ptr)),
     indices_type())));
 
-  detail::member_info_type* mi_ptr(class_<C>::firstdef_);
+  auto mi_ptr(class_<C>::firstdef_);
 
   while (mi_ptr)
   {
