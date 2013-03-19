@@ -393,8 +393,8 @@ int default_setter(lua_State* const L)
 
   char const* const key(lua_tostring(L, 2));
 
-  typename decltype(lualite::class_<C>::getters_)::const_iterator i(
-    lualite::class_<C>::getters_.find(key));
+  typename decltype(lualite::class_<C>::setters_)::const_iterator i(
+    lualite::class_<C>::setters_.find(key));
 
   if (i == lualite::class_<C>::setters_.cend())
   {
@@ -606,7 +606,10 @@ typename std::enable_if<
   >::type
 member_stub(lua_State* const L)
 {
-//std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << std::endl;
+//std::cout << lua_gettop(L)
+//  << " " << sizeof...(A)
+//  << " " << O
+//  << " " << sizeof...(A) + O - 1 << std::endl;
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
 
   typedef R (C::*ptr_to_member_type)(A...);
@@ -803,8 +806,6 @@ member_stub(lua_State* const L)
     rawsetfield(L, -2, mi.name);
   }
 
-  lua_setmetatable(L, -2);
-
   assert(lua_istable(L, -1));
   lua_pushlightuserdata(L, instance);
   lua_pushcclosure(L, default_getter<C>, 1);
@@ -816,6 +817,8 @@ member_stub(lua_State* const L)
   lua_pushcclosure(L, default_setter<C>, 1);
 
   rawsetfield(L, -2, "__newindex");
+
+  lua_setmetatable(L, -2);
 
   assert(lua_istable(L, -1));
   return 1;
@@ -1141,10 +1144,10 @@ public:
     typedef typename detail::make_indices<sizeof...(A)>::type indices_type;
 
     [](...){ }((
-      inherited_.inherited_defs.push_back(&A::defs_),
-      inherited_.inherited_metadefs.push_back(&A::metadefs_),
-      inherited_.inherited_getters.push_back(&A::getters_),
-      inherited_.inherited_setters.push_back(&A::setters_),
+      inherited_.inherited_defs.push_back(&class_<A>::defs_),
+      inherited_.inherited_metadefs.push_back(&class_<A>::metadefs_),
+      inherited_.inherited_getters.push_back(&class_<A>::getters_),
+      inherited_.inherited_setters.push_back(&class_<A>::setters_),
       0)...);
     return *this;
   }
@@ -1304,6 +1307,9 @@ public:
   }
 
 private:
+  template <class C_>
+  friend class class_;
+
   template <std::size_t O, class C_, class ...A>
   friend int detail::constructor_stub(lua_State* const);
 

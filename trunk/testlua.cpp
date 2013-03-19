@@ -60,7 +60,15 @@ point testfunc(int i)
   return point{-1, -222};
 }
 
-struct testclass
+struct testbase
+{
+  std::string dummy()
+  {
+    return "dummy() called";
+  }
+};
+
+struct testclass : testbase
 {
   testclass()
     : a_(777)
@@ -93,6 +101,7 @@ struct testclass
 
   void set_a(int i)
   {
+    std::cout << "setter called" << std::endl;
     a_ = i;
   }
 
@@ -117,8 +126,11 @@ int main(int argc, char* argv[])
   luaL_openlibs(L);
 
   lualite::module(L,
+    lualite::class_<testbase>("testbase")
+      .def("dummy", &testbase::dummy),
     lualite::class_<testclass>("testclass")
       .constructor<int>()
+      .inherits<testbase>()
       .enum_("smell", 9)
       .def("print", (void (testclass::*)(int))&testclass::print)
       .def("print_", (std::vector<std::string> (testclass::*)() const)&testclass::print)
@@ -148,7 +160,7 @@ int main(int argc, char* argv[])
     "print(\"---\")\n"
     "print(b.a)\n"
     "b:reference().a = 888\n"
-    "print(b.a)\n"
+    "print(b.a .. \" \" .. b:dummy())\n"
     "b:pointer():print(100)\n"
     "b:reference():print_()\n"
     "local a = subscope.testclass.new(1111)\n"
