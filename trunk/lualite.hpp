@@ -405,7 +405,7 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_)
+  for (auto const i: lualite::class_<C>::inherited_defs_)
   {
     for (auto const& mi: *i)
     {
@@ -600,7 +600,7 @@ member_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_)
+  for (auto const i: lualite::class_<C>::inherited_defs_)
   {
     for (auto const& mi: *i)
     {
@@ -698,7 +698,7 @@ member_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_)
+  for (auto const i: lualite::class_<C>::inherited_defs_)
   {
     for (auto const& mi: *i)
     {
@@ -1075,7 +1075,7 @@ public:
   {
     typedef typename detail::make_indices<sizeof...(A)>::type indices_type;
 
-    [](...){ }((inherited_.push_back(A::defs_))...);
+    [](...){ }((inherited_defs_.push_back(A::defs_))...);
     return *this;
   }
 
@@ -1271,7 +1271,8 @@ private:
 
   static detail::func_info_type constructors_;
 
-  static std::vector<std::vector<detail::member_info_type> const*> inherited_;
+  static std::vector<
+    std::vector<detail::member_info_type> const*> inherited_defs_;
 
   static std::vector<detail::member_info_type> defs_;
 
@@ -1296,7 +1297,8 @@ template <class C>
 detail::func_info_type class_<C>::constructors_;
 
 template <class C>
-std::vector<std::vector<detail::member_info_type> const*> class_<C>::inherited_;
+std::vector<
+  std::vector<detail::member_info_type> const*> class_<C>::inherited_defs_;
 
 template <class C>
 std::vector<detail::member_info_type> class_<C>::defs_;
