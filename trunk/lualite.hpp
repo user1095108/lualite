@@ -606,10 +606,7 @@ typename std::enable_if<
   >::type
 member_stub(lua_State* const L)
 {
-//std::cout << lua_gettop(L)
-//  << " " << sizeof...(A)
-//  << " " << O
-//  << " " << sizeof...(A) + O - 1 << std::endl;
+//std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << std::endl;
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
 
   typedef R (C::*ptr_to_member_type)(A...);
