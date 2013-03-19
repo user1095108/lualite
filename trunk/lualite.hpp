@@ -1070,6 +1070,15 @@ public:
     return *this;
   }
 
+  template <class ...A>
+  class_& inherits()
+  {
+    typedef typename detail::make_indices<sizeof...(A)>::type indices_type;
+
+    [](...){ }((inherited_.push_back(A::defs_))...);
+    return *this;
+  }
+
   template <class R, class ...A>
   class_& def(char const* const name, R (*ptr_to_func)(A...))
   {
