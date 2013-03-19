@@ -405,6 +405,19 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
+  for (auto const i: lualite::class_<C>::inherited_)
+  {
+    for (auto const& mi: *i)
+    {
+      assert(lua_istable(L, -1));
+
+      lua_pushlightuserdata(L, instance);
+      lua_pushcclosure(L, mi.func, 1);
+    
+      rawsetfield(L, -2, mi.name);
+    }
+  }
+
   for (auto const& mi: lualite::class_<C>::defs_)
   {
     assert(lua_istable(L, -1));
@@ -584,6 +597,22 @@ member_stub(lua_State* const L)
         static_cast<void const*>(mmi_ptr)),
     indices_type())));
 
+  // table
+  lua_createtable(L, 0, 1);
+
+  for (auto const i: lualite::class_<C>::inherited_)
+  {
+    for (auto const& mi: *i)
+    {
+      assert(lua_istable(L, -1));
+
+      lua_pushlightuserdata(L, instance);
+      lua_pushcclosure(L, mi.func, 1);
+    
+      rawsetfield(L, -2, mi.name);
+    }
+  }
+
   for (auto const& mi: lualite::class_<C>::defs_)
   {
     assert(lua_istable(L, -1));
@@ -665,6 +694,22 @@ member_stub(lua_State* const L)
       *static_cast<ptr_to_member_type const*>(
         static_cast<void const*>(mmi_ptr)),
     indices_type())));
+
+  // table
+  lua_createtable(L, 0, 1);
+
+  for (auto const i: lualite::class_<C>::inherited_)
+  {
+    for (auto const& mi: *i)
+    {
+      assert(lua_istable(L, -1));
+
+      lua_pushlightuserdata(L, instance);
+      lua_pushcclosure(L, mi.func, 1);
+    
+      rawsetfield(L, -2, mi.name);
+    }
+  }
 
   for (auto const& mi: lualite::class_<C>::defs_)
   {
@@ -1217,6 +1262,8 @@ private:
 
   static detail::func_info_type constructors_;
 
+  static std::vector<std::vector<detail::member_info_type> const*> inherited_;
+
   static std::vector<detail::member_info_type> defs_;
 
   static std::vector<detail::member_info_type> metadefs_;
@@ -1238,6 +1285,9 @@ bool class_<C>::has_newindex;
 
 template <class C>
 detail::func_info_type class_<C>::constructors_;
+
+template <class C>
+std::vector<std::vector<detail::member_info_type> const*> class_<C>::inherited_;
 
 template <class C>
 std::vector<detail::member_info_type> class_<C>::defs_;
