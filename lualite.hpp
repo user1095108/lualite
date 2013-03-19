@@ -360,9 +360,30 @@ int default_getter(lua_State* const L)
 {
   assert(2 == lua_gettop(L));
 
-  auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
+  char const* const key(lua_tostring(L, 2));
 
-  return i == lualite::class_<C>::getters_.cend() ? 0 : (i->second)(L);
+  typename decltype(lualite::class_<C>::getters_)::const_iterator i(
+    lualite::class_<C>::getters_.find(key));
+
+  if (i == lualite::class_<C>::getters_.cend())
+  {
+    for (auto const j: lualite::class_<C>::inherited_.inherited_getters)
+    {
+      i = j->find(key);
+
+      if (i != j->cend())
+      {
+        return (i->second)(L);
+      }
+      // else do nothing
+    }
+  }
+  else
+  {
+    return (i->second)(L);
+  }
+
+  return 0;
 }
 
 template <class C>
@@ -370,13 +391,31 @@ int default_setter(lua_State* const L)
 {
   assert(3 == lua_gettop(L));
 
-  auto const i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
+  char const* const key(lua_tostring(L, 2));
 
-  if (i != lualite::class_<C>::setters_.cend())
+  typename decltype(lualite::class_<C>::getters_)::const_iterator i(
+    lualite::class_<C>::getters_.find(key));
+
+  if (i == lualite::class_<C>::setters_.cend())
+  {
+    for (auto const j: lualite::class_<C>::inherited_.inherited_setters)
+    {
+      i = j->find(key);
+
+      if (i != j->cend())
+      {
+        (i->second)(L);
+
+        break;
+      }
+      // else do nothing
+    }
+  }
+  else
   {
     (i->second)(L);
   }
-  // else do nothing
+
   return 0;
 }
 
@@ -405,7 +444,7 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_defs_)
+  for (auto const i: lualite::class_<C>::inherited_.inherited_defs)
   {
     for (auto const& mi: *i)
     {
@@ -430,6 +469,19 @@ int constructor_stub(lua_State* const L)
 
   // metatable
   lua_createtable(L, 0, 1);
+
+  for (auto const i: lualite::class_<C>::inherited_.inherited_metadefs)
+  {
+    for (auto const& mi: *i)
+    {
+      assert(lua_istable(L, -1));
+
+      lua_pushlightuserdata(L, instance);
+      lua_pushcclosure(L, mi.func, 1);
+    
+      rawsetfield(L, -2, mi.name);
+    }
+  }
 
   for (auto const& mi: lualite::class_<C>::metadefs_)
   {
@@ -600,7 +652,7 @@ member_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_defs_)
+  for (auto const i: lualite::class_<C>::inherited_.inherited_defs)
   {
     for (auto const& mi: *i)
     {
@@ -627,6 +679,19 @@ member_stub(lua_State* const L)
 
   // metatable
   lua_createtable(L, 0, 1);
+
+  for (auto const i: lualite::class_<C>::inherited_.inherited_metadefs)
+  {
+    for (auto const& mi: *i)
+    {
+      assert(lua_istable(L, -1));
+
+      lua_pushlightuserdata(L, instance);
+      lua_pushcclosure(L, mi.func, 1);
+    
+      rawsetfield(L, -2, mi.name);
+    }
+  }
 
   for (auto const& mi: lualite::class_<C>::metadefs_)
   {
@@ -698,7 +763,7 @@ member_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_defs_)
+  for (auto const i: lualite::class_<C>::inherited_.inherited_defs)
   {
     for (auto const& mi: *i)
     {
@@ -1075,7 +1140,12 @@ public:
   {
     typedef typename detail::make_indices<sizeof...(A)>::type indices_type;
 
-    [](...){ }((inherited_defs_.push_back(A::defs_))...);
+    [](...){ }((
+      inherited_.inherited_defs.push_back(&A::defs_),
+      inherited_.inherited_metadefs.push_back(&A::metadefs_),
+      inherited_.inherited_getters.push_back(&A::getters_),
+      inherited_.inherited_setters.push_back(&A::setters_),
+      0)...);
     return *this;
   }
 
@@ -1271,9 +1341,6 @@ private:
 
   static detail::func_info_type constructors_;
 
-  static std::vector<
-    std::vector<detail::member_info_type> const*> inherited_defs_;
-
   static std::vector<detail::member_info_type> defs_;
 
   static std::vector<detail::member_info_type> metadefs_;
@@ -1282,6 +1349,21 @@ private:
     detail::unordered_hash, detail::unordered_eq> getters_;
   static std::unordered_map<char const*, lua_CFunction,
     detail::unordered_hash, detail::unordered_eq> setters_;
+
+  struct inherited_info
+  {
+    std::vector<
+      std::vector<detail::member_info_type> const*> inherited_defs;
+    std::vector<
+      std::vector<detail::member_info_type> const*> inherited_metadefs;
+
+    std::vector<std::unordered_map<char const*, lua_CFunction,
+      detail::unordered_hash, detail::unordered_eq> const*> inherited_getters;
+    std::vector<std::unordered_map<char const*, lua_CFunction,
+      detail::unordered_hash, detail::unordered_eq> const*> inherited_setters;
+  };
+
+  static struct inherited_info inherited_;
 };
 
 template <class C>
@@ -1297,8 +1379,7 @@ template <class C>
 detail::func_info_type class_<C>::constructors_;
 
 template <class C>
-std::vector<
-  std::vector<detail::member_info_type> const*> class_<C>::inherited_defs_;
+struct class_<C>::inherited_info class_<C>::inherited_;
 
 template <class C>
 std::vector<detail::member_info_type> class_<C>::defs_;
