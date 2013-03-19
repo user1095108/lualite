@@ -130,8 +130,6 @@ struct member_info_type
   char const* name;
 
   lua_CFunction func;
-
-  member_info_type* next;
 };
 
 typedef std::vector<std::pair<char const*, lua_CFunction> > func_info_type;
@@ -407,35 +405,27 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  auto mi_ptr(lualite::class_<C>::firstdef_);
-
-  while (mi_ptr)
+  for (auto const& mi: lualite::class_<C>::defs_)
   {
     assert(lua_istable(L, -1));
 
     lua_pushlightuserdata(L, instance);
-    lua_pushcclosure(L, mi_ptr->func, 1);
+    lua_pushcclosure(L, mi.func, 1);
   
-    rawsetfield(L, -2, mi_ptr->name);
-
-    mi_ptr = mi_ptr->next;
+    rawsetfield(L, -2, mi.name);
   }
 
   // metatable
   lua_createtable(L, 0, 1);
 
-  mi_ptr = lualite::class_<C>::firstmetadef_;
-
-  while (mi_ptr)
+  for (auto const& mi: lualite::class_<C>::metadefs_)
   {
     assert(lua_istable(L, -1));
 
     lua_pushlightuserdata(L, instance);
-    lua_pushcclosure(L, mi_ptr->func, 1);
+    lua_pushcclosure(L, mi.func, 1);
   
-    rawsetfield(L, -2, mi_ptr->name);
-
-    mi_ptr = mi_ptr->next;
+    rawsetfield(L, -2, mi.name);
   }
 
   if (!lualite::class_<C>::has_gc)
@@ -594,18 +584,14 @@ member_stub(lua_State* const L)
         static_cast<void const*>(mmi_ptr)),
     indices_type())));
 
-  auto mi_ptr(class_<C>::firstdef_);
-
-  while (mi_ptr)
+  for (auto const& mi: lualite::class_<C>::defs_)
   {
     assert(lua_istable(L, -1));
 
     lua_pushlightuserdata(L, instance);
-    lua_pushcclosure(L, mi_ptr->func, 1);
+    lua_pushcclosure(L, mi.func, 1);
 
-    rawsetfield(L, -2, mi_ptr->name);
-
-    mi_ptr = mi_ptr->next;
+    rawsetfield(L, -2, mi.name);
   }
 
   assert(lua_istable(L, -1));
@@ -613,22 +599,18 @@ member_stub(lua_State* const L)
   // metatable
   lua_createtable(L, 0, 1);
 
-  mi_ptr = class_<C>::firstmetadef_;
-
-  while (mi_ptr)
+  for (auto const& mi: lualite::class_<C>::metadefs_)
   {
     assert(lua_istable(L, -1));
 
-    if (std::strcmp("__gc", mi_ptr->name))
+    if (std::strcmp("__gc", mi.name))
     {
       lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi_ptr->func, 1);
+      lua_pushcclosure(L, mi.func, 1);
 
-      rawsetfield(L, -2, mi_ptr->name);
+      rawsetfield(L, -2, mi.name);
     }
     // else do nothing
-
-    mi_ptr = mi_ptr->next;
   }
 
   if (!lualite::class_<C>::has_index)
@@ -684,44 +666,34 @@ member_stub(lua_State* const L)
         static_cast<void const*>(mmi_ptr)),
     indices_type())));
 
-  auto mi_ptr(class_<C>::firstdef_);
-
-  while (mi_ptr)
+  for (auto const& mi: lualite::class_<C>::defs_)
   {
     assert(lua_istable(L, -1));
 
-    if (std::strcmp("__gc", mi_ptr->name))
+    if (std::strcmp("__gc", mi.name))
     {
       lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi_ptr->func, 1);
+      lua_pushcclosure(L, mi.func, 1);
 
-      rawsetfield(L, -2, mi_ptr->name);
+      rawsetfield(L, -2, mi.name);
     }
     // else do nothing
-
-    mi_ptr = mi_ptr->next;
   }
 
   // metatable
-  if ((mi_ptr = class_<C>::firstmetadef_))
+  lua_createtable(L, 0, 1);
+
+  for (auto const& mi: lualite::class_<C>::metadefs_)
   {
-    lua_createtable(L, 0, 1);
+    assert(lua_istable(L, -1));
 
-    while (mi_ptr)
-    {
-      assert(lua_istable(L, -1));
+    lua_pushlightuserdata(L, instance);
+    lua_pushcclosure(L, mi.func, 1);
 
-      lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi_ptr->func, 1);
-
-      rawsetfield(L, -2, mi_ptr->name);
-
-      mi_ptr = mi_ptr->next;
-    }
-
-    lua_setmetatable(L, -2);
+    rawsetfield(L, -2, mi.name);
   }
-  // else do nothing
+
+  lua_setmetatable(L, -2);
 
   assert(lua_istable(L, -1));
   lua_pushlightuserdata(L, instance);
@@ -1016,9 +988,7 @@ class class_ : public scope
 {
 public:
   class_(char const* const name)
-    : scope(name),
-      lastdef_(0),
-      lastmetadef_(0)
+    : scope(name)
   {
   }
   
@@ -1063,8 +1033,7 @@ public:
   }
 
   template <std::size_t O = 2, class R, class ...A>
-  void member_function(detail::member_info_type*& first,
-    detail::member_info_type*& last, char const* const name,
+  void member_function(char const* const name,
     R (C::*ptr_to_member)(A...))
   {
     static detail::member_func_type mmi;
@@ -1072,32 +1041,19 @@ public:
     static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
       "pointer size mismatch");
 
-    static detail::member_info_type mi{name,
-      detail::member_stub<&mmi, O, C, R, A...>,
-      0};
-
-    if (!mi.next)
+    if (std::memcmp(&mmi, &ptr_to_member, sizeof(ptr_to_member)))
     {
       *static_cast<decltype(ptr_to_member)*>(static_cast<void*>(&mmi))
         = ptr_to_member;
 
-      if (last)
-      {
-        last->next = &mi;
-      }
-      else
-      {
-        first = &mi;
-      }
+      defs_.emplace_back(detail::member_info_type{ name,
+        detail::member_stub<&mmi, O, C, R, A...> });
     }
     // else do nothing
-
-    last = &mi;
   }
 
   template <std::size_t O = 2, class R, class ...A>
-  void const_member_function(detail::member_info_type*& first,
-    detail::member_info_type*& last, char const* const name,
+  void const_member_function(char const* const name,
     R (C::*ptr_to_member)(A...) const)
   {
     static detail::member_func_type mmi;
@@ -1105,40 +1061,28 @@ public:
     static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
       "pointer size mismatch");
 
-    static detail::member_info_type mi{ name,
-      detail::member_stub<&mmi, O, C, R, A...>,
-      0 };
-
-    if (!mi.next)
+    if (std::memcmp(&mmi, &ptr_to_member, sizeof(ptr_to_member)))
     {
       *static_cast<decltype(ptr_to_member)*>(static_cast<void*>(&mmi))
         = ptr_to_member;
 
-      if (last)
-      {
-        last->next = &mi;
-      }
-      else
-      {
-        first = &mi;
-      }
+      defs_.emplace_back(detail::member_info_type{ name,
+        detail::member_stub<&mmi, O, C, R, A...> });
     }
     // else do nothing
-
-    last = &mi;
   }
 
   template <class R, class ...A>
   class_& def(char const* const name, R (C::*ptr_to_member)(A...))
   {
-    member_function(firstdef_, lastdef_, name, ptr_to_member);
+    member_function(name, ptr_to_member);
     return *this;
   }
 
   template <class R, class ...A>
   class_& def(char const* const name, R (C::*ptr_to_member)(A...) const)
   {
-    const_member_function(firstdef_, lastdef_, name, ptr_to_member);
+    const_member_function(name, ptr_to_member);
     return *this;
   }
 
@@ -1151,7 +1095,7 @@ public:
   template <class R, class ...A>
   class_& metadef(char const* const name, R (C::*ptr_to_member)(A...))
   {
-    member_function(firstmetadef_, lastmetadef_, name, ptr_to_member);
+    member_function(name, ptr_to_member);
     return *this;
   }
 
@@ -1164,7 +1108,7 @@ public:
 
     has_newindex = has_newindex || !std::strcmp("__newindex", name);
 
-    const_member_function(firstmetadef_, lastmetadef_, name, ptr_to_member);
+    const_member_function(name, ptr_to_member);
     return *this;
   }
 
@@ -1273,11 +1217,9 @@ private:
 
   static detail::func_info_type constructors_;
 
-  static detail::member_info_type* firstdef_;
-  detail::member_info_type* lastdef_;
+  static std::vector<detail::member_info_type> defs_;
 
-  static detail::member_info_type* firstmetadef_;
-  detail::member_info_type* lastmetadef_;
+  static std::vector<detail::member_info_type> metadefs_;
 
   static std::unordered_map<char const*, lua_CFunction,
     detail::unordered_hash, detail::unordered_eq> getters_;
@@ -1298,10 +1240,10 @@ template <class C>
 detail::func_info_type class_<C>::constructors_;
 
 template <class C>
-detail::member_info_type* class_<C>::firstdef_;
+std::vector<detail::member_info_type> class_<C>::defs_;
 
 template <class C>
-detail::member_info_type* class_<C>::firstmetadef_;
+std::vector<detail::member_info_type> class_<C>::metadefs_;
 
 template <class C>
 std::unordered_map<char const*, lua_CFunction,
