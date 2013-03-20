@@ -1102,8 +1102,6 @@ public:
   template <class ...A>
   class_& inherits()
   {
-    typedef typename detail::make_indices<sizeof...(A)>::type indices_type;
-
     [](...){ }((
       inherited_.inherited_defs.push_back(&class_<A>::defs_),
       inherited_.inherited_metadefs.push_back(&class_<A>::metadefs_),
