@@ -1096,6 +1096,7 @@ public:
   {
     constructors_.emplace_back(std::make_pair("new",
       detail::constructor_stub<1, C, A...>));
+
     return *this;
   }
 
@@ -1120,6 +1121,7 @@ public:
   class_& def(char const* const name, R (*ptr_to_func)(A...))
   {
     scope::def(name, ptr_to_func);
+
     return *this;
   }
 
@@ -1174,12 +1176,14 @@ public:
   class_& def(char const* const name, R (C::*ptr_to_member)(A...) const)
   {
     const_member_function(name, ptr_to_member);
+
     return *this;
   }
 
   class_& enum_(char const* const name, int value)
   {
     scope::enum_(name, value);
+
     return *this;
   }
 
@@ -1187,6 +1191,7 @@ public:
   class_& metadef(char const* const name, R (C::*ptr_to_member)(A...))
   {
     member_function(name, ptr_to_member);
+
     return *this;
   }
 
@@ -1200,6 +1205,7 @@ public:
     has_newindex = has_newindex || !std::strcmp("__newindex", name);
 
     const_member_function(name, ptr_to_member);
+
     return *this;
   }
 
@@ -1213,6 +1219,7 @@ public:
       = ptr_to_const_member;
 
     getters_.emplace(name, detail::member_stub<&mmi, 3, C, R, A...>);
+
     return *this;
   }
 
@@ -1226,6 +1233,7 @@ public:
       = ptr_to_member;
 
     getters_.emplace(name, detail::member_stub<&mmi, 3, C, R, A...>);
+
     return *this;
   }
 
@@ -1247,6 +1255,7 @@ public:
       = ptr_to_member;
 
     setters_.emplace(name, detail::member_stub<&mmib, 3, C, RB, B...>);
+
     return *this;
   }
 
@@ -1267,6 +1276,7 @@ public:
       = ptr_to_memberb;
 
     setters_.emplace(name, detail::member_stub<&mmib, 3, C, RB, B...>);
+
     return *this;
   }
 
