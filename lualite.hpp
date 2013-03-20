@@ -743,7 +743,7 @@ member_stub(lua_State* const L)
     }
   }
 
-  for (auto const& mi: as_const(lualite::class_<C>::defs_))
+  for (auto& mi: as_const(lualite::class_<C>::defs_))
   {
     assert(lua_istable(L, -1));
 
