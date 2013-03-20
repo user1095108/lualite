@@ -360,30 +360,10 @@ int default_getter(lua_State* const L)
 {
   assert(2 == lua_gettop(L));
 
-  char const* const key(lua_tostring(L, 2));
-
   typename decltype(lualite::class_<C>::getters_)::const_iterator i(
-    lualite::class_<C>::getters_.find(key));
+    lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
-  if (i == lualite::class_<C>::getters_.cend())
-  {
-    for (auto const j: lualite::class_<C>::inherited_.inherited_getters)
-    {
-      i = j->find(key);
-
-      if (i != j->cend())
-      {
-        return (i->second)(L);
-      }
-      // else do nothing
-    }
-  }
-  else
-  {
-    return (i->second)(L);
-  }
-
-  return 0;
+  return (lualite::class_<C>::getters_.cend() == i) ? 0 : (i->second)(L);
 }
 
 template <class C>
@@ -391,30 +371,14 @@ int default_setter(lua_State* const L)
 {
   assert(3 == lua_gettop(L));
 
-  char const* const key(lua_tostring(L, 2));
+  typename decltype(lualite::class_<C>::getters_)::const_iterator i(
+    lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
 
-  typename decltype(lualite::class_<C>::setters_)::const_iterator i(
-    lualite::class_<C>::setters_.find(key));
-
-  if (i == lualite::class_<C>::setters_.cend())
-  {
-    for (auto const j: lualite::class_<C>::inherited_.inherited_setters)
-    {
-      i = j->find(key);
-
-      if (i != j->cend())
-      {
-        (i->second)(L);
-
-        break;
-      }
-      // else do nothing
-    }
-  }
-  else
+  if (lualite::class_<C>::setters_.cend() != i)
   {
     (i->second)(L);
   }
+  // else do nothing
 
   return 0;
 }
@@ -1143,9 +1107,14 @@ public:
     [](...){ }((
       inherited_.inherited_defs.push_back(&class_<A>::defs_),
       inherited_.inherited_metadefs.push_back(&class_<A>::metadefs_),
-      inherited_.inherited_getters.push_back(&class_<A>::getters_),
-      inherited_.inherited_setters.push_back(&class_<A>::setters_),
       0)...);
+
+    [](decltype(getters_) const& g)
+    { for (auto const& a: g) getters_.insert(a); }(class_<A>::getters_...);
+
+    [](decltype(getters_) const& s)
+    { for (auto const& a: s) setters_.insert(a); }(class_<A>::setters_...);
+
     return *this;
   }
 
@@ -1359,11 +1328,6 @@ private:
       std::vector<detail::member_info_type> const*> inherited_defs;
     std::vector<
       std::vector<detail::member_info_type> const*> inherited_metadefs;
-
-    std::vector<std::unordered_map<char const*, lua_CFunction,
-      detail::unordered_hash, detail::unordered_eq> const*> inherited_getters;
-    std::vector<std::unordered_map<char const*, lua_CFunction,
-      detail::unordered_hash, detail::unordered_eq> const*> inherited_setters;
   };
 
   static struct inherited_info inherited_;
