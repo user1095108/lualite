@@ -405,14 +405,14 @@ int constructor_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  C* const instance(forward<O, C, A...>(L, indices_type()));
+  auto const instance(forward<O, C, A...>(L, indices_type()));
 
   // table
   lua_createtable(L, 0, 1);
 
   for (auto const i: as_const(lualite::class_<C>::inherited_.inherited_defs))
   {
-    for (auto& mi: *i)
+    for (auto& mi: as_const(*i))
     {
       assert(lua_istable(L, -1));
 
@@ -439,7 +439,7 @@ int constructor_stub(lua_State* const L)
   for (auto const i:
     as_const(lualite::class_<C>::inherited_.inherited_metadefs))
   {
-    for (auto& mi: *i)
+    for (auto& mi: as_const(*i))
     {
       assert(lua_istable(L, -1));
 
@@ -450,7 +450,7 @@ int constructor_stub(lua_State* const L)
     }
   }
 
-  for (auto const& mi: as_const(lualite::class_<C>::metadefs_))
+  for (auto& mi: as_const(lualite::class_<C>::metadefs_))
   {
     assert(lua_istable(L, -1));
 
@@ -610,7 +610,7 @@ member_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  T* const instance(const_cast<T*>(forward<O, C, R, A...>(L,
+  auto const instance(const_cast<T*>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
       *static_cast<ptr_to_member_type const*>(
         static_cast<void const*>(mmi_ptr)),
@@ -650,7 +650,7 @@ member_stub(lua_State* const L)
   for (auto const i:
     as_const(lualite::class_<C>::inherited_.inherited_metadefs))
   {
-    for (auto& mi: *i)
+    for (auto& mi: as_const(*i))
     {
       assert(lua_istable(L, -1));
 
@@ -722,7 +722,7 @@ member_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  T* const instance(&const_cast<T&>(forward<O, C, R, A...>(L,
+  auto const instance(&const_cast<T&>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
       *static_cast<ptr_to_member_type const*>(
         static_cast<void const*>(mmi_ptr)),
@@ -733,7 +733,7 @@ member_stub(lua_State* const L)
 
   for (auto const i: as_const(lualite::class_<C>::inherited_.inherited_defs))
   {
-    for (auto const& mi: *i)
+    for (auto& mi: as_const(*i))
     {
       assert(lua_istable(L, -1));
 
