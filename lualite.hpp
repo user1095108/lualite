@@ -362,7 +362,7 @@ int default_getter(lua_State* const L)
 {
   assert(2 == lua_gettop(L));
 
-  typename decltype(lualite::class_<C>::getters_)::const_iterator i(
+  auto const i(
     as_const(lualite::class_<C>::getters_).find(lua_tostring(L, 2)));
 
   return (lualite::class_<C>::getters_.cend() == i) ? 0 : (i->second)(L);
@@ -373,7 +373,7 @@ int default_setter(lua_State* const L)
 {
   assert(3 == lua_gettop(L));
 
-  typename decltype(lualite::class_<C>::getters_)::const_iterator i(
+  auto const i(
     as_const(lualite::class_<C>::setters_).find(lua_tostring(L, 2)));
 
   if (lualite::class_<C>::setters_.cend() != i)
