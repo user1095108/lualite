@@ -64,6 +64,8 @@ class class_;
 namespace detail
 {
 
+template<typename T> inline T const& as_const(T& t) { return t; }
+
 inline void rawsetfield(lua_State* const L, int const index,
   char const* const key)
 {
@@ -408,7 +410,7 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_.inherited_defs)
+  for (auto const i: as_const(lualite::class_<C>::inherited_.inherited_defs))
   {
     for (auto& mi: *i)
     {
@@ -421,7 +423,7 @@ int constructor_stub(lua_State* const L)
     }
   }
 
-  for (auto const& mi: lualite::class_<C>::defs_)
+  for (auto& mi: as_const(lualite::class_<C>::defs_))
   {
     assert(lua_istable(L, -1));
 
@@ -434,7 +436,8 @@ int constructor_stub(lua_State* const L)
   // metatable
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_.inherited_metadefs)
+  for (auto const i:
+    as_const(lualite::class_<C>::inherited_.inherited_metadefs))
   {
     for (auto& mi: *i)
     {
@@ -447,7 +450,7 @@ int constructor_stub(lua_State* const L)
     }
   }
 
-  for (auto const& mi: lualite::class_<C>::metadefs_)
+  for (auto const& mi: as_const(lualite::class_<C>::metadefs_))
   {
     assert(lua_istable(L, -1));
 
@@ -616,9 +619,9 @@ member_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_.inherited_defs)
+  for (auto const i: as_const(lualite::class_<C>::inherited_.inherited_defs))
   {
-    for (auto const& mi: *i)
+    for (auto& mi: *i)
     {
       assert(lua_istable(L, -1));
 
@@ -629,7 +632,7 @@ member_stub(lua_State* const L)
     }
   }
 
-  for (auto const& mi: lualite::class_<C>::defs_)
+  for (auto& mi: as_const(lualite::class_<C>::defs_))
   {
     assert(lua_istable(L, -1));
 
@@ -644,9 +647,10 @@ member_stub(lua_State* const L)
   // metatable
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_.inherited_metadefs)
+  for (auto const i:
+    as_const(lualite::class_<C>::inherited_.inherited_metadefs))
   {
-    for (auto const& mi: *i)
+    for (auto& mi: *i)
     {
       assert(lua_istable(L, -1));
 
@@ -657,7 +661,7 @@ member_stub(lua_State* const L)
     }
   }
 
-  for (auto const& mi: lualite::class_<C>::metadefs_)
+  for (auto& mi: as_const(lualite::class_<C>::metadefs_))
   {
     assert(lua_istable(L, -1));
 
@@ -727,7 +731,7 @@ member_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_.inherited_defs)
+  for (auto const i: as_const(lualite::class_<C>::inherited_.inherited_defs))
   {
     for (auto const& mi: *i)
     {
@@ -740,7 +744,7 @@ member_stub(lua_State* const L)
     }
   }
 
-  for (auto const& mi: lualite::class_<C>::defs_)
+  for (auto const& mi: as_const(lualite::class_<C>::defs_))
   {
     assert(lua_istable(L, -1));
 
@@ -757,7 +761,7 @@ member_stub(lua_State* const L)
   // metatable
   lua_createtable(L, 0, 1);
 
-  for (auto const& mi: lualite::class_<C>::metadefs_)
+  for (auto& mi: as_const(lualite::class_<C>::metadefs_))
   {
     assert(lua_istable(L, -1));
 
@@ -818,7 +822,7 @@ public:
 
       assert(lua_istable(L, -1));
 
-      for (auto const& i: enums_)
+      for (auto& i: detail::as_const(enums_))
       {
         assert(lua_istable(L, -1));
 
@@ -826,7 +830,7 @@ public:
         detail::rawsetfield(L, -2, i.first);
       }
 
-      for (auto const& i: functions_)
+      for (auto& i: detail::as_const(functions_))
       {
         assert(lua_istable(L, -1));
 
@@ -838,13 +842,13 @@ public:
     }
     else
     {
-      for (auto const& i: enums_)
+      for (auto& i: detail::as_const(enums_))
       {
         lua_pushinteger(L, i.second);
         lua_setglobal(L, i.first);
       }
 
-      for (auto const& i: functions_)
+      for (auto& i: detail::as_const(functions_))
       {
         lua_pushcfunction(L, i.second);
         lua_setglobal(L, i.first);
@@ -1075,7 +1079,7 @@ public:
     scope::get_scope(L);
     assert(lua_istable(L, -1));
 
-    for (auto const& i: constructors_)
+    for (auto& i: detail::as_const(constructors_))
     {
       assert(lua_istable(L, -1));
 
