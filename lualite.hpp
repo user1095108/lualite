@@ -1112,7 +1112,7 @@ public:
     [](decltype(getters_) const& g)
     { for (auto const& a: g) getters_.insert(a); }(class_<A>::getters_...);
 
-    [](decltype(getters_) const& s)
+    [](decltype(setters_) const& s)
     { for (auto const& a: s) setters_.insert(a); }(class_<A>::setters_...);
 
     return *this;
