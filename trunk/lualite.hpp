@@ -84,7 +84,7 @@ inline void rawgetfield(lua_State* const L, int const index,
 
 struct unordered_eq
 {
-  bool operator()(char const* const s1, char const* const s2) const
+  inline bool operator()(char const* const s1, char const* const s2) const
   {
     return !std::strcmp(s1, s2);
   }
@@ -92,7 +92,7 @@ struct unordered_eq
 
 struct unordered_hash
 {
-  std::size_t operator()(char const* s) const
+  inline std::size_t operator()(char const* s) const
   {
     std::size_t h(0);
 
@@ -795,24 +795,47 @@ class scope
 public:
   scope(char const* const name)
   : name_(name),
+    scope_create_(true),
     parent_scope_(0),
-    next_(0),
-    scope_create_(true)
+    next_(0)
   {
   }
 
   template <typename ...A>
   scope(char const* const name, A&&... args)
   : name_(name),
+    scope_create_(true),
     parent_scope_(0),
-    next_(0),
-    scope_create_(true)
+    next_(0)
   {
     [](...){ }((args.set_parent_scope(this), 0)...);
   }
 
   scope(scope const&) = delete;
 
+  template <class R, class ...A>
+  scope& def(char const* const name, R (*ptr_to_func)(A...))
+  {
+    static detail::func_type fmi;
+
+    static_assert(sizeof(ptr_to_func) <= sizeof(fmi),
+      "pointer size mismatch");
+
+    *static_cast<decltype(ptr_to_func)*>(static_cast<void*>(&fmi))
+      = ptr_to_func;
+
+    functions_.emplace_back(
+      std::make_pair(name, detail::func_stub<&fmi, 1, R, A...>));
+    return *this;
+  }
+
+  scope& enum_(char const* const name, int value)
+  {
+    enums_.emplace_back(std::make_pair(name, value));
+    return *this;
+  }
+
+protected:
   virtual void apply(lua_State* const L)
   {
     if (parent_scope_)
@@ -892,29 +915,6 @@ public:
     parent_scope->set_apply_instance(this);
   }
 
-  template <class R, class ...A>
-  scope& def(char const* const name, R (*ptr_to_func)(A...))
-  {
-    static detail::func_type fmi;
-
-    static_assert(sizeof(ptr_to_func) <= sizeof(fmi),
-      "pointer size mismatch");
-
-    *static_cast<decltype(ptr_to_func)*>(static_cast<void*>(&fmi))
-      = ptr_to_func;
-
-    functions_.emplace_back(
-      std::make_pair(name, detail::func_stub<&fmi, 1, R, A...>));
-    return *this;
-  }
-
-  scope& enum_(char const* const name, int value)
-  {
-    enums_.emplace_back(std::make_pair(name, value));
-    return *this;
-  }
-
-protected:
   void get_scope(lua_State* const L)
   {
     if (parent_scope_)
@@ -972,16 +972,18 @@ protected:
 protected:
   char const* const name_;
 
-  scope* parent_scope_;
-
-  scope* next_;
-
 private:
+  friend class module;
+
   bool scope_create_;
 
   detail::enum_info_type enums_;
 
   detail::func_info_type functions_;
+
+  scope* parent_scope_;
+
+  scope* next_;
 };
 
 class module : public scope
