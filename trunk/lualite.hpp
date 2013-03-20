@@ -82,7 +82,6 @@ inline void rawgetfield(lua_State* const L, int const index,
   lua_rawget(L, index >= 0 ? index : index - 1);
 }
 
-
 struct unordered_eq
 {
   bool operator()(char const* const s1, char const* const s2) const
@@ -627,7 +626,7 @@ member_stub(lua_State* const L)
 
       lua_pushlightuserdata(L, instance);
       lua_pushcclosure(L, mi.func, 1);
-    
+
       rawsetfield(L, -2, mi.name);
     }
   }
