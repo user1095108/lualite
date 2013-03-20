@@ -1070,31 +1070,6 @@ public:
     : scope(name)
   {
   }
-  
-  void apply(lua_State* const L)
-  {
-    assert(parent_scope_);
-
-    scope::apply(L);
-
-    scope::get_scope(L);
-    assert(lua_istable(L, -1));
-
-    for (auto& i: detail::as_const(constructors_))
-    {
-      assert(lua_istable(L, -1));
-
-      lua_pushcfunction(L, i.second);
-      detail::rawsetfield(L, -2, i.first);
-    }
-
-    lua_pushstring(L, name_);
-    detail::rawsetfield(L, -2, "__classname");
-
-    lua_pop(L, 1);
-
-    assert(!lua_gettop(L));
-  }
 
   template <class ...A>
   class_& constructor()
@@ -1273,6 +1248,32 @@ public:
 
     setters_.emplace(name, detail::member_stub<&mmib, 3, C, RB, B...>);
     return *this;
+  }
+
+private:
+  void apply(lua_State* const L)
+  {
+    assert(parent_scope_);
+
+    scope::apply(L);
+
+    scope::get_scope(L);
+    assert(lua_istable(L, -1));
+
+    for (auto& i: detail::as_const(constructors_))
+    {
+      assert(lua_istable(L, -1));
+
+      lua_pushcfunction(L, i.second);
+      detail::rawsetfield(L, -2, i.first);
+    }
+
+    lua_pushstring(L, name_);
+    detail::rawsetfield(L, -2, "__classname");
+
+    lua_pop(L, 1);
+
+    assert(!lua_gettop(L));
   }
 
 private:
