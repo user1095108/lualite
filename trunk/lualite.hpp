@@ -513,10 +513,10 @@ template <member_func_type const* mmi_ptr, std::size_t O, class C, class R,
   class ...A>
 typename std::enable_if<
   std::is_pointer<R>::value
-  && std::is_class<lualite::class_<
+  && std::is_class<
     typename std::remove_const<
       typename std::remove_pointer<R>::type
-    >::type>
+    >::type
   >::value, int>::type
 member_stub(lua_State* const L)
 {
@@ -629,10 +629,10 @@ template <member_func_type const* mmi_ptr, std::size_t O, class C, class R,
   class ...A>
 typename std::enable_if<
   std::is_reference<R>::value
-  && std::is_class<class_<
+  && std::is_class<
     typename std::remove_const<
       typename std::remove_reference<R>::type
-    >::type>
+    >::type
   >::value, int>::type
 member_stub(lua_State* const L)
 {
@@ -1217,10 +1217,10 @@ private:
     class R, class ...A>
   typename std::enable_if<
     std::is_pointer<R>::value
-    && std::is_class<class_<
+    && std::is_class<
       typename std::remove_const<
         typename std::remove_pointer<R>::type
-      >::type>
+      >::type
     >::value, int>::type
   friend detail::member_stub(lua_State*);
 
@@ -1228,10 +1228,10 @@ private:
     class R, class ...A>
   typename std::enable_if<
     std::is_reference<R>::value
-    && std::is_class<class_<
+    && std::is_class<
       typename std::remove_const<
         typename std::remove_reference<R>::type
-      >::type>
+      >::type
     >::value, int>::type
   friend detail::member_stub(lua_State*);
 
