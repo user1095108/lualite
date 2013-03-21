@@ -311,28 +311,6 @@ inline void set_result(lua_State* const L, T && v,
 template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
-    std::is_pointer<T>::value
-    && std::is_class<typename std::remove_pointer<T>::type>::value
-    && !std::is_const<typename std::remove_pointer<T>::type>::value
-  >::type* = 0)
-{
-  create_wrapper_table(L, v);
-}
-
-template <typename T>
-inline void set_result(lua_State* const L, T && v,
-  typename std::enable_if<
-    std::is_reference<T>::value
-    && std::is_class<typename std::remove_reference<T>::type>::value
-    && !std::is_const<typename std::remove_reference<T>::type>::value
-  >::type* = 0)
-{
-  create_wrapper_table(L, &v);
-}
-
-template <typename T>
-inline void set_result(lua_State* const L, T && v,
-  typename std::enable_if<
     std::is_same<typename std::remove_reference<T>::type, char const*>::value
     && !is_nonconst_reference<T>::value
   >::type* = 0)
@@ -343,25 +321,53 @@ inline void set_result(lua_State* const L, T && v,
 template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
-    std::is_pointer<T>::value
-    && !std::is_class<typename std::remove_pointer<T>::type>::value
-    && !std::is_same<T, char const*>::value
+    std::is_same<typename std::remove_reference<T>::type, void const*>::value
+    && !is_nonconst_reference<T>::value
   >::type* = 0)
 {
-  lua_pushlightuserdata(L, const_cast<
-    typename std::remove_const<
-      typename std::remove_pointer<T>::type>
-    ::type*>(v));
+  lua_pushlightuserdata(L, const_cast<void*>(v));
 }
 
 template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
-    !std::is_class<typename std::remove_reference<T>::type>::value
-    && is_nonconst_reference<T>::value
+    std::is_pointer<T>::value
+    && !std::is_const<typename std::remove_pointer<T>::type>::value
+    && !std::is_class<typename std::remove_pointer<T>::type>::value
+  >::type* = 0)
+{
+  lua_pushlightuserdata(L, v);
+}
+
+template <typename T>
+inline void set_result(lua_State* const L, T && v,
+  typename std::enable_if<
+    is_nonconst_reference<T>::value
+    && !std::is_class<typename std::remove_reference<T>::type>::value
   >::type* = 0)
 {
   lua_pushlightuserdata(L, &v);
+}
+
+template <typename T>
+inline void set_result(lua_State* const L, T && v,
+  typename std::enable_if<
+    std::is_pointer<T>::value
+    && !std::is_const<typename std::remove_pointer<T>::type>::value
+    && std::is_class<typename std::remove_pointer<T>::type>::value
+  >::type* = 0)
+{
+  create_wrapper_table(L, v);
+}
+
+template <typename T>
+inline void set_result(lua_State* const L, T && v,
+  typename std::enable_if<
+    is_nonconst_reference<T>::value
+    && std::is_class<typename std::remove_reference<T>::type>::value
+  >::type* = 0)
+{
+  create_wrapper_table(L, &v);
 }
 
 template <int I, typename T>
