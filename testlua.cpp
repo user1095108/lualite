@@ -97,6 +97,7 @@ struct testclass : testbase
 
   int a() const
   {
+    std::cout << "getter called" << std::endl;
     return a_;
   }
 
@@ -164,6 +165,7 @@ int main(int argc, char* argv[])
     "print(testclass.__classname)\n"
     "print(testclass.smell)\n"
     "local b = testclass.new(1000)\n"
+    "print(b)\n"
     "print(\"---\")\n"
     "print(b.a)\n"
     "b:reference().a = 888\n"

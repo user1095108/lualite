@@ -146,94 +146,130 @@ typedef std::aligned_storage<sizeof(&dummy)>::type func_type;
 
 typedef std::aligned_storage<sizeof(&dummy_::dummy)>::type member_func_type;
 
-template <typename R>
-inline void set_result(lua_State* const L, typename std::enable_if<
-  std::is_floating_point<R>::value, R>::type const v)
+inline void set_result(lua_State* const L,
+  long double const value)
 {
-  lua_pushnumber(L, v);
+  lua_pushnumber(L, value);
 }
 
-template <typename R>
-inline void set_result(lua_State* const L, typename std::enable_if<
-  std::is_integral<R>::value && std::is_signed<R>::value, R>::type const v)
+inline void set_result(lua_State* const L,
+  double const value)
 {
-  lua_pushinteger(L, v);
+  lua_pushnumber(L, value);
 }
 
-template <typename R>
-inline void set_result(lua_State* const L, typename std::enable_if<
-  std::is_integral<R>::value && std::is_unsigned<R>::value, R>::type const v)
+inline void set_result(lua_State* const L,
+  float const value)
 {
-  lua_pushunsigned(L, v);
+  lua_pushnumber(L, value);
 }
 
-inline void set_result(lua_State* const L, bool const v)
+inline void set_result(lua_State* const L,
+  long long const value)
 {
-  lua_pushboolean(L, v);
+  lua_pushinteger(L, value);
 }
 
-inline void set_result(lua_State* const L, char const* const v)
+inline void set_result(lua_State* const L,
+  unsigned long long const value)
 {
-  lua_pushstring(L, v);
+  lua_pushunsigned(L, value);
 }
 
-template <typename R>
-inline void set_result(lua_State* const L, R* const v)
+inline void set_result(lua_State* const L,
+  long const value)
 {
-  lua_pushlightuserdata(L, v);
+  lua_pushinteger(L, value);
 }
 
-template <typename R>
-inline void set_result(lua_State* const L, R const* const v)
+inline void set_result(lua_State* const L,
+  unsigned long const value)
 {
-  lua_pushlightuserdata(L, const_cast<R*>(v));
+  lua_pushunsigned(L, value);
 }
 
-template <typename R>
-inline void set_result(lua_State* const L, R& v)
+inline void set_result(lua_State* const L,
+  int const value)
 {
-  lua_pushlightuserdata(L, &v);
+  lua_pushinteger(L, value);
 }
 
-template <typename R>
-inline void set_result(lua_State* const L, R const& v)
+inline void set_result(lua_State* const L,
+  unsigned int const value)
 {
-  lua_pushlightuserdata(L, &const_cast<R&>(v));
+  lua_pushunsigned(L, value);
 }
 
-template <int I, typename T,
-  typename C = typename std::remove_reference<T>::type>
-inline typename std::enable_if<std::is_floating_point<C>::value, C>::type
+inline void set_result(lua_State* const L,
+  signed char const value)
+{
+  lua_pushinteger(L, value);
+}
+
+inline void set_result(lua_State* const L,
+  unsigned char const value)
+{
+  lua_pushunsigned(L, value);
+}
+
+inline void set_result(lua_State* const L,
+  char const value)
+{
+  lua_pushinteger(L, value);
+}
+
+inline void set_result(lua_State* const L,
+  bool const value)
+{
+  lua_pushboolean(L, value);
+}
+
+inline void set_result(lua_State* const L,
+  char const* const value)
+{
+  lua_pushstring(L, value);
+}
+
+inline void set_result(lua_State* const L,
+  void* const value)
+{
+  lua_pushlightuserdata(L, value);
+}
+
+inline void set_result(lua_State* const L,
+  void const* const value)
+{
+  lua_pushlightuserdata(L, const_cast<void*>(value));
+}
+
+template <int I, typename T>
+inline typename std::enable_if<std::is_floating_point<T>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
   return lua_tonumber(L, I);
 }
 
-template <int I, typename T,
-  typename C = typename std::remove_reference<T>::type>
+template <int I, typename T>
 inline typename std::enable_if<
-  std::is_integral<C>::value && std::is_signed<C>::value, T>::type
+  std::is_integral<T>::value && std::is_signed<T>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
   return lua_tointeger(L, I);
 }
 
-template <int I, typename T,
-  typename C = typename std::remove_reference<T>::type>
+template <int I, typename T>
 inline typename std::enable_if<
-  std::is_integral<C>::value && std::is_unsigned<C>::value, C>::type
+  std::is_integral<T>::value && std::is_unsigned<T>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
   return lua_tounsigned(L, I);
 }
 
-template <int I, typename T,
-  typename C = typename std::remove_const<
-    typename std::remove_reference<T>::type>::type>
-inline typename std::enable_if<std::is_same<C, bool>::value, T>::type
+template <int I, typename T>
+inline typename std::enable_if<std::is_same<bool, T>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isboolean(L, I));
@@ -241,7 +277,7 @@ get_arg(lua_State* const L)
 }
 
 template <int I, typename T>
-inline typename std::enable_if<std::is_same<T, char const*>::value, T>::type
+inline typename std::enable_if<std::is_same<char const*, T>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isstring(L, I));
@@ -250,7 +286,7 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename std::enable_if<
-  std::is_pointer<T>::value && !std::is_same<T, char const*>::value, T>::type
+  std::is_pointer<T>::value && !std::is_same<char const*, T>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_islightuserdata(L, I));
@@ -716,8 +752,8 @@ class scope
 public:
   scope(char const* const name)
   : name_(name),
-    scope_create_(true),
     parent_scope_(0),
+    scope_create_(true),
     next_(0)
   {
   }
@@ -725,8 +761,8 @@ public:
   template <typename ...A>
   scope(char const* const name, A&&... args)
   : name_(name),
-    scope_create_(true),
     parent_scope_(0),
+    scope_create_(true),
     next_(0)
   {
     [](...){ }((args.set_parent_scope(this), 0)...);
@@ -893,6 +929,8 @@ protected:
 protected:
   char const* const name_;
 
+  scope* parent_scope_;
+
 private:
   friend class module;
 
@@ -901,8 +939,6 @@ private:
   detail::enum_info_type enums_;
 
   detail::func_info_type functions_;
-
-  scope* parent_scope_;
 
   scope* next_;
 };
