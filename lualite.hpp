@@ -64,6 +64,11 @@ class class_;
 namespace detail
 {
 
+template <typename T>
+struct is_nonconst_reference : std::integral_constant<bool,
+  std::is_reference<T>::value
+  && !std::is_const<typename std::remove_reference<T>::type>::value> {};
+
 template<typename T> inline T const& as_const(T& t) { return t; }
 
 inline void rawgetfield(lua_State* const L, int const index,
@@ -146,70 +151,216 @@ typedef std::aligned_storage<sizeof(&dummy)>::type func_type;
 
 typedef std::aligned_storage<sizeof(&dummy_::dummy)>::type member_func_type;
 
+template <class C>
+int default_getter(lua_State* const L)
+{
+  assert(2 == lua_gettop(L));
+
+  auto const i(
+    as_const(lualite::class_<C>::getters_).find(lua_tostring(L, 2)));
+  return (lualite::class_<C>::getters_.cend() == i) ? 0 : (i->second)(L);
+}
+
+template <class C>
+int default_setter(lua_State* const L)
+{
+  assert(3 == lua_gettop(L));
+
+  auto const i(
+    as_const(lualite::class_<C>::setters_).find(lua_tostring(L, 2)));
+
+  if (lualite::class_<C>::setters_.cend() != i)
+  {
+    (i->second)(L);
+  }
+  // else do nothing
+  return 0;
+}
+
+template <class D>
+inline void create_wrapper_table(lua_State* const L, D* instance)
+{
+  lua_createtable(L, 0, 1);
+
+  for (auto const i: as_const(lualite::class_<D>::inherited_.inherited_defs))
+  {
+    for (auto& mi: *i)
+    {
+      assert(lua_istable(L, -1));
+
+      lua_pushlightuserdata(L, instance);
+      lua_pushcclosure(L, mi.func, 1);
+
+      rawsetfield(L, -2, mi.name);
+    }
+  }
+
+  for (auto& mi: as_const(lualite::class_<D>::defs_))
+  {
+    assert(lua_istable(L, -1));
+
+    lua_pushlightuserdata(L, instance);
+    lua_pushcclosure(L, mi.func, 1);
+
+    rawsetfield(L, -2, mi.name);
+  }
+
+  // instance
+  lua_pushlightuserdata(L, instance);
+  rawsetfield(L, -2, "__instance");
+
+  // metatable
+  assert(lua_istable(L, -1));
+  lua_createtable(L, 0, 1);
+
+  for (auto const i:
+    as_const(lualite::class_<D>::inherited_.inherited_metadefs))
+  {
+    for (auto& mi: as_const(*i))
+    {
+      assert(lua_istable(L, -1));
+
+      lua_pushlightuserdata(L, instance);
+      lua_pushcclosure(L, mi.func, 1);
+
+      rawsetfield(L, -2, mi.name);
+    }
+  }
+
+  for (auto& mi: as_const(lualite::class_<D>::metadefs_))
+  {
+    assert(lua_istable(L, -1));
+
+    if (std::strcmp("__gc", mi.name))
+    {
+      lua_pushlightuserdata(L, instance);
+      lua_pushcclosure(L, mi.func, 1);
+
+      rawsetfield(L, -2, mi.name);
+    }
+    // else do nothing
+  }
+
+  if (!lualite::class_<D>::has_index)
+  {
+    assert(lua_istable(L, -1));
+    lua_pushlightuserdata(L, instance);
+    lua_pushcclosure(L, default_getter<D>, 1);
+
+    rawsetfield(L, -2, "__index");
+  }
+  // else do nothing
+
+  if (!lualite::class_<D>::has_newindex)
+  {
+    assert(lua_istable(L, -1));
+    lua_pushlightuserdata(L, instance);
+    lua_pushcclosure(L, default_setter<D>, 1);
+
+    rawsetfield(L, -2, "__newindex");
+  }
+  // else do nothing
+
+  lua_setmetatable(L, -2);
+
+  assert(lua_istable(L, -1));
+}
+
 template <typename T>
 inline void set_result(lua_State* const L, T const v,
-  typename std::enable_if<std::is_floating_point<T>::value, T>::type* = 0)
-{
-  lua_pushnumber(L, v);
-}
-
-inline void set_result(lua_State* const L, int v)
-{
-  lua_pushnumber(L, v);
-}
-
-template <typename T>
-inline void set_result(lua_State* const L, T const& v,
-  typename std::enable_if<std::is_floating_point<T>::value, T>::type* = 0)
+  typename std::enable_if<
+    std::is_floating_point<typename std::remove_reference<T>::type>::value
+    && !is_nonconst_reference<T>::value
+  >::type* = 0)
 {
   lua_pushnumber(L, v);
 }
 
 template <typename T>
-inline void set_result(lua_State* const L, T const v,
-  typename std::enable_if<std::is_integral<T>::value
-    && std::is_signed<T>::value, T>::type* = 0)
+inline void set_result(lua_State* const L, T && v,
+  typename std::enable_if<
+    std::is_integral<typename std::remove_reference<T>::type>::value
+    && std::is_signed<typename std::remove_reference<T>::type>::value
+    && !is_nonconst_reference<T>::value
+  >::type* = 0)
 {
   lua_pushinteger(L, v);
 }
 
-
 template <typename T>
-inline void set_result(lua_State* const L, T const v,
-  typename std::enable_if<std::is_integral<T>::value
-    && !std::is_signed<T>::value, T>::type* = 0)
+inline void set_result(lua_State* const L, T && v,
+  typename std::enable_if<
+    std::is_integral<typename std::remove_reference<T>::type>::value
+    && !std::is_signed<typename std::remove_reference<T>::type>::value
+    && !is_nonconst_reference<T>::value
+  >::type* = 0)
 {
   lua_pushunsigned(L, v);
 }
 
 template <typename T>
-inline void set_result(lua_State* const L, T const v,
-  typename std::enable_if<std::is_same<T, bool>::value>::type* = 0)
+inline void set_result(lua_State* const L, T && v,
+  typename std::enable_if<
+    std::is_same<typename std::remove_reference<T>::type, bool>::value
+    && !is_nonconst_reference<T>::value
+  >::type* = 0)
 {
   lua_pushboolean(L, v);
 }
 
-inline void set_result(lua_State* const L, char const* const v)
+template <typename T>
+inline void set_result(lua_State* const L, T && v,
+  typename std::enable_if<
+    std::is_pointer<T>::value
+    && std::is_class<typename std::remove_pointer<T>::type>::value
+    && !std::is_const<typename std::remove_pointer<T>::type>::value
+  >::type* = 0)
+{
+  create_wrapper_table(L, v);
+}
+
+template <typename T>
+inline void set_result(lua_State* const L, T && v,
+  typename std::enable_if<
+    std::is_reference<T>::value
+    && std::is_class<typename std::remove_reference<T>::type>::value
+    && !std::is_const<typename std::remove_reference<T>::type>::value
+  >::type* = 0)
+{
+  create_wrapper_table(L, &v);
+}
+
+template <typename T>
+inline void set_result(lua_State* const L, T&& v,
+  typename std::enable_if<
+    std::is_same<typename std::remove_reference<T>::type, char const*>::value
+    && !is_nonconst_reference<T>::value
+  >::type* = 0)
 {
   lua_pushstring(L, v);
 }
 
-inline void set_result(lua_State* const L, void* const v)
+template <typename T>
+inline void set_result(lua_State* const L, T && v,
+  typename std::enable_if<
+    !std::is_class<typename std::remove_pointer<T>::type>::value
+    && std::is_pointer<T>::value
+  >::type* = 0)
 {
-  lua_pushlightuserdata(L, v);
-}
-
-inline void set_result(lua_State* const L, void const* const v)
-{
-  lua_pushlightuserdata(L, const_cast<void*>(v));
+  lua_pushlightuserdata(L, const_cast<
+    typename std::remove_const<
+      typename std::remove_pointer<T>::type>
+    ::type*>(v));
 }
 
 template <typename T>
-inline void set_result(lua_State* const L, T v,
-  typename std::enable_if<std::is_reference<T>::value>::type* = 0)
+inline void set_result(lua_State* const L, T && v,
+  typename std::enable_if<
+    !std::is_class<typename std::remove_reference<T>::type>::value
+    && is_nonconst_reference<T>::value
+  >::type* = 0)
 {
-  lua_pushlightuserdata(L,
-    &const_cast<typename std::remove_const<T>::type>(v));
+  lua_pushlightuserdata(L, &v);
 }
 
 template <int I, typename T>
@@ -270,32 +421,6 @@ get_arg(lua_State* const L)
   assert(lua_islightuserdata(L, I));
   return *static_cast<typename std::remove_reference<T>::type*>(
     lua_touserdata(L, I));
-}
-
-template <class C>
-int default_getter(lua_State* const L)
-{
-  assert(2 == lua_gettop(L));
-
-  auto const i(
-    as_const(lualite::class_<C>::getters_).find(lua_tostring(L, 2)));
-  return (lualite::class_<C>::getters_.cend() == i) ? 0 : (i->second)(L);
-}
-
-template <class C>
-int default_setter(lua_State* const L)
-{
-  assert(3 == lua_gettop(L));
-
-  auto const i(
-    as_const(lualite::class_<C>::setters_).find(lua_tostring(L, 2)));
-
-  if (lualite::class_<C>::setters_.cend() != i)
-  {
-    (i->second)(L);
-  }
-  // else do nothing
-  return 0;
 }
 
 template <class C>
@@ -438,17 +563,7 @@ func_stub(lua_State* const L)
 }
 
 template <func_type const* fmi_ptr, std::size_t O, class R, class ...A>
-typename std::enable_if<
-  !(std::is_pointer<R>::value
-    && std::is_class<typename std::remove_pointer<R>::type>::value
-    && !std::is_const<typename std::remove_pointer<R>::type>::value)
-
-  && !(std::is_reference<R>::value
-    && std::is_class<typename std::remove_reference<R>::type>::value
-    && !std::is_const<typename std::remove_reference<R>::type>::value)
-
-  && std::is_void<decltype(set_result(0, std::declval<R>()))>::value,
-  int>::type
+typename std::enable_if<!std::is_void<R>::value, int>::type
 func_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
@@ -464,150 +579,6 @@ func_stub(lua_State* const L)
   return 1;
 }
 
-template <class C, class D>
-inline void create_wrapper_table(lua_State* const L, D* instance)
-{
-  lua_createtable(L, 0, 1);
-
-  for (auto const i: as_const(lualite::class_<C>::inherited_.inherited_defs))
-  {
-    for (auto& mi: *i)
-    {
-      assert(lua_istable(L, -1));
-
-      lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi.func, 1);
-
-      rawsetfield(L, -2, mi.name);
-    }
-  }
-
-  for (auto& mi: as_const(lualite::class_<C>::defs_))
-  {
-    assert(lua_istable(L, -1));
-
-    lua_pushlightuserdata(L, instance);
-    lua_pushcclosure(L, mi.func, 1);
-
-    rawsetfield(L, -2, mi.name);
-  }
-
-  // instance
-  lua_pushlightuserdata(L, instance);
-  rawsetfield(L, -2, "__instance");
-
-  // metatable
-  assert(lua_istable(L, -1));
-  lua_createtable(L, 0, 1);
-
-  for (auto const i:
-    as_const(lualite::class_<C>::inherited_.inherited_metadefs))
-  {
-    for (auto& mi: as_const(*i))
-    {
-      assert(lua_istable(L, -1));
-
-      lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi.func, 1);
-
-      rawsetfield(L, -2, mi.name);
-    }
-  }
-
-  for (auto& mi: as_const(lualite::class_<C>::metadefs_))
-  {
-    assert(lua_istable(L, -1));
-
-    if (std::strcmp("__gc", mi.name))
-    {
-      lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi.func, 1);
-
-      rawsetfield(L, -2, mi.name);
-    }
-    // else do nothing
-  }
-
-  if (!lualite::class_<C>::has_index)
-  {
-    assert(lua_istable(L, -1));
-    lua_pushlightuserdata(L, instance);
-    lua_pushcclosure(L, default_getter<C>, 1);
-
-    rawsetfield(L, -2, "__index");
-  }
-  // else do nothing
-
-  if (!lualite::class_<C>::has_newindex)
-  {
-    assert(lua_istable(L, -1));
-    lua_pushlightuserdata(L, instance);
-    lua_pushcclosure(L, default_setter<C>, 1);
-
-    rawsetfield(L, -2, "__newindex");
-  }
-  // else do nothing
-
-  lua_setmetatable(L, -2);
-
-  assert(lua_istable(L, -1));
-}
-
-template <func_type const* fmi_ptr, std::size_t O, class R, class ...A>
-typename std::enable_if<
-  std::is_pointer<R>::value
-  && std::is_class<typename std::remove_pointer<R>::type>::value
-  && !std::is_const<typename std::remove_pointer<R>::type>::value,
-  int>::type
-member_stub(lua_State* const L)
-{
-  assert(sizeof...(A) + O - 1 == lua_gettop(L));
-
-  typedef typename std::remove_const<
-    typename std::remove_pointer<R>::type
-  >::type T;
-
-  typedef R (*ptr_to_func_type)(A...);
-
-  typedef typename make_indices<sizeof...(A)>::type indices_type;
-
-  auto const instance(const_cast<T*>(forward<O, R, A...>(L,
-    *static_cast<ptr_to_func_type const*>(
-      static_cast<void const*>(fmi_ptr)),
-    indices_type())));
-
-  // table
-  create_wrapper_table<typename std::remove_pointer<R>::type>(L, instance);
-  return 1;
-}
-
-template <func_type const* fmi_ptr, std::size_t O, class R, class ...A>
-typename std::enable_if<
-  std::is_reference<R>::value
-  && std::is_class<typename std::remove_reference<R>::type>::value
-  && !std::is_const<typename std::remove_reference<R>::type>::value,
-  int>::type
-member_stub(lua_State* const L)
-{
-  assert(sizeof...(A) + O - 1 == lua_gettop(L));
-
-  typedef typename std::remove_const<
-    typename std::remove_reference<R>::type
-  >::type T;
-
-  typedef R (*ptr_to_func_type)(A...);
-
-  typedef typename make_indices<sizeof...(A)>::type indices_type;
-
-  auto const instance(const_cast<T*>(forward<O, R, A...>(L,
-    *static_cast<ptr_to_func_type const*>(
-      static_cast<void const*>(fmi_ptr)),
-    indices_type())));
-
-  // table
-  create_wrapper_table<typename std::remove_pointer<R>::type>(L, instance);
-  return 1;
-}
 
 template <std::size_t O, typename C, typename R,
   typename ...A, std::size_t ...I>
@@ -638,17 +609,7 @@ member_stub(lua_State* const L)
 
 template <member_func_type const* mmi_ptr, std::size_t O, class C, class R,
   class ...A>
-typename std::enable_if<
-  !(std::is_pointer<R>::value
-    && std::is_class<typename std::remove_pointer<R>::type>::value
-    && !std::is_const<typename std::remove_pointer<R>::type>::value)
-
-  && !(std::is_reference<R>::value
-    && std::is_class<typename std::remove_reference<R>::type>::value
-    && !std::is_const<typename std::remove_reference<R>::type>::value)
-
-  && std::is_void<decltype(set_result(0, std::declval<R>()))>::value,
-  int>::type
+typename std::enable_if<!std::is_void<R>::value, int>::type
 member_stub(lua_State* const L)
 {
 //std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << std::endl;
@@ -663,67 +624,6 @@ member_stub(lua_State* const L)
     *static_cast<ptr_to_member_type const*>(
       static_cast<void const*>(mmi_ptr)),
     indices_type()));
-  return 1;
-}
-
-template <member_func_type const* mmi_ptr, std::size_t O, class C, class R,
-  class ...A>
-typename std::enable_if<
-  std::is_pointer<R>::value
-  && std::is_class<typename std::remove_pointer<R>::type>::value
-  && !std::is_const<typename std::remove_pointer<R>::type>::value,
-  int>::type
-member_stub(lua_State* const L)
-{
-  assert(sizeof...(A) + O - 1 == lua_gettop(L));
-  assert(lua_istable(L, -1));
-
-  typedef typename std::remove_const<
-    typename std::remove_pointer<R>::type
-  >::type T;
-
-  typedef R (C::*ptr_to_member_type)(A...);
-
-  typedef typename make_indices<sizeof...(A)>::type indices_type;
-
-  auto const instance(const_cast<T*>(forward<O, C, R, A...>(L,
-    static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
-      *static_cast<ptr_to_member_type const*>(
-        static_cast<void const*>(mmi_ptr)),
-    indices_type())));
-
-  // table
-  create_wrapper_table<typename std::remove_pointer<R>::type>(L, instance);
-  return 1;
-}
-
-template <member_func_type const* mmi_ptr, std::size_t O, class C, class R,
-  class ...A>
-typename std::enable_if<
-  std::is_reference<R>::value
-  && std::is_class<typename std::remove_reference<R>::type>::value
-  && !std::is_const<typename std::remove_reference<R>::type>::value,
-  int>::type
-member_stub(lua_State* const L)
-{
-  assert(sizeof...(A) + O - 1 == lua_gettop(L));
-  assert(lua_istable(L, -1));
-
-  typedef typename std::remove_const<
-    typename std::remove_reference<R>::type >::type T;
-
-  typedef R (C::*ptr_to_member_type)(A...);
-
-  typedef typename make_indices<sizeof...(A)>::type indices_type;
-
-  auto const instance(&const_cast<T&>(forward<O, C, R, A...>(L,
-    static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
-      *static_cast<ptr_to_member_type const*>(
-        static_cast<void const*>(mmi_ptr)),
-    indices_type())));
-
-  // table
-  create_wrapper_table<typename std::remove_reference<R>::type>(L, instance);
   return 1;
 }
 
@@ -1219,8 +1119,8 @@ private:
   template <class C_>
   friend class class_;
 
-  template <class C_, class D>
-  friend void detail::create_wrapper_table(lua_State*, D*);
+  template <class C_>
+  friend void detail::create_wrapper_table(lua_State*, C_*);
 
   template <std::size_t O, class C_, class ...A>
   friend int detail::constructor_stub(lua_State* const);
