@@ -201,34 +201,39 @@ inline void set_result(lua_State* const L, R const& v)
   lua_pushlightuserdata(L, &const_cast<R&>(v));
 }
 
-template <int I, typename T>
-inline typename std::enable_if<std::is_floating_point<T>::value, T>::type
+template <int I, typename T,
+  typename C = typename std::remove_reference<T>::type>
+inline typename std::enable_if<std::is_floating_point<C>::value, C>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
   return lua_tonumber(L, I);
 }
 
-template <int I, typename T>
+template <int I, typename T,
+  typename C = typename std::remove_reference<T>::type>
 inline typename std::enable_if<
-  std::is_integral<T>::value && std::is_signed<T>::value, T>::type
+  std::is_integral<C>::value && std::is_signed<C>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
   return lua_tointeger(L, I);
 }
 
-template <int I, typename T>
+template <int I, typename T,
+  typename C = typename std::remove_reference<T>::type>
 inline typename std::enable_if<
-  std::is_integral<T>::value && std::is_unsigned<T>::value, T>::type
+  std::is_integral<C>::value && std::is_unsigned<C>::value, C>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
   return lua_tounsigned(L, I);
 }
 
-template <int I, typename T>
-inline typename std::enable_if<std::is_same<bool, T>::value, T>::type
+template <int I, typename T,
+  typename C = typename std::remove_const<
+    typename std::remove_reference<T>::type>::type>
+inline typename std::enable_if<std::is_same<C, bool>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isboolean(L, I));
@@ -236,7 +241,7 @@ get_arg(lua_State* const L)
 }
 
 template <int I, typename T>
-inline typename std::enable_if<std::is_same<char const*, T>::value, T>::type
+inline typename std::enable_if<std::is_same<T, char const*>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isstring(L, I));
@@ -245,7 +250,7 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename std::enable_if<
-  std::is_pointer<T>::value && !std::is_same<char const*, T>::value, T>::type
+  std::is_pointer<T>::value && !std::is_same<T, char const*>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_islightuserdata(L, I));
