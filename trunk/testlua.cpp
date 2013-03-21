@@ -24,12 +24,12 @@ inline void set_result(lua_State* const L,
   lua_createtable(L, 2, 0);
 
   lua_pushliteral(L, "x");
-  ::lualite::detail::set_result(L, p.x);
+  ::lualite::detail::set_result(L, const_cast<decltype(p.x) const&>(p.x));
   assert(lua_istable(L, -3));
   lua_rawset(L, -3);
 
   lua_pushliteral(L, "y");
-  ::lualite::detail::set_result(L, p.y);
+  ::lualite::detail::set_result(L, const_cast<decltype(p.y) const&>(p.y));
   assert(lua_istable(L, -3));
   lua_rawset(L, -3);
 }
@@ -95,7 +95,7 @@ struct testclass : testbase
     std::cout << i << std::endl;
   }
 
-  int& a()
+  int const& a()
   {
     std::cout << "getter called" << std::endl;
     return a_;
@@ -168,7 +168,6 @@ int main(int argc, char* argv[])
     "print(testclass.__classname)\n"
     "print(testclass.smell)\n"
     "local b = testclass.new(1000)\n"
-    "print(b)\n"
     "print(\"---\")\n"
     "print(b.a)\n"
     "b:reference().a = 888\n"
