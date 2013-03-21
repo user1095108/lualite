@@ -110,6 +110,7 @@ struct testclass : testbase
   std::string const& test_array(std::array<int, 10> const& a)
   {
     std::cout << a[0] << std::endl;
+    s_ = "blablabla";
     return s_;
   }
 
