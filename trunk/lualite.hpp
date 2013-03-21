@@ -146,94 +146,59 @@ typedef std::aligned_storage<sizeof(&dummy)>::type func_type;
 
 typedef std::aligned_storage<sizeof(&dummy_::dummy)>::type member_func_type;
 
-inline void set_result(lua_State* const L,
-  long double const value)
+template <typename R>
+inline void set_result(lua_State* const L, typename std::enable_if<
+  std::is_floating_point<R>::value, R>::type const v)
 {
-  lua_pushnumber(L, value);
+  lua_pushnumber(L, v);
 }
 
-inline void set_result(lua_State* const L,
-  double const value)
+template <typename R>
+inline void set_result(lua_State* const L, typename std::enable_if<
+  std::is_integral<R>::value && std::is_signed<R>::value, R>::type const v)
 {
-  lua_pushnumber(L, value);
+  lua_pushinteger(L, v);
 }
 
-inline void set_result(lua_State* const L,
-  float const value)
+template <typename R>
+inline void set_result(lua_State* const L, typename std::enable_if<
+  std::is_integral<R>::value && std::is_unsigned<R>::value, R>::type const v)
 {
-  lua_pushnumber(L, value);
+  lua_pushunsigned(L, v);
 }
 
-inline void set_result(lua_State* const L,
-  long long const value)
+inline void set_result(lua_State* const L, bool const v)
 {
-  lua_pushinteger(L, value);
+  lua_pushboolean(L, v);
 }
 
-inline void set_result(lua_State* const L,
-  unsigned long long const value)
+inline void set_result(lua_State* const L, char const* const v)
 {
-  lua_pushunsigned(L, value);
+  lua_pushstring(L, v);
 }
 
-inline void set_result(lua_State* const L,
-  long const value)
+template <typename R>
+inline void set_result(lua_State* const L, R* const v)
 {
-  lua_pushinteger(L, value);
+  lua_pushlightuserdata(L, v);
 }
 
-inline void set_result(lua_State* const L,
-  unsigned long const value)
+template <typename R>
+inline void set_result(lua_State* const L, R const* const v)
 {
-  lua_pushunsigned(L, value);
+  lua_pushlightuserdata(L, const_cast<R*>(v));
 }
 
-inline void set_result(lua_State* const L,
-  int const value)
+template <typename R>
+inline void set_result(lua_State* const L, R& v)
 {
-  lua_pushinteger(L, value);
+  lua_pushlightuserdata(L, &v);
 }
 
-inline void set_result(lua_State* const L,
-  unsigned int const value)
+template <typename R>
+inline void set_result(lua_State* const L, R const& v)
 {
-  lua_pushunsigned(L, value);
-}
-
-inline void set_result(lua_State* const L,
-  signed char const value)
-{
-  lua_pushinteger(L, value);
-}
-
-inline void set_result(lua_State* const L,
-  unsigned char const value)
-{
-  lua_pushunsigned(L, value);
-}
-
-inline void set_result(lua_State* const L,
-  char const value)
-{
-  lua_pushinteger(L, value);
-}
-
-inline void set_result(lua_State* const L,
-  bool const value)
-{
-  lua_pushboolean(L, value);
-}
-
-inline void set_result(lua_State* const L,
-  char const* const value)
-{
-  lua_pushstring(L, value);
-}
-
-inline void set_result(lua_State* const L,
-  void* const value)
-{
-  lua_pushlightuserdata(L, value);
+  lua_pushlightuserdata(L, &const_cast<R&>(v));
 }
 
 template <int I, typename T>
