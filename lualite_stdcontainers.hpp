@@ -187,9 +187,11 @@ inline void set_result(lua_State* const L,
   }
 }
 
-template <int I>
-inline std::string get_arg(lua_State* const L,
-  std::string &&)
+template <int I, class C>
+inline typename std::enable_if<
+  std::is_constructible<C, std::string>::value,
+    std::string>::type
+get_arg(lua_State* const L)
 {
   assert(lua_isstring(L, I));
 
@@ -199,9 +201,11 @@ inline std::string get_arg(lua_State* const L,
   return std::string(val, len);
 }
 
-template<int I, class T, std::size_t N>
-inline std::array<T, N> get_arg(lua_State* const L,
-  std::array<T, N> &&)
+template<int I, class C, class T, std::size_t N>
+inline typename std::enable_if<
+  std::is_constructible<C, std::array<T, N> >::value,
+    std::array<T, N> >::type
+get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -213,7 +217,7 @@ inline std::array<T, N> get_arg(lua_State* const L,
   {
     lua_rawgeti(L, I, i);
 
-    result[i - 1] = get_arg<I + 1>(L, T());
+    result[i - 1] = get_arg<I + 1, T>(L);
 
     lua_pop(L, 1);
   }
@@ -221,9 +225,11 @@ inline std::array<T, N> get_arg(lua_State* const L,
   return result;
 }
 
-template <int I, typename T, class Alloc>
-inline std::deque<T, Alloc> get_arg(lua_State* const L,
-  std::deque<T, Alloc> &&)
+template <int I, class C, typename T, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::deque<T, Alloc> >::value,
+    std::deque<T, Alloc> >::type
+get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -235,7 +241,7 @@ inline std::deque<T, Alloc> get_arg(lua_State* const L,
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_back(get_arg<I + 1>(L, T()));
+    result.emplace_back(get_arg<I + 1, T>(L));
 
     lua_pop(L, 1);
   }
@@ -243,9 +249,11 @@ inline std::deque<T, Alloc> get_arg(lua_State* const L,
   return result;
 }
 
-template <int I, typename T, class Alloc>
-inline std::forward_list<T, Alloc> get_arg(lua_State* const L,
-  std::forward_list<T, Alloc> &&)
+template <int I, class C, typename T, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::forward_list<T, Alloc> >::value,
+    std::forward_list<T, Alloc> >::type
+get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -257,7 +265,7 @@ inline std::forward_list<T, Alloc> get_arg(lua_State* const L,
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_front(get_arg<I + 1>(L, T()));
+    result.emplace_front(get_arg<I + 1, T>(L));
 
     lua_pop(L, 1);
   }
@@ -265,9 +273,11 @@ inline std::forward_list<T, Alloc> get_arg(lua_State* const L,
   return result;
 }
 
-template <int I, typename T, class Alloc>
-inline std::list<T, Alloc> get_arg(lua_State* const L,
-  std::list<T, Alloc> &&)
+template <int I, class C, typename T, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::list<T, Alloc> >::value,
+    std::list<T, Alloc> >::type
+get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -279,7 +289,7 @@ inline std::list<T, Alloc> get_arg(lua_State* const L,
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_back(get_arg<I + 1>(L, T()));
+    result.emplace_back(get_arg<I + 1, T>(L));
 
     lua_pop(L, 1);
   }
@@ -287,9 +297,11 @@ inline std::list<T, Alloc> get_arg(lua_State* const L,
   return result;
 }
 
-template <int I, typename T, class Alloc>
-inline std::vector<T, Alloc> get_arg(lua_State* const L,
-  std::vector<T, Alloc> &&)
+template <int I, class C, typename T, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::vector<T, Alloc> >::value,
+    std::vector<T, Alloc> >::type
+get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -301,17 +313,18 @@ inline std::vector<T, Alloc> get_arg(lua_State* const L,
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_back(get_arg<I + 1>(L, T()));
+    result.emplace_back(get_arg<I + 1, T>(L));
 
     lua_pop(L, 1);
   }
-
   return result;
 }
 
-template <int I, class Key, class T, class Compare, class Alloc>
-inline std::map<Key, T, Compare, Alloc> get_arg(lua_State* const L,
-  std::map<Key, T, Compare, Alloc> &&)
+template <int I, class C, class Key, class T, class Compare, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::map<Key, T, Compare, Alloc> >::value,
+    std::map<Key, T, Compare, Alloc> >::type
+get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -321,17 +334,18 @@ inline std::map<Key, T, Compare, Alloc> get_arg(lua_State* const L,
 
   while (lua_next(L, I))
   {
-    result.emplace(get_arg<I + 1>(L, Key()), get_arg<I + 2>(L, T()));
+    result.emplace(get_arg<I + 1, Key>(L), get_arg<I + 2, T>(L));
 
     lua_pop(L, 1);
   }
-
   return result;
 }
 
-template <int I, class Key, class T, class Hash, class Pred, class Alloc>
-inline std::unordered_map<Key, T, Hash, Pred, Alloc> get_arg(
-  lua_State* const L, std::unordered_map<Key, T, Hash, Pred, Alloc> &&)
+template <int I, class C, class Key, class T, class Hash, class Pred, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::unordered_map<Key, T, Hash, Pred, Alloc> >::value,
+    std::unordered_map<Key, T, Hash, Pred, Alloc> >::type
+get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -341,11 +355,10 @@ inline std::unordered_map<Key, T, Hash, Pred, Alloc> get_arg(
 
   while (lua_next(L, I))
   {
-    result.emplace(get_arg<I + 1>(L, Key()), get_arg<I + 2>(L, T()));
+    result.emplace(get_arg<I + 1, Key>(L), get_arg<I + 2, T>(L));
 
     lua_pop(L, 1);
   }
-
   return result;
 }
 

@@ -236,148 +236,64 @@ inline void set_result(lua_State* const L,
   lua_pushlightuserdata(L, value);
 }
 
-template <int I>
-inline long double get_arg(lua_State* const L,
-  long double const)
+template <int I, typename T>
+inline typename std::enable_if<std::is_floating_point<T>::value, T>::type
+get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
   return lua_tonumber(L, I);
 }
 
-template <int I>
-inline double get_arg(lua_State* const L,
-  double const)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tonumber(L, I);
-}
-
-template <int I>
-inline float get_arg(lua_State* const L,
-  float const)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tonumber(L, I);
-}
-
-template <int I>
-inline long long get_arg(lua_State* const L,
-  long long const)
+template <int I, typename T>
+inline typename std::enable_if<
+  std::is_integral<T>::value && std::is_signed<T>::value, T>::type
+get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
   return lua_tointeger(L, I);
 }
 
-template <int I>
-inline unsigned long long get_arg(lua_State* const L,
-  unsigned long long const)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tointeger(L, I);
-}
-
-template <int I>
-inline long get_arg(lua_State* const L,
-  long const)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tointeger(L, I);
-}
-
-template <int I>
-inline unsigned long get_arg(lua_State* const L,
-  unsigned long const)
+template <int I, typename T>
+inline typename std::enable_if<
+  std::is_integral<T>::value && std::is_unsigned<T>::value, T>::type
+get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
   return lua_tounsigned(L, I);
 }
 
-template <int I>
-inline int get_arg(lua_State* const L,
-  int const)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tointeger(L, I);
-}
-
-template <int I>
-inline unsigned int get_arg(lua_State* const L,
-  unsigned int const)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tounsigned(L, I);
-}
-
-template <int I>
-inline signed char get_arg(lua_State* const L,
-  signed char const)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tointeger(L, I);
-}
-
-template <int I>
-inline unsigned char get_arg(lua_State* const L,
-  unsigned char const)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tounsigned(L, I);
-}
-
-template <int I>
-inline char get_arg(lua_State* const L,
-  char const)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tointeger(L, I);
-}
-
-template <int I>
-inline bool get_arg(lua_State* const L,
-  bool const)
+template <int I, typename T>
+inline typename std::enable_if<std::is_same<bool, T>::value, T>::type
+get_arg(lua_State* const L)
 {
   assert(lua_isboolean(L, I));
   return lua_toboolean(L, I);
 }
 
-template <int I>
-inline char const* get_arg(lua_State* const L,
-  char const* const)
+template <int I, typename T>
+inline typename std::enable_if<std::is_same<char const*, T>::value, T>::type
+get_arg(lua_State* const L)
 {
   assert(lua_isstring(L, I));
   return lua_tostring(L, I);
 }
 
 template <int I, typename T>
-inline T* get_arg(lua_State* const L,
-  T* const)
+inline typename std::enable_if<
+  std::is_pointer<T>::value && !std::is_same<char const*, T>::value, T>::type
+get_arg(lua_State* const L)
 {
   assert(lua_islightuserdata(L, I));
-  return static_cast<T*>(lua_touserdata(L, I));
+  return static_cast<T>(lua_touserdata(L, I));
 }
 
 template <int I, typename T>
-inline T const* get_arg(lua_State* const L,
-  T const* const)
+inline typename std::enable_if<std::is_reference<T>::value, T>::type
+get_arg(lua_State* const L)
 {
   assert(lua_islightuserdata(L, I));
-  return static_cast<T const*>(lua_touserdata(L, I));
-}
-
-template <int I, typename T>
-inline T& get_arg(lua_State* const L,
-  T&)
-{
-  assert(lua_islightuserdata(L, I));
-  return *static_cast<T*>(lua_touserdata(L, I));
-}
-
-template <int I, typename T>
-inline T const& get_arg(lua_State* const L,
-  T const&)
-{
-  assert(lua_islightuserdata(L, I));
-  return *static_cast<T const*>(lua_touserdata(L, I));
+  return *static_cast<typename std::remove_reference<T>::type*>(
+    lua_touserdata(L, I));
 }
 
 template <class C>
@@ -416,7 +332,7 @@ int default_finalizer(lua_State* const L)
 template <std::size_t O, typename C, typename ...A, std::size_t ...I>
 inline C* forward(lua_State* const L, indices<I...>)
 {
-  return new C(get_arg<I + O>(L, A())...);
+  return new C(get_arg<I + O, A>(L)...);
 }
 
 template <std::size_t O, class C, class ...A>
@@ -525,7 +441,7 @@ int constructor_stub(lua_State* const L)
 template <std::size_t O, typename R, typename ...A, std::size_t ...I>
 inline R forward(lua_State* const L, R (*f)(A...), indices<I...>)
 {
-  return (*f)(get_arg<I + O>(L, A())...);
+  return (*f)(get_arg<I + O, A>(L)...);
 }
 
 template <func_type const* fmi_ptr, std::size_t O, class R, class ...A>
@@ -567,7 +483,7 @@ template <std::size_t O, typename C, typename R,
 inline R forward(lua_State* const L, C* c,
   R (C::*ptr_to_member)(A...), indices<I...>)
 {
-  return (c->*ptr_to_member)(get_arg<I + O>(L, A())...);
+  return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
 }
 
 template <member_func_type const* mmi_ptr, std::size_t O, class C, class R,
@@ -685,7 +601,7 @@ member_stub(lua_State* const L)
 
       lua_pushlightuserdata(L, instance);
       lua_pushcclosure(L, mi.func, 1);
-    
+
       rawsetfield(L, -2, mi.name);
     }
   }

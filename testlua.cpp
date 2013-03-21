@@ -34,9 +34,10 @@ inline void set_result(lua_State* const L,
   lua_rawset(L, -3);
 }
 
-template <std::size_t I>
-inline point get_arg(lua_State* const L,
-  point &&)
+template <std::size_t I, typename T>
+inline typename std::enable_if<
+  std::is_same<point const&, T>::value, point>::type
+get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -105,6 +106,11 @@ struct testclass : testbase
     a_ = i;
   }
 
+  void test_array(std::array<int, 10> const& a)
+  {
+    std::cout << a[0] << std::endl;
+  }
+
   testclass const* pointer()
   {
     return this;
@@ -136,6 +142,7 @@ int main(int argc, char* argv[])
       .def("print_", (std::vector<std::string> (testclass::*)() const)&testclass::print)
       .def("pointer", &testclass::pointer)
       .def("reference", &testclass::reference)
+      .def("test_array", &testclass::test_array)
       .property("a", &testclass::a, &testclass::set_a),
     lualite::scope("subscope",
       lualite::class_<testclass>("testclass")
