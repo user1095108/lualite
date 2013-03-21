@@ -331,7 +331,7 @@ inline void set_result(lua_State* const L, T && v,
 }
 
 template <typename T>
-inline void set_result(lua_State* const L, T&& v,
+inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
     std::is_same<typename std::remove_reference<T>::type, char const*>::value
     && !is_nonconst_reference<T>::value
@@ -343,8 +343,9 @@ inline void set_result(lua_State* const L, T&& v,
 template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
-    !std::is_class<typename std::remove_pointer<T>::type>::value
-    && std::is_pointer<T>::value
+    std::is_pointer<T>::value
+    && !std::is_class<typename std::remove_pointer<T>::type>::value
+    && !std::is_same<T, char const*>::value
   >::type* = 0)
 {
   lua_pushlightuserdata(L, const_cast<
