@@ -66,20 +66,20 @@ namespace detail
 
 template<typename T> inline T const& as_const(T& t) { return t; }
 
-inline void rawsetfield(lua_State* const L, int const index,
-  char const* const key)
-{
-  lua_pushstring(L, key);
-  lua_insert(L, -2);
-  lua_rawset(L, index >= 0 ? index : index - 1);
-}
-
 inline void rawgetfield(lua_State* const L, int const index,
   char const* const key)
 {
   lua_pushstring(L, key);
   lua_insert(L, -2);
   lua_rawget(L, index >= 0 ? index : index - 1);
+}
+
+inline void rawsetfield(lua_State* const L, int const index,
+  char const* const key)
+{
+  lua_pushstring(L, key);
+  lua_insert(L, -2);
+  lua_rawset(L, index >= 0 ? index : index - 1);
 }
 
 struct unordered_eq
