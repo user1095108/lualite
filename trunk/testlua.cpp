@@ -95,7 +95,7 @@ struct testclass : testbase
     std::cout << i << std::endl;
   }
 
-  int a() const
+  int a()
   {
     std::cout << "getter called" << std::endl;
     return a_;
@@ -143,8 +143,8 @@ int main(int argc, char* argv[])
       .def("print_", (std::vector<std::string> (testclass::*)() const)&testclass::print)
       .def("pointer", &testclass::pointer)
       .def("reference", &testclass::reference)
-      .def("test_array", &testclass::test_array)
-      .property("a", &testclass::a, &testclass::set_a),
+      .property("a", &testclass::a, &testclass::set_a)
+      .def("test_array", &testclass::test_array),
     lualite::scope("subscope",
       lualite::class_<testclass>("testclass")
         .constructor<int>()
