@@ -242,6 +242,20 @@ inline void set_result(lua_State* const L,
   lua_pushlightuserdata(L, const_cast<void*>(value));
 }
 
+template <typename T>
+inline void set_result(lua_State* const L,
+  T& value)
+{
+  lua_pushlightuserdata(L, &value);
+}
+
+template <typename T>
+inline void set_result(lua_State* const L,
+  T const& value)
+{
+  lua_pushlightuserdata(L, &const_cast<T&>(value));
+}
+
 template <int I, typename T>
 inline typename std::enable_if<std::is_floating_point<T>::value, T>::type
 get_arg(lua_State* const L)
