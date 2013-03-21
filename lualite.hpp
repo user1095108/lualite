@@ -226,7 +226,7 @@ get_arg(lua_State* const L)
 }
 
 template <int I, typename T>
-inline typename std::enable_if<std::is_same<bool, T>::value, T>::type
+inline typename std::enable_if<std::is_same<T, bool>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isboolean(L, I));
@@ -234,7 +234,7 @@ get_arg(lua_State* const L)
 }
 
 template <int I, typename T>
-inline typename std::enable_if<std::is_same<char const*, T>::value, T>::type
+inline typename std::enable_if<std::is_same<T, char const*>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isstring(L, I));
@@ -243,7 +243,7 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename std::enable_if<
-  std::is_pointer<T>::value && !std::is_same<char const*, T>::value, T>::type
+  std::is_pointer<T>::value && !std::is_same<T, char const*>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_islightuserdata(L, I));
