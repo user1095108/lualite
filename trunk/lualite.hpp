@@ -348,12 +348,36 @@ inline char const* get_arg(lua_State* const L,
   return lua_tostring(L, I);
 }
 
-template <int I>
-inline void* get_arg(lua_State* const L,
-  void* const)
+template <int I, typename T>
+inline T* get_arg(lua_State* const L,
+  T* const)
 {
   assert(lua_islightuserdata(L, I));
-  return lua_touserdata(L, I);
+  return static_cast<T*>(lua_touserdata(L, I));
+}
+
+template <int I, typename T>
+inline T const* get_arg(lua_State* const L,
+  T const* const)
+{
+  assert(lua_islightuserdata(L, I));
+  return static_cast<T const*>(lua_touserdata(L, I));
+}
+
+template <int I, typename T>
+inline T& get_arg(lua_State* const L,
+  T&)
+{
+  assert(lua_islightuserdata(L, I));
+  return *static_cast<T*>(lua_touserdata(L, I));
+}
+
+template <int I, typename T>
+inline T const& get_arg(lua_State* const L,
+  T const&)
+{
+  assert(lua_islightuserdata(L, I));
+  return *static_cast<T const*>(lua_touserdata(L, I));
 }
 
 template <class C>
@@ -430,7 +454,12 @@ int constructor_stub(lua_State* const L)
     rawsetfield(L, -2, mi.name);
   }
 
+  // instance
+  lua_pushlightuserdata(L, instance);
+  rawsetfield(L, -2, "__instance");
+
   // metatable
+  assert(lua_istable(L, -1));
   lua_createtable(L, 0, 1);
 
   for (auto const i:
@@ -639,9 +668,12 @@ member_stub(lua_State* const L)
     rawsetfield(L, -2, mi.name);
   }
 
-  assert(lua_istable(L, -1));
+  // instance
+  lua_pushlightuserdata(L, instance);
+  rawsetfield(L, -2, "__instance");
 
   // metatable
+  assert(lua_istable(L, -1));
   lua_createtable(L, 0, 1);
 
   for (auto const i:
@@ -755,7 +787,12 @@ member_stub(lua_State* const L)
     // else do nothing
   }
 
+  // instance
+  lua_pushlightuserdata(L, instance);
+  rawsetfield(L, -2, "__instance");
+
   // metatable
+  assert(lua_istable(L, -1));
   lua_createtable(L, 0, 1);
 
   for (auto& mi: as_const(lualite::class_<C>::metadefs_))
