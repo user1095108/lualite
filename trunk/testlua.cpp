@@ -95,7 +95,7 @@ struct testclass : testbase
     std::cout << i << std::endl;
   }
 
-  int a()
+  int& a()
   {
     std::cout << "getter called" << std::endl;
     return a_;
@@ -107,23 +107,25 @@ struct testclass : testbase
     a_ = i;
   }
 
-  void test_array(std::array<int, 10> const& a)
+  std::string const& test_array(std::array<int, 10> const& a)
   {
     std::cout << a[0] << std::endl;
+    return s_;
   }
 
-  testclass const* pointer()
+  testclass* pointer()
   {
     return this;
   }
 
-  testclass const& reference()
+  testclass& reference()
   {
     return *this;
   }
 
 private:
   int a_;
+  std::string s_;
 };
 
 int main(int argc, char* argv[])
