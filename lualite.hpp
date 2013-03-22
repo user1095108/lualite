@@ -581,7 +581,8 @@ get_arg(lua_State* const L)
 
 template <int I, class C>
 inline typename std::enable_if<
-  std::is_same<typename remove_cr<C>::type, std::string>::value,
+  std::is_same<typename remove_cr<C>::type, std::string>::value
+  && !is_nc_lvalue_reference<C>::value,
   std::string>::type
 get_arg(lua_State* const L)
 {
@@ -602,7 +603,8 @@ struct is_std_pair<std::pair<T1, T2> > : std::true_type {};
 
 template<int I, class C>
 inline typename std::enable_if<
-  is_std_pair<typename remove_cr<C>::type>::value,
+  is_std_pair<typename remove_cr<C>::type>::value
+  && !is_nc_lvalue_reference<C>::value,
   typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -630,7 +632,8 @@ struct is_std_array<std::array<T, N> > : std::true_type {};
 
 template<int I, class C>
 inline typename std::enable_if<
-  is_std_array<typename remove_cr<C>::type>::value,
+  is_std_array<typename remove_cr<C>::type>::value
+  && !is_nc_lvalue_reference<C>::value,
   typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -661,7 +664,8 @@ struct is_std_deque<std::deque<T, Alloc> > : std::true_type {};
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_deque<typename remove_cr<C>::type>::value,
+  is_std_deque<typename remove_cr<C>::type>::value
+  && !is_nc_lvalue_reference<C>::value,
   typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -692,7 +696,8 @@ struct is_std_forward_list<std::forward_list<T, Alloc> > : std::true_type {};
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_forward_list<typename remove_cr<C>::type>::value,
+  is_std_forward_list<typename remove_cr<C>::type>::value
+  && !is_nc_lvalue_reference<C>::value,
   typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -723,7 +728,8 @@ struct is_std_list<std::forward_list<T, Alloc> > : std::true_type {};
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_list<typename remove_cr<C>::type>::value,
+  is_std_list<typename remove_cr<C>::type>::value
+  && !is_nc_lvalue_reference<C>::value,
   typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -746,7 +752,6 @@ get_arg(lua_State* const L)
   return result;
 }
 
-
 template <typename>
 struct is_std_vector : std::false_type { };
 
@@ -755,7 +760,8 @@ struct is_std_vector<std::vector<T, Alloc> > : std::true_type {};
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_vector<typename remove_cr<C>::type>::value,
+  is_std_vector<typename remove_cr<C>::type>::value
+  && !is_nc_lvalue_reference<C>::value,
   typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -785,7 +791,8 @@ struct is_std_map<std::map<Key, T, Compare, Alloc> > : std::true_type {};
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_map<typename remove_cr<C>::type>::value,
+  is_std_map<typename remove_cr<C>::type>::value
+  && !is_nc_lvalue_reference<C>::value,
   typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -816,7 +823,8 @@ struct is_std_unordered_map<std::unordered_map<Key, T, Hash, Pred, Alloc> >
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_unordered_map<typename remove_cr<C>::type>::value,
+  is_std_unordered_map<typename remove_cr<C>::type>::value
+  && !is_nc_lvalue_reference<C>::value,
   typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
