@@ -288,7 +288,7 @@ inline void create_wrapper_table(lua_State* const L, D* instance)
 }
 
 template <typename T>
-inline void set_result(lua_State* const L, T const v,
+inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
     std::is_floating_point<typename std::remove_reference<T>::type>::value
     && !is_nc_lvalue_reference<T>::value
@@ -669,7 +669,7 @@ template <int I, class C>
 inline typename std::enable_if<
   std::is_same<typename remove_cr<C>::type, std::string>::value
   && !is_nc_lvalue_reference<C>::value,
-  std::string>::type
+  typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isstring(L, I));
@@ -1085,11 +1085,11 @@ member_stub(lua_State* const L)
 
   typedef typename make_indices<sizeof...(A)>::type indices_type;
 
-  set_result(L, forward<O, C, R, A...>(L,
+  set_result(L, static_cast<R>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
     *static_cast<ptr_to_member_type const*>(
       static_cast<void const*>(mmi_ptr)),
-    indices_type()));
+    indices_type())));
   return 1;
 }
 
