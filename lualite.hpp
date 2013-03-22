@@ -594,16 +594,6 @@ get_arg(lua_State* const L)
   return std::string(val, len);
 }
 
-template <typename> struct extract;
-
-template <typename T, std::size_t N>
-struct extract<std::array<T, N> > : std::true_type
-{
-  typedef T value_type;
-
-  static auto const size = N;
-};
-
 template <typename>
 struct is_std_array : std::false_type { };
 
@@ -618,10 +608,40 @@ get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  typedef typename remove_cr<C>::type array_type;
+  typedef typename remove_cr<C>::type result_type;
 
-  std::array<typename extract<array_type>::value_type,
-    extract<array_type>::size> result;
+  result_type result;
+
+  auto const end(std::min(lua_rawlen(L, I), result.size()) + 1);
+
+  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result[i - 1] = get_arg<I + 1, typename result_type::value_type>(L);
+
+    lua_pop(L, 1);
+  }
+  return result;
+}
+
+template <typename>
+struct is_std_deque : std::false_type { };
+
+template <typename T, class Alloc>
+struct is_std_deque<std::deque<T, Alloc> > : std::true_type {};
+
+template <int I, class C>
+inline typename std::enable_if<
+  is_std_deque<typename remove_cr<C>::type>::value,
+  typename remove_cr<C>::type>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_istable(L, I));
+
+  typedef typename remove_cr<C>::type result_type;
+
+  result_type result;
 
   auto const end(lua_rawlen(L, I) + 1);
 
@@ -629,47 +649,30 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result[i - 1] = get_arg<I + 1, typename array_type::value_type>(L);
+    result.emplace_back(get_arg<I + 1, typename result_type::value_type>(L));
 
     lua_pop(L, 1);
   }
   return result;
 }
 
-/*
+template <typename>
+struct is_std_forward_list : std::false_type { };
+
+template <typename T, class Alloc>
+struct is_std_forward_list<std::forward_list<T, Alloc> > : std::true_type {};
+
 template <int I, class C, typename T, class Alloc>
 inline typename std::enable_if<
-  std::is_constructible<C, std::deque<T, Alloc> >::value,
-    std::deque<T, Alloc> >::type
+  is_std_forward_list<typename remove_cr<C>::type>::value,
+  typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  std::deque<T, Alloc> result;
+  typedef typename remove_cr<C>::type result_type;
 
-  auto const end(lua_rawlen(L, I) + 1);
-
-  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
-  {
-    lua_rawgeti(L, I, i);
-
-    result.emplace_back(get_arg<I + 1, T>(L));
-
-    lua_pop(L, 1);
-  }
-
-  return result;
-}
-
-template <int I, class C, typename T, class Alloc>
-inline typename std::enable_if<
-  std::is_constructible<C, std::forward_list<T, Alloc> >::value,
-    std::forward_list<T, Alloc> >::type
-get_arg(lua_State* const L)
-{
-  assert(lua_istable(L, I));
-
-  std::list<T, Alloc> result;
+  result_type result;
 
   static decltype(lua_rawlen(L, I)) const end(0);
 
@@ -677,14 +680,14 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_front(get_arg<I + 1, T>(L));
+    result.emplace_front(get_arg<I + 1, typename result_type::value_type>(L));
 
     lua_pop(L, 1);
   }
-
   return result;
 }
 
+/*
 template <int I, class C, typename T, class Alloc>
 inline typename std::enable_if<
   std::is_constructible<C, std::list<T, Alloc> >::value,
