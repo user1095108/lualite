@@ -41,11 +41,27 @@
 
 #include <stdexcept>
 
-#include <type_traits>
+#include <string>
+
+#include <array>
+
+#include <deque>
+
+#include <forward_list>
+
+#include <list>
+
+#include <map>
+
+#include <unordered_map>
+
+#include <unordered_map>
 
 #include <utility>
 
 #include <vector>
+
+#include <type_traits>
 
 extern "C" {
 
@@ -65,8 +81,11 @@ namespace detail
 {
 
 template <typename T>
-struct is_nonconst_reference : std::integral_constant<bool,
-  std::is_reference<T>::value
+using remove_cr = std::remove_const<typename std::remove_reference<T>::type>;
+
+template <typename T>
+struct is_nc_lvalue_reference : std::integral_constant<bool,
+  std::is_lvalue_reference<T>::value
   && !std::is_const<typename std::remove_reference<T>::type>::value> {};
 
 template<typename T> inline T const& as_const(T& t) { return t; }
@@ -270,7 +289,7 @@ template <typename T>
 inline void set_result(lua_State* const L, T const v,
   typename std::enable_if<
     std::is_floating_point<typename std::remove_reference<T>::type>::value
-    && !is_nonconst_reference<T>::value
+    && !is_nc_lvalue_reference<T>::value
   >::type* = 0)
 {
   lua_pushnumber(L, v);
@@ -281,7 +300,7 @@ inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
     std::is_integral<typename std::remove_reference<T>::type>::value
     && std::is_signed<typename std::remove_reference<T>::type>::value
-    && !is_nonconst_reference<T>::value
+    && !is_nc_lvalue_reference<T>::value
   >::type* = 0)
 {
   lua_pushinteger(L, v);
@@ -292,7 +311,7 @@ inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
     std::is_integral<typename std::remove_reference<T>::type>::value
     && !std::is_signed<typename std::remove_reference<T>::type>::value
-    && !is_nonconst_reference<T>::value
+    && !is_nc_lvalue_reference<T>::value
   >::type* = 0)
 {
   lua_pushunsigned(L, v);
@@ -302,7 +321,7 @@ template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
     std::is_same<typename std::remove_reference<T>::type, bool>::value
-    && !is_nonconst_reference<T>::value
+    && !is_nc_lvalue_reference<T>::value
   >::type* = 0)
 {
   lua_pushboolean(L, v);
@@ -312,7 +331,7 @@ template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
     std::is_same<typename std::remove_reference<T>::type, char const*>::value
-    && !is_nonconst_reference<T>::value
+    && !is_nc_lvalue_reference<T>::value
   >::type* = 0)
 {
   lua_pushstring(L, v);
@@ -322,7 +341,7 @@ template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
     std::is_same<typename std::remove_reference<T>::type, void const*>::value
-    && !is_nonconst_reference<T>::value
+    && !is_nc_lvalue_reference<T>::value
   >::type* = 0)
 {
   lua_pushlightuserdata(L, const_cast<void*>(v));
@@ -342,7 +361,7 @@ inline void set_result(lua_State* const L, T && v,
 template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
-    is_nonconst_reference<T>::value
+    is_nc_lvalue_reference<T>::value
     && !std::is_class<typename std::remove_reference<T>::type>::value
   >::type* = 0)
 {
@@ -363,11 +382,139 @@ inline void set_result(lua_State* const L, T && v,
 template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
-    is_nonconst_reference<T>::value
+    is_nc_lvalue_reference<T>::value
     && std::is_class<typename std::remove_reference<T>::type>::value
   >::type* = 0)
 {
   create_wrapper_table(L, &v);
+}
+
+inline void set_result(lua_State* const L, std::string const& s)
+{
+  lua_pushlstring(L, s.c_str(), s.size());
+}
+
+template <class C, typename T, std::size_t N>
+inline void set_result(lua_State* const L, std::array<T, N> const& a)
+{
+  lua_createtable(L, N, 0);
+
+  auto const end(a.cend());
+
+  for (auto i(a.cbegin()); i != end; ++i)
+  {
+    lua_pushunsigned(L, i - a.cbegin() + 1);
+    set_result(L, *i);
+
+    lua_rawset(L, -3);
+  }
+}
+
+template <typename T, class Alloc>
+inline void set_result(lua_State* const L,
+  std::deque<T, Alloc> const& d)
+{
+  lua_createtable(L, d.size(), 0);
+
+  auto const end(d.cend());
+
+  for (auto i(d.cbegin()); i != end; ++i)
+  {
+    lua_pushunsigned(L, i - d.cbegin() + 1);
+    set_result(L, *i);
+
+    lua_rawset(L, -3);
+  }
+}
+
+template <typename T, class Alloc>
+inline void set_result(lua_State* const L,
+  std::forward_list<T, Alloc> const& l)
+{
+  lua_createtable(L, l.size(), 0);
+
+  std::size_t j(1);
+
+  auto const end(l.cend());
+
+  for (auto i(l.cbegin()); i != end; ++i, ++j)
+  {
+    lua_pushunsigned(L, j);
+    set_result(L, *i);
+
+    lua_rawset(L, -3);
+  }
+}
+
+template <typename T, class Alloc>
+inline void set_result(lua_State* const L,
+  std::list<T, Alloc> const& l)
+{
+  lua_createtable(L, l.size(), 0);
+
+  std::size_t j(1);
+
+  auto const end(l.cend());
+
+  for (auto i(l.cbegin()); i != end; ++i, ++j)
+  {
+    lua_pushunsigned(L, j);
+    set_result(L, *i);
+
+    lua_rawset(L, -3);
+  }
+}
+
+
+template <class Key, class T, class Compare, class Alloc>
+inline void set_result(lua_State* const L,
+  std::map<Key, T, Compare, Alloc> const& m)
+{
+  lua_createtable(L, 0, m.size());
+
+  auto const end(m.cend());
+
+  for (auto i(m.cbegin()); i != end; ++i)
+  {
+    set_result(L, i->first);
+    set_result(L, i->second);
+
+    lua_rawset(L, -3);
+  }
+}
+
+template <class Key, class T, class Hash, class Pred, class Alloc>
+inline void set_result(lua_State* const L,
+  std::unordered_map<Key, T, Hash, Pred, Alloc> const& m)
+{
+  lua_createtable(L, 0, m.size());
+
+  auto const end(m.cend());
+
+  for (auto i(m.cbegin()); i != end; ++i)
+  {
+    set_result(L, i->first);
+    set_result(L, i->second);
+
+    lua_rawset(L, -3);
+  }
+}
+
+template <typename T, class Alloc>
+inline void set_result(lua_State* const L,
+  std::vector<T, Alloc> const& v)
+{
+  lua_createtable(L, v.size(), 0);
+
+  auto const end(v.cend());
+
+  for (auto i(v.cbegin()); i != end; ++i)
+  {
+    lua_pushunsigned(L, i - v.cbegin() + 1);
+    set_result(L, *i);
+
+    lua_rawset(L, -3);
+  }
 }
 
 template <int I, typename T>
@@ -422,13 +569,210 @@ get_arg(lua_State* const L)
 }
 
 template <int I, typename T>
-inline typename std::enable_if<std::is_reference<T>::value, T>::type
+inline typename std::enable_if<is_nc_lvalue_reference<T>::value, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_islightuserdata(L, I));
   return *static_cast<typename std::remove_reference<T>::type*>(
     lua_touserdata(L, I));
 }
+
+template <int I, class C>
+inline typename std::enable_if<
+  std::is_same<typename remove_cr<C>::type, std::string>::value,
+  std::string>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_isstring(L, I));
+
+  std::size_t len;
+
+  char const* const val(lua_tolstring(L, I, &len));
+
+  return std::string(val, len);
+}
+
+template <typename> struct extract;
+
+template <typename T, std::size_t N>
+struct extract<std::array<T, N> > : std::true_type
+{
+  typedef T value_type;
+
+  static auto const size = N;
+};
+
+template <typename>
+struct is_std_array : std::false_type { };
+
+template <typename T, std::size_t N>
+struct is_std_array<std::array<T, N> > : std::true_type {};
+
+template<int I, class C>
+inline typename std::enable_if<
+  is_std_array<typename remove_cr<C>::type>::value,
+  typename remove_cr<C>::type>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_istable(L, I));
+
+  typedef typename remove_cr<C>::type array_type;
+
+  std::array<typename extract<array_type>::value_type,
+    extract<array_type>::size> result;
+
+  auto const end(lua_rawlen(L, I) + 1);
+
+  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result[i - 1] = get_arg<I + 1, typename array_type::value_type>(L);
+
+    lua_pop(L, 1);
+  }
+  return result;
+}
+
+/*
+template <int I, class C, typename T, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::deque<T, Alloc> >::value,
+    std::deque<T, Alloc> >::type
+get_arg(lua_State* const L)
+{
+  assert(lua_istable(L, I));
+
+  std::deque<T, Alloc> result;
+
+  auto const end(lua_rawlen(L, I) + 1);
+
+  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result.emplace_back(get_arg<I + 1, T>(L));
+
+    lua_pop(L, 1);
+  }
+
+  return result;
+}
+
+template <int I, class C, typename T, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::forward_list<T, Alloc> >::value,
+    std::forward_list<T, Alloc> >::type
+get_arg(lua_State* const L)
+{
+  assert(lua_istable(L, I));
+
+  std::list<T, Alloc> result;
+
+  static decltype(lua_rawlen(L, I)) const end(0);
+
+  for (decltype(lua_rawlen(L, I)) i(lua_rawlen(L, I)); i != end; --i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result.emplace_front(get_arg<I + 1, T>(L));
+
+    lua_pop(L, 1);
+  }
+
+  return result;
+}
+
+template <int I, class C, typename T, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::list<T, Alloc> >::value,
+    std::list<T, Alloc> >::type
+get_arg(lua_State* const L)
+{
+  assert(lua_istable(L, I));
+
+  std::list<T, Alloc> result;
+
+  auto const end(lua_rawlen(L, I) + 1);
+
+  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result.emplace_back(get_arg<I + 1, T>(L));
+
+    lua_pop(L, 1);
+  }
+
+  return result;
+}
+
+template <int I, class C, typename T, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::vector<T, Alloc> >::value,
+    std::vector<T, Alloc> >::type
+get_arg(lua_State* const L)
+{
+  assert(lua_istable(L, I));
+
+  std::vector<T, Alloc> result;
+
+  auto const end(lua_rawlen(L, I) + 1);
+
+  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result.emplace_back(get_arg<I + 1, T>(L));
+
+    lua_pop(L, 1);
+  }
+  return result;
+}
+
+template <int I, class C, class Key, class T, class Compare, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::map<Key, T, Compare, Alloc> >::value,
+    std::map<Key, T, Compare, Alloc> >::type
+get_arg(lua_State* const L)
+{
+  assert(lua_istable(L, I));
+
+  std::map<Key, T, Compare, Alloc> result;
+
+  lua_pushnil(L);
+
+  while (lua_next(L, I))
+  {
+    result.emplace(get_arg<I + 1, Key>(L), get_arg<I + 2, T>(L));
+
+    lua_pop(L, 1);
+  }
+  return result;
+}
+
+template <int I, class C, class Key, class T, class Hash, class Pred, class Alloc>
+inline typename std::enable_if<
+  std::is_constructible<C, std::unordered_map<Key, T, Hash, Pred, Alloc> >::value,
+    std::unordered_map<Key, T, Hash, Pred, Alloc> >::type
+get_arg(lua_State* const L)
+{
+  assert(lua_istable(L, I));
+
+  std::unordered_map<Key, T, Hash, Pred, Alloc> result;
+
+  lua_pushnil(L);
+
+  while (lua_next(L, I))
+  {
+    result.emplace(get_arg<I + 1, Key>(L), get_arg<I + 2, T>(L));
+
+    lua_pop(L, 1);
+  }
+  return result;
+}
+
+*/
 
 template <class C>
 int default_finalizer(lua_State* const L)
