@@ -520,7 +520,10 @@ inline void set_result(lua_State* const L,
 }
 
 template <int I, typename T>
-inline typename std::enable_if<std::is_floating_point<T>::value, T>::type
+inline typename std::enable_if<
+  std::is_floating_point<typename remove_cr<T>::type>::value
+  && !is_nc_lvalue_reference<T>::value,
+  typename remove_cr<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
@@ -529,7 +532,10 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename std::enable_if<
-  std::is_integral<T>::value && std::is_signed<T>::value, T>::type
+  std::is_integral<typename remove_cr<T>::type>::value
+  && std::is_signed<typename remove_cr<T>::type>::value
+  && !is_nc_lvalue_reference<T>::value,
+  typename remove_cr<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
@@ -538,7 +544,10 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename std::enable_if<
-  std::is_integral<T>::value && std::is_unsigned<T>::value, T>::type
+  std::is_integral<typename remove_cr<T>::type>::value
+  && std::is_unsigned<typename remove_cr<T>::type>::value
+  && !is_nc_lvalue_reference<T>::value,
+  typename remove_cr<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
@@ -546,7 +555,10 @@ get_arg(lua_State* const L)
 }
 
 template <int I, typename T>
-inline typename std::enable_if<std::is_same<T, bool>::value, T>::type
+inline typename std::enable_if<std::is_same<
+  typename remove_cr<T>::type, bool>::value
+  && !is_nc_lvalue_reference<T>::value,
+  typename remove_cr<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isboolean(L, I));
@@ -554,7 +566,10 @@ get_arg(lua_State* const L)
 }
 
 template <int I, typename T>
-inline typename std::enable_if<std::is_same<T, char const*>::value, T>::type
+inline typename std::enable_if<std::is_same<
+  typename remove_cr<T>::type, char const*>::value
+  && !is_nc_lvalue_reference<T>::value,
+  typename remove_cr<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isstring(L, I));
@@ -563,7 +578,9 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename std::enable_if<
-  std::is_pointer<T>::value && !std::is_same<T, char const*>::value, T>::type
+  std::is_pointer<T>::value
+  && !std::is_same<typename remove_cr<T>::type, char const*>::value,
+  typename remove_cr<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_islightuserdata(L, I));
