@@ -57,7 +57,7 @@ namespace lualite
 namespace detail
 {
 
-inline void set_result(lua_State* const  L,
+inline void set_result(lua_State* const L,
   std::string const& value)
 {
   lua_pushlstring(L, value.c_str(), value.size());
@@ -65,7 +65,7 @@ inline void set_result(lua_State* const  L,
 
 template <typename T, std::size_t N>
 inline void set_result(lua_State* const L,
-  std::array<T, N> && a)
+  std::array<T, N> const& a)
 {
   lua_createtable(L, N, 0);
 
@@ -82,7 +82,7 @@ inline void set_result(lua_State* const L,
 
 template <typename T, class Alloc>
 inline void set_result(lua_State* const L,
-  std::deque<T, Alloc> && d)
+  std::deque<T, Alloc> const& d)
 {
   lua_createtable(L, d.size(), 0);
 
@@ -99,7 +99,7 @@ inline void set_result(lua_State* const L,
 
 template <typename T, class Alloc>
 inline void set_result(lua_State* const L,
-  std::forward_list<T, Alloc> && l)
+  std::forward_list<T, Alloc> const& l)
 {
   lua_createtable(L, l.size(), 0);
 
@@ -118,7 +118,7 @@ inline void set_result(lua_State* const L,
 
 template <typename T, class Alloc>
 inline void set_result(lua_State* const L,
-  std::list<T, Alloc> && l)
+  std::list<T, Alloc> const& l)
 {
   lua_createtable(L, l.size(), 0);
 
@@ -138,7 +138,7 @@ inline void set_result(lua_State* const L,
 
 template <class Key, class T, class Compare, class Alloc>
 inline void set_result(lua_State* const L,
-  std::map<Key, T, Compare, Alloc> && m)
+  std::map<Key, T, Compare, Alloc> const& m)
 {
   lua_createtable(L, 0, m.size());
 
@@ -155,7 +155,7 @@ inline void set_result(lua_State* const L,
 
 template <class Key, class T, class Hash, class Pred, class Alloc>
 inline void set_result(lua_State* const L,
-  std::unordered_map<Key, T, Hash, Pred, Alloc> && m)
+  std::unordered_map<Key, T, Hash, Pred, Alloc> const& m)
 {
   lua_createtable(L, 0, m.size());
 
@@ -172,7 +172,7 @@ inline void set_result(lua_State* const L,
 
 template <typename T, class Alloc>
 inline void set_result(lua_State* const L,
-  std::vector<T, Alloc> && v)
+  std::vector<T, Alloc> const& v)
 {
   lua_createtable(L, v.size(), 0);
 
