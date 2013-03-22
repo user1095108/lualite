@@ -670,7 +670,6 @@ get_arg(lua_State* const L)
   typedef typename remove_cr<C>::type result_type;
 
   result_type result;
-
   auto const end(lua_rawlen(L, I) + 1);
 
   for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
@@ -700,7 +699,6 @@ get_arg(lua_State* const L)
   assert(lua_istable(L, I));
 
   typedef typename remove_cr<C>::type result_type;
-
   result_type result;
 
   static decltype(lua_rawlen(L, I)) const end(0);
@@ -755,7 +753,7 @@ struct is_std_vector : std::false_type { };
 template <typename T, class Alloc>
 struct is_std_vector<std::vector<T, Alloc> > : std::true_type {};
 
-template <int I, class C, typename T, class Alloc>
+template <int I, class C>
 inline typename std::enable_if<
   is_std_vector<typename remove_cr<C>::type>::value,
   typename remove_cr<C>::type>::type
@@ -772,7 +770,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_back(get_arg<I + 1, T>(L));
+    result.emplace_back(get_arg<I + 1, typename result_type::value_type>(L));
 
     lua_pop(L, 1);
   }
