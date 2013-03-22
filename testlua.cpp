@@ -8,8 +8,6 @@ extern "C" {
 
 }
 
-#include "lualite/lualite_stdcontainers.hpp"
-
 #include "lualite/lualite.hpp"
 
 struct point
@@ -36,7 +34,7 @@ inline void set_result(lua_State* const L,
 
 template <std::size_t I, typename T>
 inline typename std::enable_if<
-  std::is_same<point const&, T>::value, point>::type
+  std::is_same<point, T>::value, point>::type
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
@@ -63,9 +61,9 @@ point testfunc(int i)
 
 struct testbase
 {
-  std::string dummy()
+  std::string dummy(std::string const& msg)
   {
-    return "dummy() called";
+    return "dummy() called: " + msg;
   }
 };
 
@@ -83,9 +81,9 @@ struct testclass : testbase
     std::cout << "testclass::testclass(int):" << i << std::endl;
   }
 
-  std::vector<std::string> print() const
+  std::vector<std::string> print(std::string msg) const
   {
-    std::cout << "hello world!" << std::endl;
+    std::cout << "hello world!: " << msg << std::endl;
 
     return std::vector<std::string>(10, "bla!!!");
   }
@@ -143,7 +141,7 @@ int main(int argc, char* argv[])
       .inherits<testbase>()
       .enum_("smell", 9)
       .def("print", (void (testclass::*)(int))&testclass::print)
-      .def("print_", (std::vector<std::string> (testclass::*)() const)&testclass::print)
+      .def("print_", (std::vector<std::string> (testclass::*)(std::string) const)&testclass::print)
       .def("pointer", &testclass::pointer)
       .def("reference", &testclass::reference)
       .property("a", &testclass::a, &testclass::set_a)
@@ -154,7 +152,7 @@ int main(int argc, char* argv[])
         .enum_("smell", 10)
         .def("testfunc", &testfunc)
         .def("print", (void (testclass::*)(int))&testclass::print)
-        .def("print_", (std::vector<std::string> (testclass::*)() const)&testclass::print)
+        .def("print_", (std::vector<std::string> (testclass::*)(std::string) const)&testclass::print)
     )
   )
   .enum_("apple", 1)
@@ -171,13 +169,13 @@ int main(int argc, char* argv[])
     "print(\"---\")\n"
     "print(b.a)\n"
     "b:reference().a = 888\n"
-    "print(b.a .. \" \" .. b:dummy())\n"
+    "print(b.a .. \" \" .. b:dummy(\"test\"))\n"
     "b:pointer():print(100)\n"
-    "b:reference():print_()\n"
+    "b:reference():print_(\"msg1\")\n"
     "local a = subscope.testclass.new(1111)\n"
     "print(subscope.testclass.smell)\n"
     "subscope.testclass.testfunc(200)\n"
-    "local c = a:reference():print_()\n"
+    "local c = a:reference():print_(\"msg2\")\n"
     "print(c[10])\n"
   );
 
