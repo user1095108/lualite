@@ -84,9 +84,11 @@ template <typename T>
 using remove_cr = std::remove_const<typename std::remove_reference<T>::type>;
 
 template <typename T>
-struct is_nc_lvalue_reference : std::integral_constant<bool,
-  std::is_lvalue_reference<T>::value
-  && !std::is_const<typename std::remove_reference<T>::type>::value> {};
+using is_nc_lvalue_reference
+  = std::integral_constant<bool,
+      std::is_lvalue_reference<T>::value
+      && !std::is_const<typename std::remove_reference<T>::type>::value
+    >;
 
 template<typename T> inline T const& as_const(T& t) { return t; }
 
