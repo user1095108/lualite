@@ -595,6 +595,35 @@ get_arg(lua_State* const L)
 }
 
 template <typename>
+struct is_std_pair : std::false_type { };
+
+template <class T1, class T2>
+struct is_std_pair<std::pair<T1, T2> > : std::true_type {};
+
+template<int I, class C>
+inline typename std::enable_if<
+  is_std_pair<typename remove_cr<C>::type>::value,
+  typename remove_cr<C>::type>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_istable(L, I));
+ 
+  typedef typename remove_cr<C>::type result_type;
+
+  result_type result;
+
+  rawgetfield(L, -1, "first");
+  result.first = get_arg<I + 1, decltype(result.first)>(L);
+  lua_pop(L, 1);
+
+  rawgetfield(L, -1, "second");
+  result.second = get_arg<I + 1, decltype(result.second)>(L);
+  lua_pop(L, 1);
+
+  return result;
+}
+
+template <typename>
 struct is_std_array : std::false_type { };
 
 template <typename T, std::size_t N>
@@ -622,6 +651,7 @@ get_arg(lua_State* const L)
 
     lua_pop(L, 1);
   }
+
   return result;
 }
 
