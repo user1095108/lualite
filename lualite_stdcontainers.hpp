@@ -49,6 +49,8 @@
 
 #include <string>
 
+#include <type_traits>
+
 #include <vector>
 
 namespace lualite
@@ -57,15 +59,29 @@ namespace lualite
 namespace detail
 {
 
-inline void set_result(lua_State* const L,
-  std::string const& value)
+template <typename T>
+struct is_nonconst_reference;
+
+template <class C>
+inline void set_result(lua_State* const L, C && s,
+  typename std::enable_if<
+    std::is_same<typename std::remove_const<
+      typename std::remove_reference<C>::type>::type,
+    std::string>::value
+    && !is_nonconst_reference<C>::value
+  >::type* = 0)
 {
-  lua_pushlstring(L, value.c_str(), value.size());
+  lua_pushlstring(L, s.c_str(), s.size());
 }
 
-template <typename T, std::size_t N>
-inline void set_result(lua_State* const L,
-  std::array<T, N> const& a)
+template <class C, typename T, std::size_t N>
+inline void set_result(lua_State* const L, C && a,
+  typename std::enable_if<
+    std::is_same<typename std::remove_const<
+      typename std::remove_reference<C>::type>::type,
+    std::array<T, N> >::value
+    && !is_nonconst_reference<C>::value
+  >::type* = 0)
 {
   lua_createtable(L, N, 0);
 
