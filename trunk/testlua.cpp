@@ -62,7 +62,7 @@ point testfunc(int i)
 
 struct testbase
 {
-  std::string dummy(std::string const& msg)
+  std::string dummy(std::string msg)
   {
     return "dummy() called: " + msg;
   }
