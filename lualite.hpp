@@ -609,7 +609,6 @@ get_arg(lua_State* const L)
   assert(lua_istable(L, I));
  
   typedef typename remove_cr<C>::type result_type;
-
   result_type result;
 
   rawgetfield(L, -1, "first");
@@ -638,7 +637,6 @@ get_arg(lua_State* const L)
   assert(lua_istable(L, I));
 
   typedef typename remove_cr<C>::type result_type;
-
   result_type result;
 
   auto const end(std::min(lua_rawlen(L, I), result.size()) + 1);
@@ -683,6 +681,7 @@ get_arg(lua_State* const L)
 
     lua_pop(L, 1);
   }
+
   return result;
 }
 
@@ -692,7 +691,7 @@ struct is_std_forward_list : std::false_type { };
 template <typename T, class Alloc>
 struct is_std_forward_list<std::forward_list<T, Alloc> > : std::true_type {};
 
-template <int I, class C, typename T, class Alloc>
+template <int I, class C>
 inline typename std::enable_if<
   is_std_forward_list<typename remove_cr<C>::type>::value,
   typename remove_cr<C>::type>::type
@@ -714,19 +713,58 @@ get_arg(lua_State* const L)
 
     lua_pop(L, 1);
   }
+
   return result;
 }
 
-/*
-template <int I, class C, typename T, class Alloc>
+template <typename>
+struct is_std_list : std::false_type { };
+
+template <typename T, class Alloc>
+struct is_std_list<std::forward_list<T, Alloc> > : std::true_type {};
+
+template <int I, class C>
 inline typename std::enable_if<
-  std::is_constructible<C, std::list<T, Alloc> >::value,
-    std::list<T, Alloc> >::type
+  is_std_list<typename remove_cr<C>::type>::value,
+  typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  std::list<T, Alloc> result;
+  typedef typename remove_cr<C>::type result_type;
+  result_type result;
+
+  auto const end(lua_rawlen(L, I) + 1);
+
+  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result.emplace_back(get_arg<I + 1, typename result_type::value_type>(L));
+
+    lua_pop(L, 1);
+  }
+
+  return result;
+}
+
+
+template <typename>
+struct is_std_vector : std::false_type { };
+
+template <typename T, class Alloc>
+struct is_std_vector<std::vector<T, Alloc> > : std::true_type {};
+
+template <int I, class C, typename T, class Alloc>
+inline typename std::enable_if<
+  is_std_vector<typename remove_cr<C>::type>::value,
+  typename remove_cr<C>::type>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_istable(L, I));
+
+  typedef typename remove_cr<C>::type result_type;
+  result_type result;
 
   auto const end(lua_rawlen(L, I) + 1);
 
@@ -738,76 +776,69 @@ get_arg(lua_State* const L)
 
     lua_pop(L, 1);
   }
-
   return result;
 }
 
-template <int I, class C, typename T, class Alloc>
+template <typename>
+struct is_std_map : std::false_type { };
+
+template <class Key, class T, class Compare, class Alloc>
+struct is_std_map<std::map<Key, T, Compare, Alloc> > : std::true_type {};
+
+template <int I, class C>
 inline typename std::enable_if<
-  std::is_constructible<C, std::vector<T, Alloc> >::value,
-    std::vector<T, Alloc> >::type
+  is_std_map<typename remove_cr<C>::type>::value,
+  typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  std::vector<T, Alloc> result;
-
-  auto const end(lua_rawlen(L, I) + 1);
-
-  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
-  {
-    lua_rawgeti(L, I, i);
-
-    result.emplace_back(get_arg<I + 1, T>(L));
-
-    lua_pop(L, 1);
-  }
-  return result;
-}
-
-template <int I, class C, class Key, class T, class Compare, class Alloc>
-inline typename std::enable_if<
-  std::is_constructible<C, std::map<Key, T, Compare, Alloc> >::value,
-    std::map<Key, T, Compare, Alloc> >::type
-get_arg(lua_State* const L)
-{
-  assert(lua_istable(L, I));
-
-  std::map<Key, T, Compare, Alloc> result;
+  typedef typename remove_cr<C>::type result_type;
+  result_type result;
 
   lua_pushnil(L);
 
   while (lua_next(L, I))
   {
-    result.emplace(get_arg<I + 1, Key>(L), get_arg<I + 2, T>(L));
+    result.emplace(get_arg<I + 1, typename result_type::key_type>(L),
+      get_arg<I + 2, typename result_type::mapped_type>(L));
 
     lua_pop(L, 1);
   }
+
   return result;
 }
 
-template <int I, class C, class Key, class T, class Hash, class Pred, class Alloc>
+template <typename>
+struct is_std_unordered_map : std::false_type { };
+
+template <class Key, class T, class Hash, class Pred, class Alloc>
+struct is_std_unordered_map<std::unordered_map<Key, T, Hash, Pred, Alloc> >
+  : std::true_type {};
+
+template <int I, class C>
 inline typename std::enable_if<
-  std::is_constructible<C, std::unordered_map<Key, T, Hash, Pred, Alloc> >::value,
-    std::unordered_map<Key, T, Hash, Pred, Alloc> >::type
+  is_std_unordered_map<typename remove_cr<C>::type>::value,
+  typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  std::unordered_map<Key, T, Hash, Pred, Alloc> result;
+  typedef typename remove_cr<C>::type result_type;
+  result_type result;
 
   lua_pushnil(L);
 
   while (lua_next(L, I))
   {
-    result.emplace(get_arg<I + 1, Key>(L), get_arg<I + 2, T>(L));
+    result.emplace(get_arg<I + 1, typename result_type::key_type>(L),
+      get_arg<I + 2, typename result_type::mapped_type>(L));
 
     lua_pop(L, 1);
   }
+
   return result;
 }
-
-*/
 
 template <class C>
 int default_finalizer(lua_State* const L)

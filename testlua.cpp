@@ -16,18 +16,19 @@ struct point
   int y;
 };
 
-inline void set_result(lua_State* const L,
-  point && p)
+inline void set_result(lua_State* const L, point p)
 {
+  using namespace ::lualite::detail;
+
   lua_createtable(L, 2, 0);
 
   lua_pushliteral(L, "x");
-  ::lualite::detail::set_result(L, const_cast<decltype(p.x) const&>(p.x));
+  set_result(L, const_cast<decltype(p.x) const&>(p.x));
   assert(lua_istable(L, -3));
   lua_rawset(L, -3);
 
   lua_pushliteral(L, "y");
-  ::lualite::detail::set_result(L, const_cast<decltype(p.y) const&>(p.y));
+  set_result(L, const_cast<decltype(p.y) const&>(p.y));
   assert(lua_istable(L, -3));
   lua_rawset(L, -3);
 }
