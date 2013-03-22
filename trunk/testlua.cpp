@@ -38,6 +38,8 @@ inline typename std::enable_if<
   std::is_same<point, T>::value, point>::type
 get_arg(lua_State* const L)
 {
+  using namespace ::lualite::detail;
+
   assert(lua_istable(L, I));
 
   struct point p;
@@ -62,9 +64,9 @@ point testfunc(int i)
 
 struct testbase
 {
-  std::string dummy(std::string msg)
+  std::string const& dummy(std::string msg)
   {
-    return "dummy() called: " + msg;
+    return std::string("dummy() called: " + msg);
   }
 };
 
@@ -106,7 +108,7 @@ struct testclass : testbase
     a_ = i;
   }
 
-  std::string& test_array(std::array<int, 10> const& a)
+  std::string const& test_array(std::array<int, 10> const& a)
   {
     std::cout << a[0] << std::endl;
     s_ = "blablabla";
