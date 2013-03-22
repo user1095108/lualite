@@ -391,6 +391,28 @@ inline void set_result(lua_State* const L, T && v,
   create_wrapper_table(L, &v);
 }
 
+template <typename>
+struct is_std_pair : std::false_type { };
+
+template <class T1, class T2>
+struct is_std_pair<std::pair<T1, T2> > : std::true_type {};
+
+template <typename C>
+inline void set_result(lua_State* const L, C && a,
+  typename std::enable_if<
+    is_std_pair<typename remove_cr<C>::type>::value
+    && !is_nc_lvalue_reference<C>::value
+  >::type* = 0)
+{
+  lua_createtable(L, 0, 2);
+
+  set_result(L, a.first);
+  rawsetfield(L, -2, "first");
+
+  set_result(L, a.second);
+  rawsetfield(L, -2, "second");
+}
+
 template <typename T>
 inline void set_result(lua_State* const L, T && s,
   typename std::enable_if<
@@ -680,12 +702,6 @@ get_arg(lua_State* const L)
 
   return std::string(val, len);
 }
-
-template <typename>
-struct is_std_pair : std::false_type { };
-
-template <class T1, class T2>
-struct is_std_pair<std::pair<T1, T2> > : std::true_type {};
 
 template<int I, class C>
 inline typename std::enable_if<

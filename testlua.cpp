@@ -64,7 +64,7 @@ point testfunc(int i)
 
 struct testbase
 {
-  std::string const& dummy(std::string msg)
+  std::string dummy(std::string msg)
   {
     return std::string("dummy() called: " + msg);
   }
@@ -180,6 +180,11 @@ int main(int argc, char* argv[])
     "subscope.testclass.testfunc(200)\n"
     "local c = a:reference():print_(\"msg2\")\n"
     "print(c[10])\n"
+    "r = {}"
+    "for i = 1, 10 do\n"
+    "  r[i] = 7\n"
+    "end\n"
+    "print(a:test_array(r))\n"
   );
 
   lua_close(L);
