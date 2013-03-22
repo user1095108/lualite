@@ -398,7 +398,7 @@ template <class T1, class T2>
 struct is_std_pair<std::pair<T1, T2> > : std::true_type {};
 
 template <typename C>
-inline void set_result(lua_State* const L, C && a,
+inline void set_result(lua_State* const L, C && p,
   typename std::enable_if<
     is_std_pair<typename remove_cr<C>::type>::value
     && !is_nc_lvalue_reference<C>::value
@@ -406,10 +406,10 @@ inline void set_result(lua_State* const L, C && a,
 {
   lua_createtable(L, 0, 2);
 
-  set_result(L, a.first);
+  set_result(L, p.first);
   rawsetfield(L, -2, "first");
 
-  set_result(L, a.second);
+  set_result(L, p.second);
   rawsetfield(L, -2, "second");
 }
 
