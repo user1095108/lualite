@@ -391,15 +391,30 @@ inline void set_result(lua_State* const L, T && v,
   create_wrapper_table(L, &v);
 }
 
-inline void set_result(lua_State* const L, std::string const& s)
+template <typename T>
+inline void set_result(lua_State* const L, T && s,
+  typename std::enable_if<
+    std::is_same<typename remove_cr<T>::type, std::string>::value
+    && !is_nc_lvalue_reference<T>::value
+  >::type* = 0)
 {
   lua_pushlstring(L, s.c_str(), s.size());
 }
 
-template <class C, typename T, std::size_t N>
-inline void set_result(lua_State* const L, std::array<T, N> const& a)
+template <typename>
+struct is_std_array : std::false_type { };
+
+template <typename T, std::size_t N>
+struct is_std_array<std::array<T, N> > : std::true_type {};
+
+template <typename C>
+inline void set_result(lua_State* const L, C && a,
+  typename std::enable_if<
+    is_std_array<typename remove_cr<C>::type>::value
+    && !is_nc_lvalue_reference<C>::value
+  >::type* = 0)
 {
-  lua_createtable(L, N, 0);
+  lua_createtable(L, a.size(), 0);
 
   auto const end(a.cend());
 
@@ -412,9 +427,18 @@ inline void set_result(lua_State* const L, std::array<T, N> const& a)
   }
 }
 
+template <typename>
+struct is_std_deque : std::false_type { };
+
 template <typename T, class Alloc>
-inline void set_result(lua_State* const L,
-  std::deque<T, Alloc> const& d)
+struct is_std_deque<std::deque<T, Alloc> > : std::true_type {};
+
+template <typename C>
+inline void set_result(lua_State* const L, C && d,
+  typename std::enable_if<
+    is_std_deque<typename remove_cr<C>::type>::value
+    && !is_nc_lvalue_reference<C>::value
+  >::type* = 0)
 {
   lua_createtable(L, d.size(), 0);
 
@@ -429,9 +453,18 @@ inline void set_result(lua_State* const L,
   }
 }
 
+template <typename>
+struct is_std_forward_list : std::false_type { };
+
 template <typename T, class Alloc>
-inline void set_result(lua_State* const L,
-  std::forward_list<T, Alloc> const& l)
+struct is_std_forward_list<std::forward_list<T, Alloc> > : std::true_type {};
+
+template <typename C>
+inline void set_result(lua_State* const L, C && l,
+  typename std::enable_if<
+    is_std_forward_list<typename remove_cr<C>::type>::value
+    && !is_nc_lvalue_reference<C>::value
+  >::type* = 0)
 {
   lua_createtable(L, l.size(), 0);
 
@@ -448,9 +481,18 @@ inline void set_result(lua_State* const L,
   }
 }
 
+template <typename>
+struct is_std_list : std::false_type { };
+
 template <typename T, class Alloc>
-inline void set_result(lua_State* const L,
-  std::list<T, Alloc> const& l)
+struct is_std_list<std::forward_list<T, Alloc> > : std::true_type {};
+
+template <typename C>
+inline void set_result(lua_State* const L, C && l,
+  typename std::enable_if<
+    is_std_list<typename remove_cr<C>::type>::value
+    && !is_nc_lvalue_reference<C>::value
+  >::type* = 0)
 {
   lua_createtable(L, l.size(), 0);
 
@@ -467,10 +509,18 @@ inline void set_result(lua_State* const L,
   }
 }
 
+template <typename>
+struct is_std_map : std::false_type { };
 
 template <class Key, class T, class Compare, class Alloc>
-inline void set_result(lua_State* const L,
-  std::map<Key, T, Compare, Alloc> const& m)
+struct is_std_map<std::map<Key, T, Compare, Alloc> > : std::true_type {};
+
+template <typename C>
+inline void set_result(lua_State* const L, C && m,
+  typename std::enable_if<
+    is_std_map<typename remove_cr<C>::type>::value
+    && !is_nc_lvalue_reference<C>::value
+  >::type* = 0)
 {
   lua_createtable(L, 0, m.size());
 
@@ -484,10 +534,20 @@ inline void set_result(lua_State* const L,
     lua_rawset(L, -3);
   }
 }
+
+template <typename>
+struct is_std_unordered_map : std::false_type { };
 
 template <class Key, class T, class Hash, class Pred, class Alloc>
-inline void set_result(lua_State* const L,
-  std::unordered_map<Key, T, Hash, Pred, Alloc> const& m)
+struct is_std_unordered_map<std::unordered_map<Key, T, Hash, Pred, Alloc> >
+  : std::true_type {};
+
+template <typename C>
+inline void set_result(lua_State* const L, C && m,
+  typename std::enable_if<
+    is_std_unordered_map<typename remove_cr<C>::type>::value
+    && !is_nc_lvalue_reference<C>::value
+  >::type* = 0)
 {
   lua_createtable(L, 0, m.size());
 
@@ -502,9 +562,18 @@ inline void set_result(lua_State* const L,
   }
 }
 
+template <typename>
+struct is_std_vector : std::false_type { };
+
 template <typename T, class Alloc>
-inline void set_result(lua_State* const L,
-  std::vector<T, Alloc> const& v)
+struct is_std_vector<std::vector<T, Alloc> > : std::true_type {};
+
+template <typename C>
+inline void set_result(lua_State* const L, C && v,
+  typename std::enable_if<
+    is_std_vector<typename remove_cr<C>::type>::value
+    && !is_nc_lvalue_reference<C>::value
+  >::type* = 0)
 {
   lua_createtable(L, v.size(), 0);
 
@@ -641,12 +710,6 @@ get_arg(lua_State* const L)
   return result;
 }
 
-template <typename>
-struct is_std_array : std::false_type { };
-
-template <typename T, std::size_t N>
-struct is_std_array<std::array<T, N> > : std::true_type {};
-
 template<int I, class C>
 inline typename std::enable_if<
   is_std_array<typename remove_cr<C>::type>::value
@@ -672,12 +735,6 @@ get_arg(lua_State* const L)
 
   return result;
 }
-
-template <typename>
-struct is_std_deque : std::false_type { };
-
-template <typename T, class Alloc>
-struct is_std_deque<std::deque<T, Alloc> > : std::true_type {};
 
 template <int I, class C>
 inline typename std::enable_if<
@@ -705,12 +762,6 @@ get_arg(lua_State* const L)
   return result;
 }
 
-template <typename>
-struct is_std_forward_list : std::false_type { };
-
-template <typename T, class Alloc>
-struct is_std_forward_list<std::forward_list<T, Alloc> > : std::true_type {};
-
 template <int I, class C>
 inline typename std::enable_if<
   is_std_forward_list<typename remove_cr<C>::type>::value
@@ -736,12 +787,6 @@ get_arg(lua_State* const L)
 
   return result;
 }
-
-template <typename>
-struct is_std_list : std::false_type { };
-
-template <typename T, class Alloc>
-struct is_std_list<std::forward_list<T, Alloc> > : std::true_type {};
 
 template <int I, class C>
 inline typename std::enable_if<
@@ -769,12 +814,6 @@ get_arg(lua_State* const L)
   return result;
 }
 
-template <typename>
-struct is_std_vector : std::false_type { };
-
-template <typename T, class Alloc>
-struct is_std_vector<std::vector<T, Alloc> > : std::true_type {};
-
 template <int I, class C>
 inline typename std::enable_if<
   is_std_vector<typename remove_cr<C>::type>::value
@@ -800,12 +839,6 @@ get_arg(lua_State* const L)
   return result;
 }
 
-template <typename>
-struct is_std_map : std::false_type { };
-
-template <class Key, class T, class Compare, class Alloc>
-struct is_std_map<std::map<Key, T, Compare, Alloc> > : std::true_type {};
-
 template <int I, class C>
 inline typename std::enable_if<
   is_std_map<typename remove_cr<C>::type>::value
@@ -830,13 +863,6 @@ get_arg(lua_State* const L)
 
   return result;
 }
-
-template <typename>
-struct is_std_unordered_map : std::false_type { };
-
-template <class Key, class T, class Hash, class Pred, class Alloc>
-struct is_std_unordered_map<std::unordered_map<Key, T, Hash, Pred, Alloc> >
-  : std::true_type {};
 
 template <int I, class C>
 inline typename std::enable_if<

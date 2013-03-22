@@ -106,7 +106,7 @@ struct testclass : testbase
     a_ = i;
   }
 
-  std::string const& test_array(std::array<int, 10> const& a)
+  std::string& test_array(std::array<int, 10> const& a)
   {
     std::cout << a[0] << std::endl;
     s_ = "blablabla";
