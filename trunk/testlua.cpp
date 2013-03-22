@@ -35,7 +35,7 @@ inline void set_result(lua_State* const L, point p)
 
 template <std::size_t I, typename T>
 inline typename std::enable_if<
-  std::is_same<point, T>::value, point>::type
+  std::is_same<T, point>::value, point>::type
 get_arg(lua_State* const L)
 {
   using namespace ::lualite::detail;
