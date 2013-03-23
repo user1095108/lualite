@@ -1447,6 +1447,12 @@ public:
   template <class R, class ...A>
   class_& metadef(char const* const name, R (C::*ptr_to_member)(A...))
   {
+    has_gc = has_gc || !std::strcmp("__gc", name);
+
+    has_index = has_index || !std::strcmp("__index", name);
+
+    has_newindex = has_newindex || !std::strcmp("__newindex", name);
+
     member_function(name, ptr_to_member);
     return *this;
   }
