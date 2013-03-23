@@ -1402,6 +1402,15 @@ public:
   }
 
   template <class ...A>
+  class_& constructor(char const* const name)
+  {
+    constructors_.emplace_back(std::make_pair(name,
+      detail::constructor_stub<1, C, A...>));
+
+    return *this;
+  }
+
+  template <class ...A>
   class_& inherits()
   {
     [](...){ }((
