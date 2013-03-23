@@ -1424,46 +1424,6 @@ public:
     return *this;
   }
 
-  template <std::size_t O = 2, class R, class ...A>
-  void member_function(char const* const name,
-    R (C::*ptr_to_member)(A...))
-  {
-    static detail::member_func_type mmi;
-
-    static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
-      "pointer size mismatch");
-
-    if (std::memcmp(&mmi, &ptr_to_member, sizeof(ptr_to_member)))
-    {
-      *static_cast<decltype(ptr_to_member)*>(static_cast<void*>(&mmi))
-        = ptr_to_member;
-
-      defs_.emplace_back(detail::member_info_type{ name,
-        detail::member_stub<&mmi, O, C, R, A...> });
-    }
-    // else do nothing
-  }
-
-  template <std::size_t O = 2, class R, class ...A>
-  void const_member_function(char const* const name,
-    R (C::*ptr_to_member)(A...) const)
-  {
-    static detail::member_func_type mmi;
-
-    static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
-      "pointer size mismatch");
-
-    if (std::memcmp(&mmi, &ptr_to_member, sizeof(ptr_to_member)))
-    {
-      *static_cast<decltype(ptr_to_member)*>(static_cast<void*>(&mmi))
-        = ptr_to_member;
-
-      defs_.emplace_back(detail::member_info_type{ name,
-        detail::member_stub<&mmi, O, C, R, A...> });
-    }
-    // else do nothing
-  }
-
   template <class R, class ...A>
   class_& def(char const* const name, R (C::*ptr_to_member)(A...))
   {
@@ -1595,6 +1555,46 @@ private:
     lua_pop(L, 1);
 
     assert(!lua_gettop(L));
+  }
+
+  template <std::size_t O = 2, class R, class ...A>
+  void member_function(char const* const name,
+    R (C::*ptr_to_member)(A...))
+  {
+    static detail::member_func_type mmi;
+
+    static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
+      "pointer size mismatch");
+
+    if (std::memcmp(&mmi, &ptr_to_member, sizeof(ptr_to_member)))
+    {
+      *static_cast<decltype(ptr_to_member)*>(static_cast<void*>(&mmi))
+        = ptr_to_member;
+
+      defs_.emplace_back(detail::member_info_type{ name,
+        detail::member_stub<&mmi, O, C, R, A...> });
+    }
+    // else do nothing
+  }
+
+  template <std::size_t O = 2, class R, class ...A>
+  void const_member_function(char const* const name,
+    R (C::*ptr_to_member)(A...) const)
+  {
+    static detail::member_func_type mmi;
+
+    static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
+      "pointer size mismatch");
+
+    if (std::memcmp(&mmi, &ptr_to_member, sizeof(ptr_to_member)))
+    {
+      *static_cast<decltype(ptr_to_member)*>(static_cast<void*>(&mmi))
+        = ptr_to_member;
+
+      defs_.emplace_back(detail::member_info_type{ name,
+        detail::member_stub<&mmi, O, C, R, A...> });
+    }
+    // else do nothing
   }
 
 private:
