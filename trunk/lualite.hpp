@@ -1395,10 +1395,7 @@ public:
   template <class ...A>
   class_& constructor()
   {
-    constructors_.emplace_back(std::make_pair("new",
-      detail::constructor_stub<1, C, A...>));
-
-    return *this;
+    return constructor<A...>("new");
   }
 
   template <class ...A>
@@ -1406,7 +1403,6 @@ public:
   {
     constructors_.emplace_back(std::make_pair(name,
       detail::constructor_stub<1, C, A...>));
-
     return *this;
   }
 
