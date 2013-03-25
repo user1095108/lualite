@@ -179,7 +179,7 @@ int default_getter(lua_State* const L)
 
   auto const i(
     as_const(lualite::class_<C>::getters_).find(lua_tostring(L, 2)));
-  return (lualite::class_<C>::getters_.cend() == i) ? 0 : (i->second)(L);
+  return lualite::class_<C>::getters_.cend() == i ? 0 : (i->second)(L);
 }
 
 template <class C>
