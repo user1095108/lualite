@@ -322,7 +322,7 @@ inline void set_result(lua_State* const L, T && v,
 template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
-    std::is_same<typename std::remove_reference<T>::type, bool>::value
+    std::is_same<typename remove_cr<T>::type, bool>::value
     && !is_nc_lvalue_reference<T>::value
   >::type* = 0)
 {
@@ -332,7 +332,7 @@ inline void set_result(lua_State* const L, T && v,
 template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
-    std::is_same<typename std::remove_reference<T>::type, char const*>::value
+    std::is_same<typename remove_cr<T>::type, char const*>::value
     && !is_nc_lvalue_reference<T>::value
   >::type* = 0)
 {
@@ -342,7 +342,7 @@ inline void set_result(lua_State* const L, T && v,
 template <typename T>
 inline void set_result(lua_State* const L, T && v,
   typename std::enable_if<
-    std::is_same<typename std::remove_reference<T>::type, void const*>::value
+    std::is_same<typename remove_cr<T>::type, void const*>::value
     && !is_nc_lvalue_reference<T>::value
   >::type* = 0)
 {
