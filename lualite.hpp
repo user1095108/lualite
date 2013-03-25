@@ -774,7 +774,6 @@ get_arg(lua_State* const L)
 
     lua_pop(L, 1);
   }
-
   return result;
 }
 
@@ -790,9 +789,7 @@ get_arg(lua_State* const L)
   typedef typename remove_cr<C>::type result_type;
   result_type result;
 
-  static decltype(lua_rawlen(L, I)) const end(0);
-
-  for (decltype(lua_rawlen(L, I)) i(lua_rawlen(L, I)); i != end; --i)
+  for (decltype(lua_rawlen(L, I)) i(lua_rawlen(L, I)); i; --i)
   {
     lua_rawgeti(L, I, i);
 
@@ -800,7 +797,6 @@ get_arg(lua_State* const L)
 
     lua_pop(L, 1);
   }
-
   return result;
 }
 
@@ -826,7 +822,6 @@ get_arg(lua_State* const L)
 
     lua_pop(L, 1);
   }
-
   return result;
 }
 
@@ -876,7 +871,6 @@ get_arg(lua_State* const L)
 
     lua_pop(L, 1);
   }
-
   return result;
 }
 
@@ -901,7 +895,6 @@ get_arg(lua_State* const L)
 
     lua_pop(L, 1);
   }
-
   return result;
 }
 
