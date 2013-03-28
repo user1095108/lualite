@@ -41,7 +41,7 @@
 
 #include <stdexcept>
 
-#include <string>
+#ifndef LUALITE_NO_STD_CONTAINERS
 
 #include <array>
 
@@ -53,15 +53,17 @@
 
 #include <map>
 
-#include <unordered_map>
-
-#include <unordered_map>
+#include <string>
 
 #include <utility>
 
-#include <vector>
+#endif // LUALITE_NO_STD_CONTAINERS
 
 #include <type_traits>
+
+#include <unordered_map>
+
+#include <vector>
 
 extern "C" {
 
@@ -391,6 +393,97 @@ inline void set_result(lua_State* const L, T && v,
   create_wrapper_table(L, &v);
 }
 
+
+
+template <int I, typename T>
+inline typename std::enable_if<
+  std::is_floating_point<typename remove_cr<T>::type>::value
+  && !is_nc_lvalue_reference<T>::value,
+  typename remove_cr<T>::type>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_isnumber(L, I));
+  return lua_tonumber(L, I);
+}
+
+template <int I, typename T>
+inline typename std::enable_if<
+  std::is_integral<typename remove_cr<T>::type>::value
+  && std::is_signed<typename remove_cr<T>::type>::value
+  && !is_nc_lvalue_reference<T>::value,
+  typename remove_cr<T>::type>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_isnumber(L, I));
+  return lua_tointeger(L, I);
+}
+
+template <int I, typename T>
+inline typename std::enable_if<
+  std::is_integral<typename remove_cr<T>::type>::value
+  && std::is_unsigned<typename remove_cr<T>::type>::value
+  && !is_nc_lvalue_reference<T>::value,
+  typename remove_cr<T>::type>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_isnumber(L, I));
+  return lua_tounsigned(L, I);
+}
+
+template <int I, typename T>
+inline typename std::enable_if<std::is_same<
+  typename remove_cr<T>::type, bool>::value
+  && !is_nc_lvalue_reference<T>::value,
+  typename remove_cr<T>::type>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_isboolean(L, I));
+  return lua_toboolean(L, I);
+}
+
+template <int I, typename T>
+inline typename std::enable_if<std::is_same<
+  typename remove_cr<T>::type, char const*>::value
+  && !is_nc_lvalue_reference<T>::value,
+  typename remove_cr<T>::type>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_isstring(L, I));
+  return lua_tostring(L, I);
+}
+
+template <int I, typename T>
+inline typename std::enable_if<
+  std::is_pointer<T>::value
+  && !std::is_same<typename remove_cr<T>::type, char const*>::value,
+  typename remove_cr<T>::type>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_islightuserdata(L, I));
+  return static_cast<T>(lua_touserdata(L, I));
+}
+
+template <int I, typename T>
+inline typename std::enable_if<is_nc_lvalue_reference<T>::value, T>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_islightuserdata(L, I));
+  return *static_cast<typename std::remove_reference<T>::type*>(
+    lua_touserdata(L, I));
+}
+
+#ifndef LUALITE_NO_STD_CONTAINERS
+
+template <typename T>
+inline void set_result(lua_State* const L, T && s,
+  typename std::enable_if<
+    std::is_same<typename remove_cr<T>::type, std::string>::value
+    && !is_nc_lvalue_reference<T>::value
+  >::type* = 0)
+{
+  lua_pushlstring(L, s.c_str(), s.size());
+}
+
 template <typename>
 struct is_std_pair : std::false_type { };
 
@@ -411,16 +504,6 @@ inline void set_result(lua_State* const L, C && p,
 
   set_result(L, p.second);
   rawsetfield(L, -2, "second");
-}
-
-template <typename T>
-inline void set_result(lua_State* const L, T && s,
-  typename std::enable_if<
-    std::is_same<typename remove_cr<T>::type, std::string>::value
-    && !is_nc_lvalue_reference<T>::value
-  >::type* = 0)
-{
-  lua_pushlstring(L, s.c_str(), s.size());
 }
 
 template <typename>
@@ -608,83 +691,6 @@ inline void set_result(lua_State* const L, C && v,
 
     lua_rawset(L, -3);
   }
-}
-
-template <int I, typename T>
-inline typename std::enable_if<
-  std::is_floating_point<typename remove_cr<T>::type>::value
-  && !is_nc_lvalue_reference<T>::value,
-  typename remove_cr<T>::type>::type
-get_arg(lua_State* const L)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tonumber(L, I);
-}
-
-template <int I, typename T>
-inline typename std::enable_if<
-  std::is_integral<typename remove_cr<T>::type>::value
-  && std::is_signed<typename remove_cr<T>::type>::value
-  && !is_nc_lvalue_reference<T>::value,
-  typename remove_cr<T>::type>::type
-get_arg(lua_State* const L)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tointeger(L, I);
-}
-
-template <int I, typename T>
-inline typename std::enable_if<
-  std::is_integral<typename remove_cr<T>::type>::value
-  && std::is_unsigned<typename remove_cr<T>::type>::value
-  && !is_nc_lvalue_reference<T>::value,
-  typename remove_cr<T>::type>::type
-get_arg(lua_State* const L)
-{
-  assert(lua_isnumber(L, I));
-  return lua_tounsigned(L, I);
-}
-
-template <int I, typename T>
-inline typename std::enable_if<std::is_same<
-  typename remove_cr<T>::type, bool>::value
-  && !is_nc_lvalue_reference<T>::value,
-  typename remove_cr<T>::type>::type
-get_arg(lua_State* const L)
-{
-  assert(lua_isboolean(L, I));
-  return lua_toboolean(L, I);
-}
-
-template <int I, typename T>
-inline typename std::enable_if<std::is_same<
-  typename remove_cr<T>::type, char const*>::value
-  && !is_nc_lvalue_reference<T>::value,
-  typename remove_cr<T>::type>::type
-get_arg(lua_State* const L)
-{
-  assert(lua_isstring(L, I));
-  return lua_tostring(L, I);
-}
-
-template <int I, typename T>
-inline typename std::enable_if<
-  std::is_pointer<T>::value
-  && !std::is_same<typename remove_cr<T>::type, char const*>::value,
-  typename remove_cr<T>::type>::type
-get_arg(lua_State* const L)
-{
-  assert(lua_islightuserdata(L, I));
-  return static_cast<T>(lua_touserdata(L, I));
-}
-
-template <int I, typename T>
-inline typename std::enable_if<is_nc_lvalue_reference<T>::value, T>::type
-get_arg(lua_State* const L)
-{
-  assert(lua_islightuserdata(L, I));
-  return *static_cast<typename std::remove_reference<T>::type*>(
-    lua_touserdata(L, I));
 }
 
 template <int I, class C>
@@ -897,6 +903,8 @@ get_arg(lua_State* const L)
   }
   return result;
 }
+
+#endif // LUALITE_NO_STD_CONTAINERS
 
 template <class C>
 int default_finalizer(lua_State* const L)
