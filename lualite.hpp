@@ -53,6 +53,8 @@
 
 #include <string>
 
+#include <tuple>
+
 #include <utility>
 
 #endif // LUALITE_NO_STD_CONTAINERS
@@ -516,6 +518,12 @@ struct is_std_unordered_map<std::unordered_map<Key, T, Hash, Pred, Alloc> >
   : std::true_type { };
 
 template <typename>
+struct is_std_tuple : std::false_type { };
+
+template <class ...Types>
+struct is_std_tuple<std::tuple<Types...> > : std::true_type { };
+
+template <typename>
 struct is_std_vector : std::false_type { };
 
 template <typename T, class Alloc>
@@ -545,6 +553,28 @@ inline void set_result(lua_State* const L, C && p,
 
   set_result(L, p.second);
   rawsetfield(L, -2, "second");
+}
+
+template <typename ...Types, std::size_t ...I>
+inline void set_tuple_result(lua_State* const L,
+  std::tuple<Types...> const& t, indices<I...>)
+{
+  lua_createtable(L, sizeof...(I), 0);
+
+  [](...){ }((lua_pushunsigned(L, I), set_result(std::get<I>(t)),
+    lua_rawset(L, -3), 0)...);
+}
+
+template <typename C>
+inline void set_result(lua_State* const L, C && t,
+  typename std::enable_if<
+    is_std_tuple<typename remove_cr<C>::type>::value
+    && !is_nc_lvalue_reference<C>::value
+  >::type* = 0)
+{
+  typedef typename make_indices<std::tuple_size<C>::value>::type indices_type;
+
+  set_tuple_result(t, indices_type());
 }
 
 template <typename C>
@@ -1413,11 +1443,11 @@ public:
       inherited_.inherited_metadefs.push_back(&class_<A>::metadefs_),
       0)...);
 
-    [](decltype(getters_) const& g)
-    { for (auto& a: g) getters_.insert(a); }(class_<A>::getters_...);
+    [](...){ }((getters_.insert(class_<A>::getters_.cbegin(),
+      class_<A>::getters_.cend()), 0)...);
 
-    [](decltype(setters_) const& s)
-    { for (auto& a: s) setters_.insert(a); }(class_<A>::setters_...);
+    [](...){ }((setters_.insert(class_<A>::setters_.cbegin(),
+      class_<A>::setters_.cend()), 0)...);
     return *this;
   }
 
