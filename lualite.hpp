@@ -573,6 +573,7 @@ inline void set_result(lua_State* const L, C && t,
   typedef typename make_indices<std::tuple_size<C>::value>::type indices_type;
 
   lua_createtable(L, std::tuple_size<C>::value, 0);
+
   set_tuple_result(L, t, indices_type());
 }
 
