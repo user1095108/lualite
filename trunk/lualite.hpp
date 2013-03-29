@@ -559,8 +559,6 @@ template <typename ...Types, std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
   std::tuple<Types...> const& t, indices<I...>)
 {
-  lua_createtable(L, sizeof...(I), 0);
-
   [](...){ }((lua_pushunsigned(L, I), set_result(std::get<I>(t)),
     lua_rawset(L, -3), 0)...);
 }
@@ -574,7 +572,9 @@ inline void set_result(lua_State* const L, C && t,
 {
   typedef typename make_indices<std::tuple_size<C>::value>::type indices_type;
 
-  set_tuple_result(t, indices_type());
+  lua_createtable(L, std::tuple_size<C>::value, 0);
+
+  set_tuple_result(L, t, indices_type());
 }
 
 template <typename C>
