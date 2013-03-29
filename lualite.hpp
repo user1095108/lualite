@@ -472,6 +472,55 @@ get_arg(lua_State* const L)
 
 #ifndef LUALITE_NO_STD_CONTAINERS
 
+template <typename>
+struct is_std_pair : std::false_type { };
+
+template <class T1, class T2>
+struct is_std_pair<std::pair<T1, T2> > : std::true_type { };
+
+template <typename>
+struct is_std_array : std::false_type { };
+
+template <typename T, std::size_t N>
+struct is_std_array<std::array<T, N> > : std::true_type { };
+
+template <typename>
+struct is_std_deque : std::false_type { };
+
+template <typename T, class Alloc>
+struct is_std_deque<std::deque<T, Alloc> > : std::true_type { };
+
+template <typename>
+struct is_std_forward_list : std::false_type { };
+
+template <typename T, class Alloc>
+struct is_std_forward_list<std::forward_list<T, Alloc> > : std::true_type { };
+
+template <typename>
+struct is_std_list : std::false_type { };
+
+template <typename T, class Alloc>
+struct is_std_list<std::forward_list<T, Alloc> > : std::true_type { };
+
+template <typename>
+struct is_std_map : std::false_type { };
+
+template <class Key, class T, class Compare, class Alloc>
+struct is_std_map<std::map<Key, T, Compare, Alloc> > : std::true_type { };
+
+template <typename>
+struct is_std_unordered_map : std::false_type { };
+
+template <class Key, class T, class Hash, class Pred, class Alloc>
+struct is_std_unordered_map<std::unordered_map<Key, T, Hash, Pred, Alloc> >
+  : std::true_type { };
+
+template <typename>
+struct is_std_vector : std::false_type { };
+
+template <typename T, class Alloc>
+struct is_std_vector<std::vector<T, Alloc> > : std::true_type { };
+
 template <typename T>
 inline void set_result(lua_State* const L, T && s,
   typename std::enable_if<
@@ -481,12 +530,6 @@ inline void set_result(lua_State* const L, T && s,
 {
   lua_pushlstring(L, s.c_str(), s.size());
 }
-
-template <typename>
-struct is_std_pair : std::false_type { };
-
-template <class T1, class T2>
-struct is_std_pair<std::pair<T1, T2> > : std::true_type {};
 
 template <typename C>
 inline void set_result(lua_State* const L, C && p,
@@ -503,12 +546,6 @@ inline void set_result(lua_State* const L, C && p,
   set_result(L, p.second);
   rawsetfield(L, -2, "second");
 }
-
-template <typename>
-struct is_std_array : std::false_type { };
-
-template <typename T, std::size_t N>
-struct is_std_array<std::array<T, N> > : std::true_type {};
 
 template <typename C>
 inline void set_result(lua_State* const L, C && a,
@@ -530,12 +567,6 @@ inline void set_result(lua_State* const L, C && a,
   }
 }
 
-template <typename>
-struct is_std_deque : std::false_type { };
-
-template <typename T, class Alloc>
-struct is_std_deque<std::deque<T, Alloc> > : std::true_type {};
-
 template <typename C>
 inline void set_result(lua_State* const L, C && d,
   typename std::enable_if<
@@ -555,12 +586,6 @@ inline void set_result(lua_State* const L, C && d,
     lua_rawset(L, -3);
   }
 }
-
-template <typename>
-struct is_std_forward_list : std::false_type { };
-
-template <typename T, class Alloc>
-struct is_std_forward_list<std::forward_list<T, Alloc> > : std::true_type {};
 
 template <typename C>
 inline void set_result(lua_State* const L, C && l,
@@ -584,12 +609,6 @@ inline void set_result(lua_State* const L, C && l,
   }
 }
 
-template <typename>
-struct is_std_list : std::false_type { };
-
-template <typename T, class Alloc>
-struct is_std_list<std::forward_list<T, Alloc> > : std::true_type {};
-
 template <typename C>
 inline void set_result(lua_State* const L, C && l,
   typename std::enable_if<
@@ -612,12 +631,6 @@ inline void set_result(lua_State* const L, C && l,
   }
 }
 
-template <typename>
-struct is_std_map : std::false_type { };
-
-template <class Key, class T, class Compare, class Alloc>
-struct is_std_map<std::map<Key, T, Compare, Alloc> > : std::true_type {};
-
 template <typename C>
 inline void set_result(lua_State* const L, C && m,
   typename std::enable_if<
@@ -638,13 +651,6 @@ inline void set_result(lua_State* const L, C && m,
   }
 }
 
-template <typename>
-struct is_std_unordered_map : std::false_type { };
-
-template <class Key, class T, class Hash, class Pred, class Alloc>
-struct is_std_unordered_map<std::unordered_map<Key, T, Hash, Pred, Alloc> >
-  : std::true_type {};
-
 template <typename C>
 inline void set_result(lua_State* const L, C && m,
   typename std::enable_if<
@@ -664,12 +670,6 @@ inline void set_result(lua_State* const L, C && m,
     lua_rawset(L, -3);
   }
 }
-
-template <typename>
-struct is_std_vector : std::false_type { };
-
-template <typename T, class Alloc>
-struct is_std_vector<std::vector<T, Alloc> > : std::true_type {};
 
 template <typename C>
 inline void set_result(lua_State* const L, C && v,
