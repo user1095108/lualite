@@ -549,18 +549,17 @@ inline void set_result(lua_State* const L, C && p,
   lua_createtable(L, 0, 2);
 
   set_result(L, p.first);
-  rawsetfield(L, -2, "first");
+  lua_rawseti(L, -2, 1);
 
   set_result(L, p.second);
-  rawsetfield(L, -2, "second");
+  lua_rawseti(L, -2, 2);
 }
 
 template <typename ...Types, std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
   std::tuple<Types...> const& t, indices<I...>)
 {
-  [](...){ }((lua_pushunsigned(L, I + 1), set_result(std::get<I>(t)),
-    lua_rawset(L, -3), 0)...);
+  [](...){ }((set_result(std::get<I>(t)), lua_rawseti(L, -2, I + 1), 0)...);
 }
 
 template <typename C>
@@ -590,10 +589,9 @@ inline void set_result(lua_State* const L, C && a,
 
   for (auto i(a.cbegin()); i != end; ++i)
   {
-    lua_pushunsigned(L, i - a.cbegin() + 1);
     set_result(L, *i);
 
-    lua_rawset(L, -3);
+    lua_rawseti(L, -2, i - a.cbegin() + 1);
   }
 }
 
@@ -610,10 +608,9 @@ inline void set_result(lua_State* const L, C && d,
 
   for (auto i(d.cbegin()); i != end; ++i)
   {
-    lua_pushunsigned(L, i - d.cbegin() + 1);
     set_result(L, *i);
 
-    lua_rawset(L, -3);
+    lua_rawset(L, -2, i - d.cbegin() + 1);
   }
 }
 
@@ -632,10 +629,9 @@ inline void set_result(lua_State* const L, C && l,
 
   for (auto i(l.cbegin()); i != end; ++i, ++j)
   {
-    lua_pushunsigned(L, j);
     set_result(L, *i);
 
-    lua_rawset(L, -3);
+    lua_rawseti(L, -2, j);
   }
 }
 
@@ -654,10 +650,9 @@ inline void set_result(lua_State* const L, C && l,
 
   for (auto i(l.cbegin()); i != end; ++i, ++j)
   {
-    lua_pushunsigned(L, j);
     set_result(L, *i);
 
-    lua_rawset(L, -3);
+    lua_rawseti(L, -2, j);
   }
 }
 
@@ -714,10 +709,9 @@ inline void set_result(lua_State* const L, C && v,
 
   for (auto i(v.cbegin()); i != end; ++i)
   {
-    lua_pushunsigned(L, i - v.cbegin() + 1);
     set_result(L, *i);
 
-    lua_rawset(L, -3);
+    lua_rawseti(L, -2, i - v.cbegin() + 1);
   }
 }
 
@@ -749,13 +743,11 @@ get_arg(lua_State* const L)
   typedef typename remove_cr<C>::type result_type;
   result_type result;
 
-  rawgetfield(L, -1, "first");
+  lua_rawgeti(L, -1, 1);
   result.first = get_arg<I + 1, decltype(result.first)>(L);
-  lua_pop(L, 1);
 
-  rawgetfield(L, -1, "second");
+  lua_rawgeti(L, -2, 2);
   result.second = get_arg<I + 1, decltype(result.second)>(L);
-  lua_pop(L, 1);
 
   return result;
 }
