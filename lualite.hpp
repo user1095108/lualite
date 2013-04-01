@@ -39,6 +39,12 @@
 
 #include <stdexcept>
 
+#include <type_traits>
+
+#include <unordered_map>
+
+#include <vector>
+
 #ifndef LUALITE_NO_STD_CONTAINERS
 
 #include <array>
@@ -58,12 +64,6 @@
 #include <utility>
 
 #endif // LUALITE_NO_STD_CONTAINERS
-
-#include <type_traits>
-
-#include <unordered_map>
-
-#include <vector>
 
 extern "C" {
 
@@ -179,8 +179,9 @@ int default_getter(lua_State* const L)
 {
   assert(2 == lua_gettop(L));
 
-  auto const i(
-    as_const(lualite::class_<C>::getters_).find(lua_tostring(L, 2)));
+  auto const i(as_const(lualite::class_<C>::getters_)
+    .find(lua_tostring(L, 2)));
+
   return lualite::class_<C>::getters_.cend() == i ? 0 : (i->second)(L);
 }
 
@@ -392,8 +393,6 @@ inline void set_result(lua_State* const L, T && v,
 {
   create_wrapper_table(L, &v);
 }
-
-
 
 template <int I, typename T>
 inline typename std::enable_if<
