@@ -16,7 +16,7 @@ struct point
   int y;
 };
 
-inline void set_result(lua_State* const L, point p)
+inline int set_result(lua_State* const L, point p)
 {
   using namespace ::lualite::detail;
 
@@ -31,6 +31,8 @@ inline void set_result(lua_State* const L, point p)
   set_result(L, const_cast<decltype(p.y) const&>(p.y));
   assert(lua_istable(L, -3));
   lua_rawset(L, -3);
+
+  return 1;
 }
 
 template <std::size_t I, typename T>
@@ -175,8 +177,8 @@ int main(int argc, char* argv[])
     "print(b.a)\n"
     "b:reference().a = 888\n"
     "print(b.a .. \" \" .. b:dummy(\"test\"))\n"
-    "local tmp = b:pointer():print(100)\n"
-    "print(tmp[1] .. \" \" .. tmp[2])\n"
+    "local tmp1, tmp2 = b:pointer():print(100)\n"
+    "print(tmp1 .. \" \" .. tmp2)\n"
     "b:reference():print_(\"msg1\")\n"
     "local a = subscope.testclass.new(1111)\n"
     "print(subscope.testclass.smell)\n"
