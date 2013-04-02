@@ -758,7 +758,7 @@ inline C get_tuple_arg(lua_State* const L, indices<I...>)
   
   [](...){ }((lua_rawgeti(L, O, I + 1),
     std::get<I>(result) = get_arg<O + 1,
-      typename std::tuple_element<I, C>::type >(L),
+      typename std::tuple_element<I, C>::type>(L),
     lua_pop(L, 1),
     0)...);
 
