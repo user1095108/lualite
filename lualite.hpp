@@ -140,16 +140,16 @@ struct indices
   typedef indices<Ns..., sizeof...(Ns)> next;
 };
 
-template<>
-struct make_indices<0>
-{
-  typedef indices<> type;
-};
-
 template <std::size_t N>
 struct make_indices
 {
   typedef typename make_indices<N - 1>::type::next type;
+};
+
+template<>
+struct make_indices<0>
+{
+  typedef indices<> type;
 };
 
 typedef std::vector<std::pair<char const*, int> > enum_info_type;
