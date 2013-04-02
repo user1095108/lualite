@@ -751,14 +751,18 @@ get_arg(lua_State* const L)
   return result;
 }
 
-template <std::size_t O, typename ...Types, std::size_t ...I>
-inline void get_tuple_arg(lua_State* const L, std::tuple<Types...>& t,
-  indices<I...>)
+template <std::size_t O, class C, std::size_t ...I>
+inline C get_tuple_arg(lua_State* const L, indices<I...>)
 {
+  C result;
+  
   [](...){ }((lua_rawgeti(L, O, I + 1),
-    std::get<I>(t) = get_arg<O + 1, Types>(L),
+    std::get<I>(result) = get_arg<O + 1,
+      typename std::tuple_element<I, C>::type >(L),
     lua_pop(L, 1),
     0)...);
+
+  return result;
 }
 
 template <int I, class C>
@@ -771,13 +775,11 @@ get_arg(lua_State* const L)
   assert(lua_istable(L, I));
 
   typedef typename remove_cr<C>::type result_type;
-  result_type result;
 
-  typedef typename make_indices<std::tuple_size<C>::value>::type indices_type;
+  typedef typename make_indices<std::tuple_size<result_type>::value>::type
+    indices_type;
 
-  get_tuple_arg<I>(L, result, indices_type());
-
-  return result;
+  return get_tuple_arg<I, result_type>(L, indices_type());
 }
 
 template<int I, class C>
