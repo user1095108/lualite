@@ -91,9 +91,11 @@ struct testclass : testbase
     return std::vector<std::string>(10, "bla!!!");
   }
 
-  void print(int i)
+  std::tuple<int, std::string> print(int i)
   {
     std::cout << i << std::endl;
+
+    return std::make_tuple(9, "huh?");
   }
 
   int const& a()
@@ -143,7 +145,7 @@ int main(int argc, char* argv[])
       .constructor<int>()
       .inherits<testbase>()
       .enum_("smell", 9)
-      .def("print", (void (testclass::*)(int))&testclass::print)
+      .def("print", (std::tuple<int, std::string> (testclass::*)(int))&testclass::print)
       .def("print_", (std::vector<std::string> (testclass::*)(std::string) const)&testclass::print)
       .def("pointer", &testclass::pointer)
       .def("reference", &testclass::reference)
@@ -154,7 +156,7 @@ int main(int argc, char* argv[])
         .constructor<int>()
         .enum_("smell", 10)
         .def("testfunc", &testfunc)
-        .def("print", (void (testclass::*)(int))&testclass::print)
+        .def("print", (std::tuple<int, std::string> (testclass::*)(int))&testclass::print)
         .def("print_", (std::vector<std::string> (testclass::*)(std::string) const)&testclass::print)
     )
   )
@@ -173,7 +175,8 @@ int main(int argc, char* argv[])
     "print(b.a)\n"
     "b:reference().a = 888\n"
     "print(b.a .. \" \" .. b:dummy(\"test\"))\n"
-    "b:pointer():print(100)\n"
+    "local tmp = b:pointer():print(100)\n"
+    "print(tmp[1] .. \" \" .. tmp[2])\n"
     "b:reference():print_(\"msg1\")\n"
     "local a = subscope.testclass.new(1111)\n"
     "print(subscope.testclass.smell)\n"
