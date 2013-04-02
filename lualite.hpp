@@ -558,7 +558,9 @@ template <typename ...Types, std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
   std::tuple<Types...> const& t, indices<I...>)
 {
-  [](...){ }((set_result(std::get<I>(t)), lua_rawseti(L, -2, I + 1), 0)...);
+  [](...){ }((set_result(L, std::get<I>(t)),
+    lua_rawseti(L, -2, I + 1),
+    0)...);
 }
 
 template <typename C>
