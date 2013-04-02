@@ -750,6 +750,8 @@ get_arg(lua_State* const L)
   lua_rawgeti(L, -2, 2);
   result.second = get_arg<I + 1, decltype(result.second)>(L);
 
+  lua_pop(L, 2);
+
   return result;
 }
 
