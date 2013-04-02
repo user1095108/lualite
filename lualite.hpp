@@ -140,16 +140,16 @@ struct indices
   typedef indices<Ns..., sizeof...(Ns)> next;
 };
 
-template <std::size_t N>
-struct make_indices
-{
-  typedef typename make_indices<N - 1>::type::next type;
-};
-
 template<>
 struct make_indices<0>
 {
   typedef indices<> type;
+};
+
+template <std::size_t N>
+struct make_indices
+{
+  typedef typename make_indices<N - 1>::type::next type;
 };
 
 typedef std::vector<std::pair<char const*, int> > enum_info_type;
@@ -793,10 +793,8 @@ inline C get_tuple_arg(lua_State* const L, indices<I...>)
 {
   C result;
   
-  [](...){ }((lua_rawgeti(L, O, I + 1),
-    std::get<I>(result) = get_arg<O + 1,
-      typename std::tuple_element<I, C>::type>(L),
-    lua_pop(L, 1),
+  [](...){ }((std::get<I>(result) = get_arg<O + 1,
+    typename std::tuple_element<I, C>::type>(L),
     0)...);
 
   return result;
@@ -809,8 +807,6 @@ inline typename std::enable_if<
   typename remove_cr<C>::type>::type
 get_arg(lua_State* const L)
 {
-  assert(lua_istable(L, I));
-
   typedef typename remove_cr<C>::type result_type;
 
   typedef typename make_indices<std::tuple_size<result_type>::value>::type
