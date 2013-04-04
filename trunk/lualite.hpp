@@ -36,7 +36,7 @@
 #include <cassert>
 
 #include <cstring>
-
+ 
 #include <stdexcept>
 
 #include <type_traits>
@@ -1384,6 +1384,8 @@ protected:
   }
 
 protected:
+  detail::func_info_type functions_;
+
   char const* const name_;
 
   scope* parent_scope_;
@@ -1394,8 +1396,6 @@ private:
   bool scope_create_;
 
   detail::enum_info_type enums_;
-
-  detail::func_info_type functions_;
 
   scope* next_;
 };
