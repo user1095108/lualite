@@ -1485,24 +1485,13 @@ public:
   {
   }
 
-  class_& constructor()
-  {
-    return constructor<>();
-  }
-
-  class_& constructor(char const* const name)
+  class_& constructor(char const* const name = "new")
   {
     return constructor<>(name);
   }
 
   template <class ...A>
-  class_& constructor()
-  {
-    return constructor<A...>("new");
-  }
-
-  template <class ...A>
-  class_& constructor(char const* const name)
+  class_& constructor(char const* const name = "new")
   {
     constructors_.emplace_back(std::make_pair(name,
       detail::constructor_stub<1, C, A...>));
