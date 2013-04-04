@@ -144,6 +144,7 @@ int main(int argc, char* argv[])
     lualite::class_<testbase>("testbase")
       .def("dummy", &testbase::dummy),
     lualite::class_<testclass>("testclass")
+      .constructor<>("defaultNew")
       .constructor<int>()
       .inherits<testbase>()
       .enum_("smell", 9)
@@ -155,6 +156,7 @@ int main(int argc, char* argv[])
       .def("test_array", &testclass::test_array),
     lualite::scope("subscope",
       lualite::class_<testclass>("testclass")
+        .constructor<>("defaultNew")
         .constructor<int>()
         .enum_("smell", 10)
         .def("testfunc", &testfunc)
@@ -172,7 +174,7 @@ int main(int argc, char* argv[])
     "print(apple)\n"
     "print(testclass.__classname)\n"
     "print(testclass.smell)\n"
-    "local b = testclass.new(1000)\n"
+    "local b = testclass.defaultNew()\n"
     "print(\"---\")\n"
     "print(b.a)\n"
     "b:reference().a = 888\n"
