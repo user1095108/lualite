@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
     lualite::class_<testbase>("testbase")
       .def("dummy", &testbase::dummy),
     lualite::class_<testclass>("testclass")
-      .constructor<>("defaultNew")
+      .constructor("defaultNew")
       .constructor<int>()
       .inherits<testbase>()
       .enum_("smell", 9)

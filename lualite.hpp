@@ -1485,6 +1485,11 @@ public:
   {
   }
 
+  class_& constructor(char const* const name)
+  {
+    return constructor<>(name);
+  }
+
   template <class ...A>
   class_& constructor()
   {
