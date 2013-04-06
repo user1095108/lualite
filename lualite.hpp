@@ -36,7 +36,7 @@
 #include <cassert>
 
 #include <cstring>
- 
+
 #include <stdexcept>
 
 #include <type_traits>
@@ -154,14 +154,9 @@ struct make_indices<0>
 
 typedef std::vector<std::pair<char const*, int> > enum_info_type;
 
-struct member_info_type
-{
-  char const* name;
+typedef std::pair<char const*, lua_CFunction> func_info_type;
 
-  lua_CFunction func;
-};
-
-typedef std::vector<std::pair<char const*, lua_CFunction> > func_info_type;
+typedef func_info_type member_info_type;
 
 void dummy();
 
@@ -213,9 +208,9 @@ inline void create_wrapper_table(lua_State* const L, D* instance)
       assert(lua_istable(L, -1));
 
       lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi.func, 1);
+      lua_pushcclosure(L, mi.second, 1);
 
-      rawsetfield(L, -2, mi.name);
+      rawsetfield(L, -2, mi.first);
     }
   }
 
@@ -224,9 +219,9 @@ inline void create_wrapper_table(lua_State* const L, D* instance)
     assert(lua_istable(L, -1));
 
     lua_pushlightuserdata(L, instance);
-    lua_pushcclosure(L, mi.func, 1);
+    lua_pushcclosure(L, mi.second, 1);
 
-    rawsetfield(L, -2, mi.name);
+    rawsetfield(L, -2, mi.first);
   }
 
   // instance
@@ -245,9 +240,9 @@ inline void create_wrapper_table(lua_State* const L, D* instance)
       assert(lua_istable(L, -1));
 
       lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi.func, 1);
+      lua_pushcclosure(L, mi.second, 1);
 
-      rawsetfield(L, -2, mi.name);
+      rawsetfield(L, -2, mi.first);
     }
   }
 
@@ -255,12 +250,12 @@ inline void create_wrapper_table(lua_State* const L, D* instance)
   {
     assert(lua_istable(L, -1));
 
-    if (std::strcmp("__gc", mi.name))
+    if (std::strcmp("__gc", mi.first))
     {
       lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi.func, 1);
+      lua_pushcclosure(L, mi.second, 1);
 
-      rawsetfield(L, -2, mi.name);
+      rawsetfield(L, -2, mi.first);
     }
     // else do nothing
   }
@@ -1032,9 +1027,9 @@ int constructor_stub(lua_State* const L)
       assert(lua_istable(L, -1));
 
       lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi.func, 1);
+      lua_pushcclosure(L, mi.second, 1);
     
-      rawsetfield(L, -2, mi.name);
+      rawsetfield(L, -2, mi.first);
     }
   }
 
@@ -1043,9 +1038,9 @@ int constructor_stub(lua_State* const L)
     assert(lua_istable(L, -1));
 
     lua_pushlightuserdata(L, instance);
-    lua_pushcclosure(L, mi.func, 1);
+    lua_pushcclosure(L, mi.second, 1);
   
-    rawsetfield(L, -2, mi.name);
+    rawsetfield(L, -2, mi.first);
   }
 
   // instance
@@ -1064,9 +1059,9 @@ int constructor_stub(lua_State* const L)
       assert(lua_istable(L, -1));
 
       lua_pushlightuserdata(L, instance);
-      lua_pushcclosure(L, mi.func, 1);
+      lua_pushcclosure(L, mi.second, 1);
     
-      rawsetfield(L, -2, mi.name);
+      rawsetfield(L, -2, mi.first);
     }
   }
 
@@ -1075,9 +1070,9 @@ int constructor_stub(lua_State* const L)
     assert(lua_istable(L, -1));
 
     lua_pushlightuserdata(L, instance);
-    lua_pushcclosure(L, mi.func, 1);
+    lua_pushcclosure(L, mi.second, 1);
   
-    rawsetfield(L, -2, mi.name);
+    rawsetfield(L, -2, mi.first);
   }
 
   if (!lualite::class_<C>::has_gc)
@@ -1384,7 +1379,7 @@ protected:
   }
 
 protected:
-  detail::func_info_type functions_;
+  std::vector<detail::func_info_type> functions_;
 
   char const* const name_;
 
@@ -1720,7 +1715,7 @@ private:
   static bool has_index;
   static bool has_newindex;
 
-  static detail::func_info_type constructors_;
+  static std::vector<detail::func_info_type> constructors_;
 
   static std::vector<detail::member_info_type> defs_;
 
@@ -1752,7 +1747,7 @@ template <class C>
 bool class_<C>::has_newindex;
 
 template <class C>
-detail::func_info_type class_<C>::constructors_;
+std::vector<detail::func_info_type> class_<C>::constructors_;
 
 template <class C>
 struct class_<C>::inherited_info class_<C>::inherited_;
