@@ -636,7 +636,7 @@ inline int set_result(lua_State* const L, C && l,
 {
   lua_createtable(L, l.size(), 0);
 
-  std::size_t j(1);
+  auto j(typename remove_cr<C>::type::size_type(1));
 
   auto const end(l.cend());
 
@@ -659,7 +659,7 @@ inline int set_result(lua_State* const L, C && l,
 {
   lua_createtable(L, l.size(), 0);
 
-  std::size_t j(1);
+  auto j(typename remove_cr<C>::type::size_type(1));
 
   auto const end(l.cend());
 
@@ -991,6 +991,7 @@ template <class C>
 int default_finalizer(lua_State* const L)
 {
   delete static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1)));
+
   return 0;
 }
 
@@ -1098,6 +1099,7 @@ int constructor_stub(lua_State* const L)
 
   assert(lua_istable(L, -2));
   lua_setmetatable(L, -2);
+
   return 1;
 }
 
@@ -1119,6 +1121,7 @@ func_stub(lua_State* const L)
     *static_cast<ptr_to_func_type const*>(
       static_cast<void const*>(fmi_ptr)),
     make_indices<sizeof...(A)>());
+
   return 0;
 }
 
@@ -1135,7 +1138,6 @@ func_stub(lua_State* const L)
       static_cast<void const*>(fmi_ptr)),
     make_indices<sizeof...(A)>()));
 }
-
 
 template <std::size_t O, typename C, typename R,
   typename ...A, std::size_t ...I>
