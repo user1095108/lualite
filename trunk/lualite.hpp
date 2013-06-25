@@ -636,9 +636,9 @@ inline int set_result(lua_State* const L, C && l,
 {
   lua_createtable(L, l.size(), 0);
 
-  auto j(typename remove_cr<C>::type::size_type(1));
-
   auto const end(l.cend());
+
+  auto j(typename remove_cr<C>::type::size_type(1));
 
   for (auto i(l.cbegin()); i != end; ++i, ++j)
   {
@@ -659,9 +659,9 @@ inline int set_result(lua_State* const L, C && l,
 {
   lua_createtable(L, l.size(), 0);
 
-  auto j(typename remove_cr<C>::type::size_type(1));
-
   auto const end(l.cend());
+
+  auto j(typename remove_cr<C>::type::size_type(1));
 
   for (auto i(l.cbegin()); i != end; ++i, ++j)
   {
@@ -751,7 +751,7 @@ get_arg(lua_State* const L)
 
   char const* const val(lua_tolstring(L, I, &len));
 
-  return std::string(val, len);
+  return { val, len };
 }
 
 template<int I, class C>
