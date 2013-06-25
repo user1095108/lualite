@@ -570,7 +570,7 @@ inline int set_result(lua_State* const L, C && p,
 
 template <typename ...Types, std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
-  std::tuple<Types...> const& t, indices<I...>)
+  std::tuple<Types...> const& t, indices<I...> const)
 {
   [](...){ }((set_result(L, std::get<I>(t)), 0)...);
 }
@@ -784,7 +784,7 @@ get_arg(lua_State* const L)
 }
 
 template <std::size_t O, class C, std::size_t ...I>
-inline C get_tuple_arg(lua_State* const L, indices<I...>)
+inline C get_tuple_arg(lua_State* const L, indices<I...> const)
 {
   C result;
   
@@ -1003,7 +1003,7 @@ int default_finalizer(lua_State* const L)
 }
 
 template <std::size_t O, typename C, typename ...A, std::size_t ...I>
-inline C* forward(lua_State* const L, indices<I...>)
+inline C* forward(lua_State* const L, indices<I...> const)
 {
   return new C(get_arg<I + O, A>(L)...);
 }
@@ -1112,7 +1112,7 @@ int constructor_stub(lua_State* const L)
 }
 
 template <std::size_t O, typename R, typename ...A, std::size_t ...I>
-inline R forward(lua_State* const L, R (*f)(A...), indices<I...>)
+inline R forward(lua_State* const L, R (*f)(A...), indices<I...> const)
 {
   return (*f)(get_arg<I + O, A>(L)...);
 }
@@ -1154,7 +1154,7 @@ func_stub(lua_State* const L)
 template <std::size_t O, typename C, typename R,
   typename ...A, std::size_t ...I>
 inline R forward(lua_State* const L, C* c,
-  R (C::*ptr_to_member)(A...), indices<I...>)
+  R (C::*ptr_to_member)(A...), indices<I...> const)
 {
   return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
 }
