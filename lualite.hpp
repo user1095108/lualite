@@ -134,22 +134,18 @@ struct unordered_hash
   }
 };
 
-template <std::size_t ...Ns>
-struct indices
+template <std::size_t...> struct indices
 {
-  typedef indices<Ns..., sizeof...(Ns)> next;
 };
 
-template <std::size_t N>
-struct make_indices
+template <std::size_t M, std::size_t... Is>
+struct make_indices : make_indices<M - 1, M - 1, Is...>
 {
-  typedef typename make_indices<N - 1>::type::next type;
 };
 
-template<>
-struct make_indices<0>
+template <std::size_t... Is>
+struct make_indices<0, Is...> : indices<Is...>
 {
-  typedef indices<> type;
 };
 
 typedef std::vector<std::pair<char const*, int> > enum_info_type;
@@ -584,9 +580,7 @@ inline int set_result(lua_State* const L, C && t,
 {
   typedef typename remove_cr<C>::type result_type;
 
-  typedef typename make_indices<std::tuple_size<C>::value>::type indices_type;
-
-  set_tuple_result(L, t, indices_type());
+  set_tuple_result(L, t, make_indices<std::tuple_size<C>::value>());
 
   return std::tuple_size<result_type>::value;
 }
@@ -809,10 +803,8 @@ get_arg(lua_State* const L)
 
   typedef typename remove_cr<C>::type result_type;
 
-  typedef typename make_indices<std::tuple_size<result_type>::value>::type
-    indices_type;
-
-  return get_tuple_arg<I, result_type>(L, indices_type());
+  return get_tuple_arg<I, result_type>(L,
+    make_indices<std::tuple_size<result_type>::value>());
 }
 
 template<int I, class C>
@@ -1013,9 +1005,7 @@ int constructor_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
 
-  typedef typename make_indices<sizeof...(A)>::type indices_type;
-
-  auto const instance(forward<O, C, A...>(L, indices_type()));
+  auto const instance(forward<O, C, A...>(L, make_indices<sizeof...(A)>()));
 
   // table
   lua_createtable(L, 0, 1);
@@ -1125,12 +1115,10 @@ func_stub(lua_State* const L)
 
   typedef R (*ptr_to_func_type)(A...);
 
-  typedef typename make_indices<sizeof...(A)>::type indices_type;
-
   forward<O, R, A...>(L,
     *static_cast<ptr_to_func_type const*>(
       static_cast<void const*>(fmi_ptr)),
-    indices_type());
+    make_indices<sizeof...(A)>());
   return 0;
 }
 
@@ -1142,12 +1130,10 @@ func_stub(lua_State* const L)
 
   typedef R (*ptr_to_func_type)(A...);
 
-  typedef typename make_indices<sizeof...(A)>::type indices_type;
-
   return set_result(L, forward<O, R, A...>(L,
     *static_cast<ptr_to_func_type const*>(
       static_cast<void const*>(fmi_ptr)),
-    indices_type()));
+    make_indices<sizeof...(A)>()));
 }
 
 
@@ -1168,13 +1154,12 @@ member_stub(lua_State* const L)
 
   typedef R (C::*ptr_to_member_type)(A...);
 
-  typedef typename make_indices<sizeof...(A)>::type indices_type;
-
   forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
       *static_cast<ptr_to_member_type const*>(
         static_cast<void const*>(mmi_ptr)),
-    indices_type());
+    make_indices<sizeof...(A)>());
+
   return 0;
 }
 
@@ -1188,13 +1173,11 @@ member_stub(lua_State* const L)
 
   typedef R (C::*ptr_to_member_type)(A...);
 
-  typedef typename make_indices<sizeof...(A)>::type indices_type;
-
   return set_result(L, static_cast<R>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
     *static_cast<ptr_to_member_type const*>(
       static_cast<void const*>(mmi_ptr)),
-    indices_type())));
+    make_indices<sizeof...(A)>())));
 }
 
 } // detail
