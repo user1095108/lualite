@@ -112,7 +112,7 @@ inline void rawsetfield(lua_State* const L, int const index,
 
 struct unordered_eq
 {
-  inline bool operator()(char const* const s1, char const* const s2) const
+  constexpr inline bool operator()(char const* const s1, char const* const s2)
   {
     return !std::strcmp(s1, s2);
   }
@@ -189,6 +189,7 @@ int default_setter(lua_State* const L)
     (i->second)(L);
   }
   // else do nothing
+
   return 0;
 }
 
@@ -996,7 +997,7 @@ int default_finalizer(lua_State* const L)
 }
 
 template <std::size_t O, typename C, typename ...A, std::size_t ...I>
-inline C* forward(lua_State* const L, indices<I...> const)
+constexpr inline C* forward(lua_State* const L, indices<I...> const)
 {
   return new C(get_arg<I + O, A>(L)...);
 }
@@ -1104,7 +1105,8 @@ int constructor_stub(lua_State* const L)
 }
 
 template <std::size_t O, typename R, typename ...A, std::size_t ...I>
-inline R forward(lua_State* const L, R (*f)(A...), indices<I...> const)
+constexpr inline R forward(lua_State* const L, R (*f)(A...),
+  indices<I...> const)
 {
   return (*f)(get_arg<I + O, A>(L)...);
 }
@@ -1475,6 +1477,7 @@ public:
   {
     constructors_.emplace_back(std::make_pair(name,
       detail::constructor_stub<1, C, A...>));
+
     return *this;
   }
 
@@ -1491,6 +1494,7 @@ public:
 
     [](...){ }((setters_.insert(class_<A>::setters_.cbegin(),
       class_<A>::setters_.cend()), 0)...);
+
     return *this;
   }
 
@@ -1498,6 +1502,7 @@ public:
   class_& def(char const* const name, R (*ptr_to_func)(A...))
   {
     scope::def(name, ptr_to_func);
+
     return *this;
   }
 
@@ -1505,6 +1510,7 @@ public:
   class_& def(char const* const name, R (C::*ptr_to_member)(A...))
   {
     member_function(name, ptr_to_member);
+
     return *this;
   }
 
@@ -1512,12 +1518,14 @@ public:
   class_& def(char const* const name, R (C::*ptr_to_member)(A...) const)
   {
     const_member_function(name, ptr_to_member);
+
     return *this;
   }
 
-  class_& enum_(char const* const name, int value)
+  class_& enum_(char const* const name, int const value)
   {
     scope::enum_(name, value);
+
     return *this;
   }
 
@@ -1531,6 +1539,7 @@ public:
     has_newindex = has_newindex || !std::strcmp("__newindex", name);
 
     member_function(name, ptr_to_member);
+
     return *this;
   }
 
@@ -1544,6 +1553,7 @@ public:
     has_newindex = has_newindex || !std::strcmp("__newindex", name);
 
     const_member_function(name, ptr_to_member);
+
     return *this;
   }
 
@@ -1557,6 +1567,7 @@ public:
       = ptr_to_const_member;
 
     getters_.emplace(name, detail::member_stub<&mmi, 3, C, R, A...>);
+
     return *this;
   }
 
@@ -1570,6 +1581,7 @@ public:
       = ptr_to_member;
 
     getters_.emplace(name, detail::member_stub<&mmi, 3, C, R, A...>);
+
     return *this;
   }
 
@@ -1591,6 +1603,7 @@ public:
       = ptr_to_member;
 
     setters_.emplace(name, detail::member_stub<&mmib, 3, C, RB, B...>);
+
     return *this;
   }
 
@@ -1611,6 +1624,7 @@ public:
       = ptr_to_memberb;
 
     setters_.emplace(name, detail::member_stub<&mmib, 3, C, RB, B...>);
+
     return *this;
   }
 
