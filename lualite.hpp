@@ -512,7 +512,7 @@ template <typename>
 struct is_std_list : std::false_type { };
 
 template <typename T, class Alloc>
-struct is_std_list<std::forward_list<T, Alloc> > : std::true_type { };
+struct is_std_list<std::list<T, Alloc> > : std::true_type { };
 
 template <typename>
 struct is_std_map : std::false_type { };
