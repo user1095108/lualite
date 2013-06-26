@@ -61,14 +61,14 @@ point testfunc(int i)
 {
   std::cout << "testfunc(): " << i << std::endl;
 
-  return point{-1, -222};
+  return {-1, -222};
 }
 
 struct testbase
 {
   std::string dummy(std::string msg)
   {
-    return std::string("dummy() called: " + msg);
+    return { "dummy() called: " + msg };
   }
 };
 
@@ -90,7 +90,7 @@ struct testclass : testbase
   {
     std::cout << "hello world!: " << msg << std::endl;
 
-    return std::vector<std::string>(10, "bla!!!");
+    return { 10, "bla!!!" };
   }
 
   std::tuple<int, std::string> print(int i)
@@ -103,19 +103,23 @@ struct testclass : testbase
   int const& a()
   {
     std::cout << "getter called" << std::endl;
+
     return a_;
   }
 
   void set_a(int i)
   {
     std::cout << "setter called" << std::endl;
+
     a_ = i;
   }
 
   std::string const& test_array(std::array<int, 10> const& a)
   {
     std::cout << a[0] << std::endl;
+
     s_ = "blablabla";
+
     return s_;
   }
 
