@@ -112,8 +112,7 @@ inline void rawsetfield(lua_State* const L, int const index,
 
 struct unordered_eq
 {
-  constexpr inline bool operator()(char const* const s1,
-    char const* const s2) const
+  inline bool operator()(char const* const s1, char const* const s2) const
   {
     return !std::strcmp(s1, s2);
   }
