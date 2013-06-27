@@ -1285,21 +1285,19 @@ protected:
     if (parent_scope_)
     {
       scope::get_scope(L);
-
       assert(lua_istable(L, -1));
 
       for (auto& i: detail::as_const(enums_))
       {
         assert(lua_istable(L, -1));
-
         lua_pushinteger(L, i.second);
+
         detail::rawsetfield(L, -2, i.first);
       }
 
-      for (auto& i: functions_)
+      for (auto& i: as_const(functions_))
       {
         assert(lua_istable(L, -1));
-
         lua_pushlightuserdata(L, i.func);
         lua_pushcclosure(L, i.callback, 1);
 
@@ -1313,10 +1311,11 @@ protected:
       for (auto& i: detail::as_const(enums_))
       {
         lua_pushinteger(L, i.second);
+
         lua_setglobal(L, i.first);
       }
 
-      for (auto& i: functions_)
+      for (auto& i: as_const(functions_))
       {
         lua_pushlightuserdata(L, i.func);
         lua_pushcclosure(L, i.callback, 1);
@@ -1478,7 +1477,6 @@ public:
     else
     {
       lua_pushlightuserdata(L_, p);
-
       lua_pushcclosure(L_, (detail::func_stub<1, R, A...>), 1);
 
       lua_setglobal(L_, name);
@@ -1502,6 +1500,7 @@ public:
     else
     {
       lua_pushinteger(L_, value);
+
       lua_setglobal(L_, name);
     }
 
