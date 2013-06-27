@@ -1049,7 +1049,7 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_.inherited_defs)
+  for (auto const i: as_const(lualite::class_<C>::inherited_.inherited_defs))
   {
     for (auto& mi: *i)
     {
@@ -1084,7 +1084,8 @@ int constructor_stub(lua_State* const L)
   assert(lua_istable(L, -1));
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<C>::inherited_.inherited_metadefs)
+  for (auto const i:
+    as_const(lualite::class_<C>::inherited_.inherited_metadefs))
   {
     for (auto& mi: *i)
     {
