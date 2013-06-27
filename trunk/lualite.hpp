@@ -1229,8 +1229,8 @@ member_stub(lua_State* const L)
 
   return set_result(L, static_cast<R>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
-      *static_cast<ptr_to_member_type const*>(
-        lua_touserdata(L, lua_upvalueindex(2))),
+    *static_cast<ptr_to_member_type const*>(
+      lua_touserdata(L, lua_upvalueindex(2))),
     make_indices<sizeof...(A)>())));
 }
 
