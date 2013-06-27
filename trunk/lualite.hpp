@@ -148,9 +148,9 @@ struct make_indices<0, Is...> : indices<Is...>
 {
 };
 
-typedef std::vector<std::pair<char const*, int> > enum_info_type;
+typedef std::vector<std::pair<char const* const, int> > enum_info_type;
 
-typedef std::pair<char const*, lua_CFunction> func_info_type;
+typedef std::pair<char const* const, lua_CFunction> func_info_type;
 
 typedef func_info_type member_info_type;
 
