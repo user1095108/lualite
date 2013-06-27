@@ -150,7 +150,7 @@ struct make_indices<0, Is...> : indices<Is...>
 
 typedef std::vector<std::pair<char const* const, int> > enum_info_type;
 
-typedef std::pair<char const* const, lua_CFunction> func_info_type;
+typedef std::pair<char const* const, lua_CFunction const> func_info_type;
 
 typedef func_info_type member_info_type;
 
@@ -852,7 +852,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_back(get_arg<I + 1, typename result_type::value_type>(L));
+    result.push_back(get_arg<I + 1, typename result_type::value_type>(L));
 
     lua_pop(L, 1);
   }
@@ -902,7 +902,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_back(get_arg<I + 1, typename result_type::value_type>(L));
+    result.push_back(get_arg<I + 1, typename result_type::value_type>(L));
 
     lua_pop(L, 1);
   }
@@ -928,7 +928,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_back(get_arg<I + 1, typename result_type::value_type>(L));
+    result.push_back(get_arg<I + 1, typename result_type::value_type>(L));
 
     lua_pop(L, 1);
   }
@@ -1220,14 +1220,16 @@ public:
     *static_cast<decltype(ptr_to_func)*>(static_cast<void*>(&fmi))
       = ptr_to_func;
 
-    functions_.emplace_back(
+    functions_.push_back(
       std::make_pair(name, detail::func_stub<&fmi, 1, R, A...>));
+
     return *this;
   }
 
   scope& enum_(char const* const name, int value)
   {
-    enums_.emplace_back(std::make_pair(name, value));
+    enums_.push_back(std::make_pair(name, value));
+
     return *this;
   }
 
@@ -1475,7 +1477,7 @@ public:
   template <class ...A>
   class_& constructor(char const* const name = "new")
   {
-    constructors_.emplace_back(std::make_pair(name,
+    constructors_.push_back(std::make_pair(name,
       detail::constructor_stub<1, C, A...>));
 
     return *this;
@@ -1668,7 +1670,7 @@ private:
       *static_cast<decltype(ptr_to_member)*>(static_cast<void*>(&mmi))
         = ptr_to_member;
 
-      defs_.emplace_back(detail::member_info_type{ name,
+      defs_.push_back(detail::member_info_type{ name,
         detail::member_stub<&mmi, O, C, R, A...> });
     }
     // else do nothing
@@ -1688,7 +1690,7 @@ private:
       *static_cast<decltype(ptr_to_member)*>(static_cast<void*>(&mmi))
         = ptr_to_member;
 
-      defs_.emplace_back(detail::member_info_type{ name,
+      defs_.push_back(detail::member_info_type{ name,
         detail::member_stub<&mmi, O, C, R, A...> });
     }
     // else do nothing
