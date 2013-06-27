@@ -163,8 +163,6 @@ struct dummy_
   void dummy();
 };
 
-typedef std::aligned_storage<sizeof(&dummy)>::type func_type;
-
 typedef std::aligned_storage<sizeof(&dummy_::dummy)>::type member_func_type;
 
 typedef std::vector<std::pair<char const* const, int const> > enum_info_type;
