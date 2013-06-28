@@ -1236,6 +1236,10 @@ member_stub(lua_State* const L)
 
 #pragma GCC diagnostic push
 
+#ifdef __clang__
+# pragma clang diagnostic ignored "-Wreturn-stack-address"
+#endif // __clang__
+
 #pragma GCC diagnostic ignored "-Wreturn-local-addr"
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
