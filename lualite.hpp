@@ -33,9 +33,6 @@
 # error "You need a C++11 compiler to use lualite"
 #endif // __cplusplus
 
-#pragma GCC diagnostic ignored "-Wreturn-local-addr"
-#pragma GCC diagnostic ignored "-Wstrict-aliasing"
-
 #include <cassert>
 
 #include <cstring>
@@ -1237,6 +1234,11 @@ member_stub(lua_State* const L)
 
 } // detail
 
+#pragma GCC diagnostic push
+
+#pragma GCC diagnostic ignored "-Wreturn-local-addr"
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+
 template <class R, class ...A>
 constexpr inline detail::func_type const& convert(
   R (*func_ptr)(A...))
@@ -1257,6 +1259,8 @@ constexpr inline detail::member_func_type const& convert(
 {
   return *static_cast<detail::member_func_type*>(static_cast<void*>(&func_ptr));
 }
+
+#pragma GCC diagnostic pop
 
 class scope
 {
