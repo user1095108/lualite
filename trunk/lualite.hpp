@@ -1771,8 +1771,8 @@ private:
 
   struct inherited_info
   {
-    std::vector< std::vector<detail::member_info_type>*> inherited_defs;
-    std::vector< std::vector<detail::member_info_type>*> inherited_metadefs;
+    std::vector<std::vector<detail::member_info_type>*> inherited_defs;
+    std::vector<std::vector<detail::member_info_type>*> inherited_metadefs;
   };
 
   static struct inherited_info inherited_;
