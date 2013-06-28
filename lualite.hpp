@@ -605,7 +605,7 @@ template <typename ...Types, std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
   std::tuple<Types...> const& t, indices<I...> const)
 {
-  [](...){ }((set_result(L, std::get<I>(t)), 0)...);
+  std::initializer_list<int>{ (set_result(L, std::get<I>(t)), 0)... };
 }
 
 template <typename C>
