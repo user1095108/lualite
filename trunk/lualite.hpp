@@ -33,6 +33,9 @@
 # error "You need a C++11 compiler to use lualite"
 #endif // __cplusplus
 
+#pragma GCC diagnostic ignored "-Wreturn-local-addr"
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+
 #include <cassert>
 
 #include <cstring>
@@ -1696,7 +1699,7 @@ private:
     {
       assert(lua_istable(L, -1));
 
-      lua_pushcclosure(L, i.callback, 0);
+      lua_pushcfunction(L, i.callback);
 
       detail::rawsetfield(L, -2, i.name);
     }
