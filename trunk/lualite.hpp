@@ -45,13 +45,13 @@
 
 #include <array>
 
+#include <forward_list>
+
 #include <vector>
 
 #ifndef LUALITE_NO_STD_CONTAINERS
 
 #include <deque>
-
-#include <forward_list>
 
 #include <list>
 
@@ -81,14 +81,6 @@ class class_;
 
 namespace detail
 {
-
-template <void* const, class U>
-struct externalizer
-{
-  typedef U value_type;
-
-  static U value;
-};
 
 template <typename T>
 using remove_cr = std::remove_const<typename std::remove_reference<T>::type>;
@@ -163,7 +155,8 @@ struct dummy_
   void dummy();
 };
 
-typedef std::array<char, sizeof(&dummy_::dummy)> member_func_type;
+typedef std::array<char, (sizeof(&dummy) > sizeof(&dummy_::dummy)
+  ? sizeof(&dummy) : sizeof(&dummy_::dummy))> func_type;
 
 typedef std::vector<std::pair<char const* const, int const> > enum_info_type;
 
@@ -182,7 +175,7 @@ struct member_info_type
 
   lua_CFunction callback;
 
-  member_func_type func;
+  func_type func;
 };
 
 
@@ -259,7 +252,8 @@ inline void create_wrapper_table(lua_State* const L, D* instance)
   assert(lua_istable(L, -1));
   lua_createtable(L, 0, 1);
 
-  for (auto const i: lualite::class_<D>::inherited_.inherited_metadefs)
+  for (auto const i: as_const(
+    lualite::class_<D>::inherited_.inherited_metadefs))
   {
     for (auto& mi: *i)
     {
@@ -1049,7 +1043,8 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: as_const(lualite::class_<C>::inherited_.inherited_defs))
+  for (auto const i: as_const(
+    lualite::class_<C>::inherited_.inherited_defs))
   {
     for (auto& mi: *i)
     {
@@ -1084,8 +1079,8 @@ int constructor_stub(lua_State* const L)
   assert(lua_istable(L, -1));
   lua_createtable(L, 0, 1);
 
-  for (auto const i:
-    as_const(lualite::class_<C>::inherited_.inherited_metadefs))
+  for (auto const i: as_const(
+    lualite::class_<C>::inherited_.inherited_metadefs))
   {
     for (auto& mi: *i)
     {
@@ -1262,11 +1257,12 @@ public:
   template <class R, class ...A>
   scope& def(char const* const name, R (*ptr_to_func)(A...))
   {
-    auto p(new char[sizeof(ptr_to_func)]);
-    std::memcpy(p, &ptr_to_func, sizeof(ptr_to_func));
+    address_pool_.push_front(detail::func_type());
+    *static_cast<decltype(ptr_to_func)*>(static_cast<void*>(
+      &address_pool_.front())) = ptr_to_func;
 
     functions_.push_back(detail::func_info_type{
-      name, detail::func_stub<1, R, A...>, p });
+      name, detail::func_stub<1, R, A...>, &address_pool_.front() });
 
     return *this;
   }
@@ -1416,6 +1412,8 @@ protected:
   }
 
 protected:
+  static std::forward_list<detail::func_type> address_pool_;
+
   std::vector<detail::func_info_type> functions_;
 
   char const* const name_;
@@ -1431,6 +1429,8 @@ private:
 
   scope* next_;
 };
+
+std::forward_list<detail::func_type> scope::address_pool_;
 
 class module : public scope
 {
@@ -1458,15 +1458,17 @@ public:
   template <class R, class ...A>
   module& def(char const* const name, R (*ptr_to_func)(A...))
   {
-    auto const p(new char[sizeof(ptr_to_func)]);
-    std::memcpy(p, &ptr_to_func, sizeof(ptr_to_func));
+    address_pool_.push_front(detail::func_type());
+
+    *static_cast<decltype(ptr_to_func)*>(static_cast<void*>(
+      &address_pool_.front())) = ptr_to_func;
 
     if (name_)
     {
       scope::get_scope(L_);
       assert(lua_istable(L_, -1));
 
-      lua_pushlightuserdata(L_, p);
+      lua_pushlightuserdata(L_, &address_pool_.front());
       lua_pushcclosure(L_, (detail::func_stub<1, R, A...>), 1);
 
       detail::rawsetfield(L_, -2, name);
@@ -1475,7 +1477,7 @@ public:
     }
     else
     {
-      lua_pushlightuserdata(L_, p);
+      lua_pushlightuserdata(L_, &address_pool_.front());
       lua_pushcclosure(L_, (detail::func_stub<1, R, A...>), 1);
 
       lua_setglobal(L_, name);
@@ -1718,7 +1720,7 @@ private:
   void member_function(char const* const name,
     R (C::*ptr_to_member)(A...))
   {
-    detail::member_func_type mmi;
+    detail::func_type mmi;
 
     static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
       "pointer size mismatch");
@@ -1734,7 +1736,7 @@ private:
   void const_member_function(char const* const name,
     R (C::*ptr_to_member)(A...) const)
   {
-    detail::member_func_type mmi;
+    detail::func_type mmi;
 
     static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
       "pointer size mismatch");
