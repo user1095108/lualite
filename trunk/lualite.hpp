@@ -1234,6 +1234,27 @@ member_stub(lua_State* const L)
 
 } // detail
 
+template <class R, class ...A>
+constexpr inline detail::func_type const& convert(
+  R (*func_ptr)(A...))
+{
+  return *static_cast<detail::func_type*>(static_cast<void*>(&func_ptr));
+}
+
+template <class C, class R, class ...A>
+constexpr inline detail::member_func_type const& convert(
+  R (C::*func_ptr)(A...))
+{
+  return *static_cast<detail::member_func_type*>(static_cast<void*>(&func_ptr));
+}
+
+template <class C, class R, class ...A>
+constexpr inline detail::member_func_type const& convert(
+  R (C::*func_ptr)(A...) const)
+{
+  return *static_cast<detail::member_func_type*>(static_cast<void*>(&func_ptr));
+}
+
 class scope
 {
 public:
@@ -1260,9 +1281,7 @@ public:
   template <class R, class ...A>
   scope& def(char const* const name, R (* const ptr_to_func)(A...))
   {
-    address_pool_.push_front(detail::func_type());
-    *static_cast<typename std::remove_const<decltype(ptr_to_func)>::type*>(
-      static_cast<void*>(&address_pool_.front())) = ptr_to_func;
+    address_pool_.push_front(convert(ptr_to_func));
 
     functions_.push_back(detail::func_info_type{
       name, detail::func_stub<1, R, A...>, &address_pool_.front() });
@@ -1461,10 +1480,7 @@ public:
   template <class R, class ...A>
   module& def(char const* const name, R (* const ptr_to_func)(A...))
   {
-    address_pool_.push_front(detail::func_type());
-
-    *static_cast<typename std::remove_const<decltype(ptr_to_func)>::type*>(
-      static_cast<void*>(&address_pool_.front())) = ptr_to_func;
+    address_pool_.push_front(convert(ptr_to_func));
 
     if (name_)
     {
@@ -1623,14 +1639,8 @@ public:
   class_& property(char const* const name,
     R (C::* const ptr_to_const_member)(A...) const)
   {
-    detail::map_member_info_type mmi;
-
-    *static_cast<decltype(ptr_to_const_member)*>(static_cast<void*>(
-      &mmi.func)) = ptr_to_const_member;
-
-    mmi.callback = detail::member_stub<3, C, R, A...>;
-
-    getters_.emplace(name, mmi);
+    getters_.emplace(name, detail::map_member_info_type{
+      detail::member_stub<3, C, R, A...>, convert(ptr_to_const_member)});
 
     return *this;
   }
@@ -1639,14 +1649,8 @@ public:
   class_& property(char const* const name,
     R (C::* const ptr_to_member)(A...))
   {
-    detail::map_member_info_type mmi;
-
-    *static_cast<decltype(ptr_to_member)*>(static_cast<void*>(
-      &mmi.func)) = ptr_to_member;
-
-    mmi.callback = detail::member_stub<3, C, R, A...>;
-
-    getters_.emplace(name, mmi);
+    getters_.emplace(name, detail::map_member_info_type{
+      detail::member_stub<3, C, R, A...>, convert(ptr_to_member)});
 
     return *this;
   }
@@ -1656,19 +1660,10 @@ public:
     RA (C::* const ptr_to_membera)(A...) const,
     RB (C::* const ptr_to_memberb)(B...))
   {
-    detail::map_member_info_type mmi{ detail::member_stub<3, C, RA, A...> };
-
-    *static_cast<typename std::remove_const<decltype(ptr_to_membera)>::type*>(
-      static_cast<void*>(&mmi.func)) = ptr_to_membera;
-
-    getters_.emplace(name, mmi);
-
-    *static_cast<typename std::remove_const<decltype(ptr_to_memberb)>::type*>(
-      static_cast<void*>(&mmi.func)) = ptr_to_memberb;
-
-    mmi.callback = detail::member_stub<3, C, RB, B...>;
-
-    setters_.emplace(name, mmi);
+    getters_.emplace(name, detail::map_member_info_type{
+      detail::member_stub<3, C, RA, A...>, convert(ptr_to_membera)});
+    setters_.emplace(name, detail::map_member_info_type{
+      detail::member_stub<3, C, RA, A...>, convert(ptr_to_memberb)});
 
     return *this;
   }
@@ -1678,19 +1673,12 @@ public:
     RA (C::* const ptr_to_membera)(A...),
     RB (C::* const ptr_to_memberb)(B...))
   {
-    detail::map_member_info_type mmi{ detail::member_stub<3, C, RA, A...> };
-
-    *static_cast<typename std::remove_const<decltype(ptr_to_membera)>::type*>(
-      static_cast<void*>(&mmi.func)) = ptr_to_membera;
-
-    getters_.emplace(name, mmi);
-
-    *static_cast<typename std::remove_const<decltype(ptr_to_memberb)>::type*>(
-      static_cast<void*>(&mmi.func)) = ptr_to_memberb;
-
-    mmi.callback = detail::member_stub<3, C, RB, B...>;
-
-    setters_.emplace(name, mmi);
+    getters_.emplace(name,
+      detail::map_member_info_type{detail::member_stub<3, C, RA, A...>,
+        convert(ptr_to_membera)});
+    setters_.emplace(name,
+      detail::map_member_info_type{detail::member_stub<3, C, RA, A...>,
+        convert(ptr_to_memberb)});
 
     return *this;
   }
@@ -1725,32 +1713,22 @@ private:
   void member_function(char const* const name,
     R (C::* const ptr_to_member)(A...))
   {
-    detail::member_func_type mmi;
-
-    static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
+    static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
 
-    *static_cast<typename std::remove_const<decltype(ptr_to_member)>::type*>(
-      static_cast<void*>(&mmi)) = ptr_to_member;
-
     defs_.push_back(detail::member_info_type{ name,
-      detail::member_stub<O, C, R, A...>, mmi });
+      detail::member_stub<O, C, R, A...>, convert(ptr_to_member) });
   }
 
   template <std::size_t O = 2, class R, class ...A>
   void const_member_function(char const* const name,
     R (C::* const ptr_to_member)(A...) const)
   {
-    detail::member_func_type mmi;
-
-    static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
+    static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
 
-    *static_cast<typename std::remove_const<decltype(ptr_to_member)>::type*>(
-      static_cast<void*>(&mmi)) = ptr_to_member;
-
     defs_.push_back(detail::member_info_type{ name,
-      detail::member_stub<O, C, R, A...>, mmi });
+      detail::member_stub<O, C, R, A...>, convert(ptr_to_member) });
   }
 
 private:
