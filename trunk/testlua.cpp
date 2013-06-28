@@ -109,7 +109,7 @@ struct testclass : testbase
 
   void set_a(int i)
   {
-    std::cout << "setter called" << std::endl;
+    std::cout << "setter called: " << i << std::endl;
 
     a_ = i;
   }
