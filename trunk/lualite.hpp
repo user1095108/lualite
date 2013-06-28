@@ -1653,20 +1653,18 @@ public:
 
   template <class RA, class ...A, class RB, class ...B>
   class_& property(char const* const name,
-    RA (C::* const ptr_to_const_member)(A...) const,
-    RB (C::* const ptr_to_member)(B...))
+    RA (C::* const ptr_to_membera)(A...) const,
+    RB (C::* const ptr_to_memberb)(B...))
   {
-    detail::map_member_info_type mmi;
+    detail::map_member_info_type mmi{ detail::member_stub<3, C, RA, A...> };
 
-    *static_cast<typename std::remove_const<decltype(ptr_to_const_member)>
-      ::type*>(static_cast<void*>(&mmi.func)) = ptr_to_const_member;
-
-    mmi.callback = detail::member_stub<3, C, RA, A...>;
+    *static_cast<typename std::remove_const<decltype(ptr_to_membera)>::type*>(
+      static_cast<void*>(&mmi.func)) = ptr_to_membera;
 
     getters_.emplace(name, mmi);
 
-    *static_cast<typename std::remove_const<decltype(ptr_to_member)>::type*>(
-      static_cast<void*>(&mmi.func)) = ptr_to_member;
+    *static_cast<typename std::remove_const<decltype(ptr_to_memberb)>::type*>(
+      static_cast<void*>(&mmi.func)) = ptr_to_memberb;
 
     mmi.callback = detail::member_stub<3, C, RB, B...>;
 
@@ -1680,12 +1678,10 @@ public:
     RA (C::* const ptr_to_membera)(A...),
     RB (C::* const ptr_to_memberb)(B...))
   {
-    detail::map_member_info_type mmi;
+    detail::map_member_info_type mmi{ detail::member_stub<3, C, RA, A...> };
 
     *static_cast<typename std::remove_const<decltype(ptr_to_membera)>::type*>(
       static_cast<void*>(&mmi.func)) = ptr_to_membera;
-
-    mmi.callback = detail::member_stub<3, C, RA, A...>;
 
     getters_.emplace(name, mmi);
 
@@ -1773,6 +1769,14 @@ private:
   template <class C_>
   friend int detail::default_setter(lua_State*);
 
+  struct inherited_info
+  {
+    std::vector< std::vector<detail::member_info_type>*> inherited_defs;
+    std::vector< std::vector<detail::member_info_type>*> inherited_metadefs;
+  };
+
+  static struct inherited_info inherited_;
+
   static bool has_gc;
   static bool has_index;
   static bool has_newindex;
@@ -1787,17 +1791,10 @@ private:
     detail::unordered_hash, detail::unordered_eq> getters_;
   static std::unordered_map<char const*, detail::map_member_info_type,
     detail::unordered_hash, detail::unordered_eq> setters_;
-
-  struct inherited_info
-  {
-    std::vector<
-      std::vector<detail::member_info_type>*> inherited_defs;
-    std::vector<
-      std::vector<detail::member_info_type>*> inherited_metadefs;
-  };
-
-  static struct inherited_info inherited_;
 };
+
+template <class C>
+struct class_<C>::inherited_info class_<C>::inherited_;
 
 template <class C>
 bool class_<C>::has_gc;
@@ -1810,9 +1807,6 @@ bool class_<C>::has_newindex;
 
 template <class C>
 std::vector<detail::func_info_type> class_<C>::constructors_;
-
-template <class C>
-struct class_<C>::inherited_info class_<C>::inherited_;
 
 template <class C>
 std::vector<detail::member_info_type> class_<C>::defs_;
