@@ -602,7 +602,7 @@ inline int set_result(lua_State* const L, C && p,
 }
 
 template <typename ...Types, std::size_t ...I>
-inline void set_tuple_result(lua_State* const L,
+constexpr inline void set_tuple_result(lua_State* const L,
   std::tuple<Types...> const& t, indices<I...> const)
 {
   std::initializer_list<int>{ (set_result(L, std::get<I>(t)), 0)... };
