@@ -1538,11 +1538,15 @@ public:
       inherited_.inherited_metadefs.push_back(&class_<A>::metadefs_),
       0)...);
 
-    [](...){ }((getters_.insert(class_<A>::getters_.cbegin(),
-      class_<A>::getters_.cend()), 0)...);
+    [](...){ }((
+      getters_.insert(class_<A>::getters_.cbegin(),
+      class_<A>::getters_.cend()),
+      0)...);
 
-    [](...){ }((setters_.insert(class_<A>::setters_.cbegin(),
-      class_<A>::setters_.cend()), 0)...);
+    [](...){ }((
+      setters_.insert(class_<A>::setters_.cbegin(),
+      class_<A>::setters_.cend()),
+      0)...);
 
     return *this;
   }
