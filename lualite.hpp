@@ -191,8 +191,7 @@ template <class C>
 int default_getter(lua_State* const L)
 {
   assert(2 == lua_gettop(L));
-
-  auto i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
+  auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
   return lualite::class_<C>::getters_.end() == i
     ? 0
@@ -205,8 +204,7 @@ template <class C>
 int default_setter(lua_State* const L)
 {
   assert(3 == lua_gettop(L));
-
-  auto i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
+  auto const i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
 
   if (lualite::class_<C>::setters_.end() != i)
   {
@@ -1238,30 +1236,34 @@ member_stub(lua_State* const L)
 
 #ifdef __clang__
 # pragma clang diagnostic ignored "-Wreturn-stack-address"
+#else
+# pragma GCC diagnostic ignored "-Wreturn-local-addr"
 #endif // __clang__
 
-#pragma GCC diagnostic ignored "-Wreturn-local-addr"
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
 template <class R, class ...A>
 constexpr inline detail::func_type const& convert(
   R (*func_ptr)(A...))
 {
-  return *static_cast<detail::func_type*>(static_cast<void*>(&func_ptr));
+  return *static_cast<detail::func_type*>(
+    static_cast<void*>(&func_ptr));
 }
 
 template <class C, class R, class ...A>
 constexpr inline detail::member_func_type const& convert(
   R (C::*func_ptr)(A...))
 {
-  return *static_cast<detail::member_func_type*>(static_cast<void*>(&func_ptr));
+  return *static_cast<detail::member_func_type*>(
+    static_cast<void*>(&func_ptr));
 }
 
 template <class C, class R, class ...A>
 constexpr inline detail::member_func_type const& convert(
   R (C::*func_ptr)(A...) const)
 {
-  return *static_cast<detail::member_func_type*>(static_cast<void*>(&func_ptr));
+  return *static_cast<detail::member_func_type*>(
+    static_cast<void*>(&func_ptr));
 }
 
 #pragma GCC diagnostic pop
