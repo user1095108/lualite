@@ -82,6 +82,8 @@ class class_;
 namespace detail
 {
 
+template<typename T> constexpr inline T const& as_const(T& t) { return t; }
+
 template <typename T>
 using remove_cr = std::remove_const<typename std::remove_reference<T>::type>;
 
@@ -91,8 +93,6 @@ using is_nc_lvalue_reference
       std::is_lvalue_reference<T>::value
       && !std::is_const<typename std::remove_reference<T>::type>::value
     >;
-
-template<typename T> inline T const& as_const(T& t) { return t; }
 
 inline void rawgetfield(lua_State* const L, int const index,
   char const* const key)
@@ -185,7 +185,6 @@ struct member_info_type
 
   member_func_type func;
 };
-
 
 template <class C>
 int default_getter(lua_State* const L)
@@ -1247,7 +1246,7 @@ member_stub(lua_State* const L)
 #endif // __GNUC__
 
 template <class R, class ...A>
-constexpr inline detail::func_type const& convert(
+constexpr inline detail::func_type convert(
   R (*func_ptr)(A...))
 {
   return *static_cast<detail::func_type*>(
@@ -1255,7 +1254,7 @@ constexpr inline detail::func_type const& convert(
 }
 
 template <class C, class R, class ...A>
-constexpr inline detail::member_func_type const& convert(
+constexpr inline detail::member_func_type convert(
   R (C::*func_ptr)(A...))
 {
   return *static_cast<detail::member_func_type*>(
@@ -1263,7 +1262,7 @@ constexpr inline detail::member_func_type const& convert(
 }
 
 template <class C, class R, class ...A>
-constexpr inline detail::member_func_type const& convert(
+constexpr inline detail::member_func_type convert(
   R (C::*func_ptr)(A...) const)
 {
   return *static_cast<detail::member_func_type*>(
@@ -1684,7 +1683,7 @@ public:
     getters_.emplace(name, detail::map_member_info_type{
       detail::member_stub<3, C, RA, A...>, convert(ptr_to_membera)});
     setters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, RA, A...>, convert(ptr_to_memberb)});
+      detail::member_stub<3, C, RB, B...>, convert(ptr_to_memberb)});
 
     return *this;
   }
@@ -1694,12 +1693,10 @@ public:
     RA (C::* const ptr_to_membera)(A...),
     RB (C::* const ptr_to_memberb)(B...))
   {
-    getters_.emplace(name,
-      detail::map_member_info_type{detail::member_stub<3, C, RA, A...>,
-        convert(ptr_to_membera)});
-    setters_.emplace(name,
-      detail::map_member_info_type{detail::member_stub<3, C, RA, A...>,
-        convert(ptr_to_memberb)});
+    getters_.emplace(name, detail::map_member_info_type{
+      detail::member_stub<3, C, RA, A...>, convert(ptr_to_membera)});
+    setters_.emplace(name, detail::map_member_info_type{
+      detail::member_stub<3, C, RB, B...>, convert(ptr_to_memberb)});
 
     return *this;
   }
