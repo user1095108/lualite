@@ -155,8 +155,9 @@ struct dummy_
   void dummy();
 };
 
-typedef std::array<char, (sizeof(&dummy) > sizeof(&dummy_::dummy)
-  ? sizeof(&dummy) : sizeof(&dummy_::dummy))> func_type;
+typedef std::array<char, sizeof(&dummy)> func_type;
+
+typedef std::array<char, sizeof(&dummy_::dummy)> member_func_type;
 
 typedef std::vector<std::pair<char const* const, int const> > enum_info_type;
 
@@ -169,13 +170,20 @@ struct func_info_type
   void* func;
 };
 
+struct map_member_info_type
+{
+  lua_CFunction callback;
+
+  member_func_type func;
+};
+
 struct member_info_type
 {
   char const* name;
 
   lua_CFunction callback;
 
-  func_type func;
+  member_func_type func;
 };
 
 
@@ -1615,7 +1623,7 @@ public:
   class_& property(char const* const name,
     R (C::* const ptr_to_const_member)(A...) const)
   {
-    detail::member_info_type mmi;
+    detail::map_member_info_type mmi;
 
     *static_cast<decltype(ptr_to_const_member)*>(static_cast<void*>(
       &mmi.func)) = ptr_to_const_member;
@@ -1631,7 +1639,7 @@ public:
   class_& property(char const* const name,
     R (C::* const ptr_to_member)(A...))
   {
-    detail::member_info_type mmi;
+    detail::map_member_info_type mmi;
 
     *static_cast<decltype(ptr_to_member)*>(static_cast<void*>(
       &mmi.func)) = ptr_to_member;
@@ -1648,7 +1656,7 @@ public:
     RA (C::* const ptr_to_const_member)(A...) const,
     RB (C::* const ptr_to_member)(B...))
   {
-    detail::member_info_type mmi;
+    detail::map_member_info_type mmi;
 
     *static_cast<typename std::remove_const<decltype(ptr_to_const_member)>
       ::type*>(static_cast<void*>(&mmi.func)) = ptr_to_const_member;
@@ -1672,7 +1680,7 @@ public:
     RA (C::* const ptr_to_membera)(A...),
     RB (C::* const ptr_to_memberb)(B...))
   {
-    detail::member_info_type mmi;
+    detail::map_member_info_type mmi;
 
     *static_cast<typename std::remove_const<decltype(ptr_to_membera)>::type*>(
       static_cast<void*>(&mmi.func)) = ptr_to_membera;
@@ -1721,7 +1729,7 @@ private:
   void member_function(char const* const name,
     R (C::* const ptr_to_member)(A...))
   {
-    detail::func_type mmi;
+    detail::member_func_type mmi;
 
     static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
       "pointer size mismatch");
@@ -1737,7 +1745,7 @@ private:
   void const_member_function(char const* const name,
     R (C::* const ptr_to_member)(A...) const)
   {
-    detail::func_type mmi;
+    detail::member_func_type mmi;
 
     static_assert(sizeof(ptr_to_member) <= sizeof(mmi),
       "pointer size mismatch");
@@ -1775,9 +1783,9 @@ private:
 
   static std::vector<detail::member_info_type> metadefs_;
 
-  static std::unordered_map<char const*, detail::member_info_type,
+  static std::unordered_map<char const*, detail::map_member_info_type,
     detail::unordered_hash, detail::unordered_eq> getters_;
-  static std::unordered_map<char const*, detail::member_info_type,
+  static std::unordered_map<char const*, detail::map_member_info_type,
     detail::unordered_hash, detail::unordered_eq> setters_;
 
   struct inherited_info
@@ -1813,11 +1821,11 @@ template <class C>
 std::vector<detail::member_info_type> class_<C>::metadefs_;
 
 template <class C>
-std::unordered_map<char const*, detail::member_info_type,
+std::unordered_map<char const*, detail::map_member_info_type,
   detail::unordered_hash, detail::unordered_eq> class_<C>::getters_;
 
 template <class C>
-std::unordered_map<char const*, detail::member_info_type,
+std::unordered_map<char const*, detail::map_member_info_type,
   detail::unordered_hash, detail::unordered_eq> class_<C>::setters_;
 
 } // lualite
