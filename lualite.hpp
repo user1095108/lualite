@@ -1232,6 +1232,8 @@ member_stub(lua_State* const L)
 
 } // detail
 
+#ifdef __GNUC__
+
 #pragma GCC diagnostic push
 
 #ifdef __clang__
@@ -1241,6 +1243,8 @@ member_stub(lua_State* const L)
 #endif // __clang__
 
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+
+#endif // __GNUC__
 
 template <class R, class ...A>
 constexpr inline detail::func_type const& convert(
@@ -1266,7 +1270,11 @@ constexpr inline detail::member_func_type const& convert(
     static_cast<void*>(&func_ptr));
 }
 
-#pragma GCC diagnostic pop
+#ifdef __GNUC__
+
+# pragma GCC diagnostic pop
+
+#endif // __GNUC__
 
 class scope
 {
