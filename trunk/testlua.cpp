@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
     "b:reference().a = 888\n"
     "print(b.a .. \" \" .. b:dummy(\"test\"))\n"
     "local tmp1, tmp2 = b:pointer():print(100)\n"
-    "print(tmp1 .. \" \" .. tmp2)\n"
+    "print(tmp1 .. \" : \" .. tmp2)\n"
     "b:reference():print_(\"msg1\")\n"
     "local a = subscope.testclass.new(1111)\n"
     "print(subscope.testclass.smell)\n"
