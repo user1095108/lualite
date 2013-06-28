@@ -1232,17 +1232,8 @@ member_stub(lua_State* const L)
 } // detail
 
 #ifdef __GNUC__
-
-#pragma GCC diagnostic push
-
-#ifdef __clang__
-# pragma clang diagnostic ignored "-Wreturn-stack-address"
-#else
-# pragma GCC diagnostic ignored "-Wreturn-local-addr"
-#endif // __clang__
-
-#pragma GCC diagnostic ignored "-Wstrict-aliasing"
-
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif // __GNUC__
 
 template <class R, class ...A>
@@ -1270,9 +1261,7 @@ constexpr inline detail::member_func_type convert(
 }
 
 #ifdef __GNUC__
-
 # pragma GCC diagnostic pop
-
 #endif // __GNUC__
 
 class scope
