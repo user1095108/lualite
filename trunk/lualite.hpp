@@ -217,6 +217,10 @@ inline void create_wrapper_table(lua_State* const L, D* instance)
 {
   lua_createtable(L, 0, 1);
 
+  // instance
+  lua_pushlightuserdata(L, instance);
+  rawsetfield(L, -2, "__instance");
+
   for (auto const i: as_const(lualite::class_<D>::inherited_.inherited_defs))
   {
     for (auto& mi: *i)
@@ -243,10 +247,6 @@ inline void create_wrapper_table(lua_State* const L, D* instance)
 
     rawsetfield(L, -2, mi.name);
   }
-
-  // instance
-  lua_pushlightuserdata(L, instance);
-  rawsetfield(L, -2, "__instance");
 
   // metatable
   assert(lua_istable(L, -1));
@@ -1043,8 +1043,11 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, 1);
 
-  for (auto const i: as_const(
-    lualite::class_<C>::inherited_.inherited_defs))
+  // instance
+  lua_pushlightuserdata(L, instance);
+  rawsetfield(L, -2, "__instance");
+
+  for (auto const i: as_const(lualite::class_<C>::inherited_.inherited_defs))
   {
     for (auto& mi: *i)
     {
@@ -1071,10 +1074,6 @@ int constructor_stub(lua_State* const L)
     rawsetfield(L, -2, mi.name);
   }
 
-  // instance
-  lua_pushlightuserdata(L, instance);
-  rawsetfield(L, -2, "__instance");
-
   // metatable
   assert(lua_istable(L, -1));
   lua_createtable(L, 0, 1);
@@ -1098,7 +1097,6 @@ int constructor_stub(lua_State* const L)
   for (auto& mi: lualite::class_<C>::metadefs_)
   {
     assert(lua_istable(L, -1));
-
     lua_pushlightuserdata(L, instance);
     lua_pushlightuserdata(L, &mi.func);
 
@@ -1110,7 +1108,6 @@ int constructor_stub(lua_State* const L)
   if (!lualite::class_<C>::has_gc)
   {
     assert(lua_istable(L, -1));
-
     lua_pushlightuserdata(L, instance);
 
     lua_pushcclosure(L, default_finalizer<C>, 1);
@@ -1122,7 +1119,6 @@ int constructor_stub(lua_State* const L)
   if (!lualite::class_<C>::has_index)
   {
     assert(lua_istable(L, -1));
-
     lua_pushlightuserdata(L, instance);
     lua_pushlightuserdata(L, 0);
 
@@ -1135,7 +1131,6 @@ int constructor_stub(lua_State* const L)
   if (!lualite::class_<C>::has_newindex)
   {
     assert(lua_istable(L, -1));
-
     lua_pushlightuserdata(L, instance);
     lua_pushlightuserdata(L, 0);
 
