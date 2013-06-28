@@ -213,7 +213,7 @@ int default_setter(lua_State* const L)
 }
 
 template <class D>
-inline void create_wrapper_table(lua_State* const L, D* instance)
+inline void create_wrapper_table(lua_State* const L, D* const instance)
 {
   lua_createtable(L, 0, 1);
 
@@ -1038,12 +1038,12 @@ int constructor_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
 
+  auto const instance(forward<O, C, A...>(L, make_indices<sizeof...(A)>()));
+
   // table
   lua_createtable(L, 0, 1);
 
   // instance
-  auto const instance(forward<O, C, A...>(L, make_indices<sizeof...(A)>()));
-
   lua_pushlightuserdata(L, instance);
   rawsetfield(L, -2, "__instance");
 
