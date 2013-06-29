@@ -910,7 +910,7 @@ get_arg(lua_State* const L)
 
   auto const len(lua_rawlen(L, I));
 
-  for (decltype(lua_rawlen(L, I)) i(len); i; --i)
+  for (auto i(len); i; --i)
   {
     lua_rawgeti(L, I, i);
 

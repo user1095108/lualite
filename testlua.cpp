@@ -129,7 +129,7 @@ struct testclass : testbase
 
   std::string const& test_array(std::array<int, 10> const& a)
   {
-    std::cout << a[0] << std::endl;
+    std::cout << a[a.size() - 1] << std::endl;
 
     s_ = "blablabla";
 
