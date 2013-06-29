@@ -652,9 +652,9 @@ inline int set_result(lua_State* const L, C && d,
 {
   lua_createtable(L, d.size(), 0);
 
-  auto const end(d.cend());
+  auto const cend(d.cend());
 
-  for (auto i(d.cbegin()); i != end; ++i)
+  for (auto i(d.cbegin()); i != cend; ++i)
   {
     set_result(L, *i);
 
@@ -741,9 +741,9 @@ inline int set_result(lua_State* const L, C && m,
 {
   lua_createtable(L, 0, m.size());
 
-  auto const end(m.cend());
+  auto const cend(m.cend());
 
-  for (auto i(m.cbegin()); i != end; ++i)
+  for (auto i(m.cbegin()); i != cend; ++i)
   {
     set_result(L, i->first);
     set_result(L, i->second);
