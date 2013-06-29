@@ -41,9 +41,9 @@
 
 #include <type_traits>
 
-#include <unordered_map>
-
 #include <forward_list>
+
+#include <unordered_map>
 
 #include <vector>
 
@@ -76,8 +76,7 @@ namespace lualite
 
 class scope;
 
-template <class C>
-class class_;
+template <class C> class class_;
 
 namespace detail
 {
@@ -94,14 +93,15 @@ using is_nc_lvalue_reference
       && !std::is_const<typename std::remove_reference<T>::type>::value
     >;
 
+// key is at the top of the stack
 inline void rawgetfield(lua_State* const L, int const index,
   char const* const key)
 {
   lua_pushstring(L, key);
-  lua_insert(L, -2);
   lua_rawget(L, index >= 0 ? index : index - 1);
 }
 
+// value is at the top of the stack, key is shifted below the top
 inline void rawsetfield(lua_State* const L, int const index,
   char const* const key)
 {
