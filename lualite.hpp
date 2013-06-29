@@ -824,7 +824,7 @@ inline C get_tuple_arg(lua_State* const L, indices<I...> const)
       typename std::tuple_element<I, C>::type>(L),
     0)...);
 
-  lua_pop(L, sizeof...(I));
+  lua_pop(L, int(sizeof...(I)));
 
   return result;
 }
