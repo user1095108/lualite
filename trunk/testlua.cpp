@@ -70,6 +70,12 @@ void testpair(std::pair<char const*, char const*> const& p)
     << " second: " << p.second << std::endl;
 }
 
+void testtuple(std::tuple<char const*, char const*> const& p)
+{
+  std::cout << "first: " << std::get<0>(p)
+    << " second: " << std::get<1>(p) << std::endl;
+}
+
 struct testbase
 {
   std::string dummy(std::string msg)
@@ -176,13 +182,15 @@ int main(int argc, char* argv[])
   )
   .enum_("apple", 1)
   .def("testfunc", &testfunc)
-  .def("testpair", &testpair);
+  .def("testpair", &testpair)
+  .def("testtuple", &testtuple);
 
   luaL_dostring(
     L,
     "local a = testfunc(3, 2, 1)\n"
     "r = { \"my\", \"pair\" }\n"
     "testpair(r)\n"
+    "testtuple(r)\n"
     "print(a.y)\n"
     "print(apple)\n"
     "print(testclass.__classname)\n"
