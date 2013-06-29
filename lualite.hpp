@@ -863,9 +863,9 @@ get_arg(lua_State* const L)
     lua_rawgeti(L, I, i);
 
     result[i - 1] = get_arg<-1, typename result_type::value_type>(L);
-
-    lua_pop(L, 1);
   }
+
+  lua_pop(L, end - 1);
 
   return result;
 }
@@ -889,9 +889,9 @@ get_arg(lua_State* const L)
     lua_rawgeti(L, I, i);
 
     result.push_back(get_arg<-1, typename result_type::value_type>(L));
-
-    lua_pop(L, 1);
   }
+
+  lua_pop(L, end - 1);
 
   return result;
 }
@@ -908,14 +908,16 @@ get_arg(lua_State* const L)
   typedef typename remove_cr<C>::type result_type;
   result_type result;
 
-  for (decltype(lua_rawlen(L, I)) i(lua_rawlen(L, I)); i; --i)
+  auto const len(lua_rawlen(L, I));
+
+  for (decltype(lua_rawlen(L, I)) i(len); i; --i)
   {
     lua_rawgeti(L, I, i);
 
     result.emplace_front(get_arg<-1, typename result_type::value_type>(L));
-
-    lua_pop(L, 1);
   }
+
+  lua_pop(L, len);
 
   return result;
 }
@@ -939,9 +941,9 @@ get_arg(lua_State* const L)
     lua_rawgeti(L, I, i);
 
     result.push_back(get_arg<-1, typename result_type::value_type>(L));
-
-    lua_pop(L, 1);
   }
+
+  lua_pop(L, end - 1);
 
   return result;
 }
@@ -965,9 +967,9 @@ get_arg(lua_State* const L)
     lua_rawgeti(L, I, i);
 
     result.push_back(get_arg<-1, typename result_type::value_type>(L));
-
-    lua_pop(L, 1);
   }
+
+  lua_pop(L, end - 1);
 
   return result;
 }
