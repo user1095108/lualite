@@ -64,6 +64,12 @@ point testfunc(int i, int j, int k)
   return {-1, -222};
 }
 
+void testpair(std::pair<char const*, char const*> const& p)
+{
+  std::cout << "first: " << p.first
+    << " second: " << p.second << std::endl;
+}
+
 struct testbase
 {
   std::string dummy(std::string msg)
@@ -169,11 +175,14 @@ int main(int argc, char* argv[])
     )
   )
   .enum_("apple", 1)
-  .def("testfunc", &testfunc);
+  .def("testfunc", &testfunc)
+  .def("testpair", &testpair);
 
   luaL_dostring(
     L,
     "local a = testfunc(3, 2, 1)\n"
+    "r = { \"my\", \"pair\" }\n"
+    "testpair(r)\n"
     "print(a.y)\n"
     "print(apple)\n"
     "print(testclass.__classname)\n"

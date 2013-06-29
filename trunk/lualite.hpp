@@ -800,14 +800,13 @@ get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
  
-  typedef typename remove_cr<C>::type result_type;
-  result_type result;
+  typename remove_cr<C>::type result;
 
   lua_rawgeti(L, -1, 1);
-  result.first = get_arg<I + 1, decltype(result.first)>(L);
+  result.first = get_arg<-1, decltype(result.first)>(L);
 
   lua_rawgeti(L, -2, 2);
-  result.second = get_arg<I + 1, decltype(result.second)>(L);
+  result.second = get_arg<-1, decltype(result.second)>(L);
 
   lua_pop(L, 2);
 
@@ -821,10 +820,11 @@ inline C get_tuple_arg(lua_State* const L, indices<I...> const)
   
   [](...){ }((
     lua_rawgeti(L, O, I + 1),
-    std::get<I>(result) = get_arg<O + 1,
+    std::get<I>(result) = get_arg<-1,
       typename std::tuple_element<I, C>::type>(L),
-    lua_pop(L, 1),
     0)...);
+
+  lua_pop(L, sizeof...(I));
 
   return result;
 }
@@ -862,7 +862,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result[i - 1] = get_arg<I + 1, typename result_type::value_type>(L);
+    result[i - 1] = get_arg<-1, typename result_type::value_type>(L);
 
     lua_pop(L, 1);
   }
@@ -888,7 +888,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.push_back(get_arg<I + 1, typename result_type::value_type>(L));
+    result.push_back(get_arg<-1, typename result_type::value_type>(L));
 
     lua_pop(L, 1);
   }
@@ -912,7 +912,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_front(get_arg<I + 1, typename result_type::value_type>(L));
+    result.emplace_front(get_arg<-1, typename result_type::value_type>(L));
 
     lua_pop(L, 1);
   }
@@ -938,7 +938,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.push_back(get_arg<I + 1, typename result_type::value_type>(L));
+    result.push_back(get_arg<-1, typename result_type::value_type>(L));
 
     lua_pop(L, 1);
   }
@@ -964,7 +964,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.push_back(get_arg<I + 1, typename result_type::value_type>(L));
+    result.push_back(get_arg<-1, typename result_type::value_type>(L));
 
     lua_pop(L, 1);
   }
@@ -988,8 +988,8 @@ get_arg(lua_State* const L)
 
   while (lua_next(L, I))
   {
-    result.emplace(get_arg<I + 1, typename result_type::key_type>(L),
-      get_arg<I + 2, typename result_type::mapped_type>(L));
+    result.emplace(get_arg<-2, typename result_type::key_type>(L),
+      get_arg<-1, typename result_type::mapped_type>(L));
 
     lua_pop(L, 1);
   }
@@ -1013,8 +1013,8 @@ get_arg(lua_State* const L)
 
   while (lua_next(L, I))
   {
-    result.emplace(get_arg<I + 1, typename result_type::key_type>(L),
-      get_arg<I + 2, typename result_type::mapped_type>(L));
+    result.emplace(get_arg<-2, typename result_type::key_type>(L),
+      get_arg<-1, typename result_type::mapped_type>(L));
 
     lua_pop(L, 1);
   }
