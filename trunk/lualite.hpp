@@ -1566,20 +1566,20 @@ public:
   template <class ...A>
   class_& inherits()
   {
-    [](...){ }((
+    std::initializer_list<int>{(
       inherited_.inherited_defs.push_back(&class_<A>::defs_),
       inherited_.inherited_metadefs.push_back(&class_<A>::metadefs_),
-      0)...);
+      0)...};
 
-    [](...){ }((
+    std::initializer_list<int>{(
       getters_.insert(class_<A>::getters_.cbegin(),
-      class_<A>::getters_.cend()),
-      0)...);
+        class_<A>::getters_.cend()),
+      0)...};
 
-    [](...){ }((
+    std::initializer_list<int>{(
       setters_.insert(class_<A>::setters_.cbegin(),
-      class_<A>::setters_.cend()),
-      0)...);
+        class_<A>::setters_.cend()),
+      0)...};
 
     return *this;
   }
