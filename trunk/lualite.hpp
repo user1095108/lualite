@@ -43,13 +43,13 @@
 
 #include <unordered_map>
 
-#include <array>
-
 #include <forward_list>
 
 #include <vector>
 
 #ifndef LUALITE_NO_STD_CONTAINERS
+
+#include <array>
 
 #include <deque>
 
@@ -155,9 +155,9 @@ struct dummy_
   void dummy();
 };
 
-typedef std::array<char, sizeof(&dummy)> func_type;
+typedef struct { char p[sizeof(&dummy)]; } func_type;
 
-typedef std::array<char, sizeof(&dummy_::dummy)> member_func_type;
+typedef struct { char p[sizeof(&dummy_::dummy)]; } member_func_type;
 
 typedef std::vector<std::pair<char const* const, int const> > enum_info_type;
 
