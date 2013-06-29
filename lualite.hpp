@@ -673,11 +673,11 @@ inline int set_result(lua_State* const L, C && l,
 {
   lua_createtable(L, l.size(), 0);
 
-  auto const end(l.cend());
+  auto const cend(l.cend());
 
   auto j(typename remove_cr<C>::type::size_type(1));
 
-  for (auto i(l.cbegin()); i != end; ++i, ++j)
+  for (auto i(l.cbegin()); i != cend; ++i, ++j)
   {
     set_result(L, *i);
 
@@ -696,11 +696,11 @@ inline int set_result(lua_State* const L, C && l,
 {
   lua_createtable(L, l.size(), 0);
 
-  auto const end(l.cend());
+  auto const cend(l.cend());
 
   auto j(typename remove_cr<C>::type::size_type(1));
 
-  for (auto i(l.cbegin()); i != end; ++i, ++j)
+  for (auto i(l.cbegin()); i != cend; ++i, ++j)
   {
     set_result(L, *i);
 
@@ -719,9 +719,9 @@ inline int set_result(lua_State* const L, C && m,
 {
   lua_createtable(L, 0, m.size());
 
-  auto const end(m.cend());
+  auto const cend(m.cend());
 
-  for (auto i(m.cbegin()); i != end; ++i)
+  for (auto i(m.cbegin()); i != cend; ++i)
   {
     set_result(L, i->first);
     set_result(L, i->second);
@@ -763,9 +763,9 @@ inline int set_result(lua_State* const L, C && v,
 {
   lua_createtable(L, v.size(), 0);
 
-  auto const end(v.cend());
+  auto const cend(v.cend());
 
-  for (auto i(v.cbegin()); i != end; ++i)
+  for (auto i(v.cbegin()); i != cend; ++i)
   {
     set_result(L, *i);
 
@@ -817,7 +817,7 @@ template <std::size_t O, class C, std::size_t ...I>
 inline C get_tuple_arg(lua_State* const L, indices<I...> const)
 {
   C result;
-  
+
   [](...){ }((
     lua_rawgeti(L, O, I + 1),
     std::get<I>(result) = get_arg<-1,

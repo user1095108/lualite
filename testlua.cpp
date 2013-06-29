@@ -70,10 +70,11 @@ void testpair(std::pair<char const*, char const*> const& p)
     << " second: " << p.second << std::endl;
 }
 
-void testtuple(std::tuple<char const*, char const*> const& p)
+void testtuple(std::tuple<char const*, char const*, int> const& p)
 {
   std::cout << "first: " << std::get<0>(p)
-    << " second: " << std::get<1>(p) << std::endl;
+    << " second: " << std::get<1>(p)
+    << " third: " << std::get<2>(p) << std::endl;
 }
 
 struct testbase
@@ -190,6 +191,7 @@ int main(int argc, char* argv[])
     "local a = testfunc(3, 2, 1)\n"
     "r = { \"my\", \"pair\" }\n"
     "testpair(r)\n"
+    "r[3] = 3\n"
     "testtuple(r)\n"
     "print(a.y)\n"
     "print(apple)\n"
