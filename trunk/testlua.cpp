@@ -57,9 +57,9 @@ get_arg(lua_State* const L)
   return p;
 }
 
-point testfunc(int i)
+point testfunc(int i, int j, int k)
 {
-  std::cout << "testfunc(): " << i << std::endl;
+  std::cout << "testfunc(): " << i << " " << j << " " << k << std::endl;
 
   return {-1, -222};
 }
@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
 
   luaL_dostring(
     L,
-    "local a = testfunc(3)\n"
+    "local a = testfunc(3, 2, 1)\n"
     "print(a.y)\n"
     "print(apple)\n"
     "print(testclass.__classname)\n"
