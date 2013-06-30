@@ -207,7 +207,7 @@ int main(int argc, char* argv[])
     "b:reference():print_(\"msg1\")\n"
     "local a = subscope.testclass.new(1111)\n"
     "print(subscope.testclass.smell)\n"
-    "subscope.testclass.testfunc(200)\n"
+    "subscope.testclass.testfunc(200, 0, 1)\n"
     "local c = a:reference():print_(\"msg2\")\n"
     "print(c[10])\n"
     "r = {}"
