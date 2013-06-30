@@ -220,13 +220,15 @@ int default_setter(lua_State* const L)
 template <class D>
 inline void create_wrapper_table(lua_State* const L, D* const instance)
 {
-  lua_pushlightuserdata(L, instance);
-  lua_rawget(L, LUA_REGISTRYINDEX);
+  auto const tableIndex(lua_upvalueindex(3));
 
-  if (lua_isnil(L, -1))
+  if (lua_istable(L, tableIndex))
   {
-    lua_pop(L, 1);
-
+    lua_pushnil(L);
+    lua_copy(L, tableIndex, -1);
+  }
+  else
+  {
     lua_createtable(L, 0, 1);
 
     // instance
@@ -241,8 +243,9 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
 
         lua_pushlightuserdata(L, instance);
         lua_pushlightuserdata(L, &mi.func);
+        lua_pushnil(L);
 
-        lua_pushcclosure(L, mi.callback, 2);
+        lua_pushcclosure(L, mi.callback, 3);
 
         rawsetfield(L, -2, mi.name);
       }
@@ -254,8 +257,9 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
 
       lua_pushlightuserdata(L, instance);
       lua_pushlightuserdata(L, &mi.func);
+      lua_pushnil(L);
 
-      lua_pushcclosure(L, mi.callback, 2);
+      lua_pushcclosure(L, mi.callback, 3);
 
       rawsetfield(L, -2, mi.name);
     }
@@ -322,13 +326,10 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
 
     lua_setmetatable(L, -2);
 
-    lua_pushlightuserdata(L, instance);
     lua_pushnil(L);
-    lua_copy(L, -3, -1);
-
-    lua_rawset(L, LUA_REGISTRYINDEX);
+    lua_copy(L, -2, -1);
+    lua_replace(L, tableIndex);
   }
-  // else do nothing
 
   assert(lua_istable(L, -1));
 }
@@ -1042,14 +1043,7 @@ get_arg(lua_State* const L)
 template <class C>
 int default_finalizer(lua_State* const L)
 {
-  auto const instance(lua_touserdata(L, lua_upvalueindex(1)));
-
-  lua_pushlightuserdata(L, instance);
-  lua_pushnil(L);
-
-  lua_rawset(L, LUA_REGISTRYINDEX);
-
-  delete static_cast<C*>(instance);
+  delete static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1)));
 
   return 0;
 }
@@ -1081,8 +1075,9 @@ int constructor_stub(lua_State* const L)
       assert(lua_istable(L, -1));
       lua_pushlightuserdata(L, instance);
       lua_pushlightuserdata(L, &mi.func);
+      lua_pushnil(L);
 
-      lua_pushcclosure(L, mi.callback, 2);
+      lua_pushcclosure(L, mi.callback, 3);
  
       rawsetfield(L, -2, mi.name);
     }
@@ -1093,8 +1088,9 @@ int constructor_stub(lua_State* const L)
     assert(lua_istable(L, -1));
     lua_pushlightuserdata(L, instance);
     lua_pushlightuserdata(L, &mi.func);
+    lua_pushnil(L);
 
-    lua_pushcclosure(L, mi.callback, 2);
+    lua_pushcclosure(L, mi.callback, 3);
   
     rawsetfield(L, -2, mi.name);
   }
@@ -1144,7 +1140,7 @@ int constructor_stub(lua_State* const L)
   {
     assert(lua_istable(L, -1));
     lua_pushlightuserdata(L, instance);
-    lua_pushlightuserdata(L, 0);
+    lua_pushnil(L);
 
     lua_pushcclosure(L, default_getter<C>, 2);
 
@@ -1196,6 +1192,7 @@ template <std::size_t O, class R, class ...A>
 typename std::enable_if<!std::is_void<R>::value, int>::type
 func_stub(lua_State* const L)
 {
+//std::cout << lua_gettop(L) << " " << sizeof...(A) << std::endl;
   assert(sizeof...(A) == lua_gettop(L));
   typedef R (* const ptr_to_func_type)(A...);
 
@@ -1342,7 +1339,9 @@ protected:
       {
         assert(lua_istable(L, -1));
         lua_pushlightuserdata(L, i.func);
-        lua_pushcclosure(L, i.callback, 1);
+        lua_pushnil(L);
+        lua_pushnil(L);
+        lua_pushcclosure(L, i.callback, 3);
 
         detail::rawsetfield(L, -2, i.name);
       }
@@ -1361,7 +1360,9 @@ protected:
       for (auto& i: as_const(functions_))
       {
         lua_pushlightuserdata(L, i.func);
-        lua_pushcclosure(L, i.callback, 1);
+        lua_pushnil(L);
+        lua_pushnil(L);
+        lua_pushcclosure(L, i.callback, 3);
 
         lua_setglobal(L, i.name);
       }
@@ -1514,7 +1515,9 @@ public:
       assert(lua_istable(L_, -1));
 
       lua_pushlightuserdata(L_, &address_pool_.front());
-      lua_pushcclosure(L_, (detail::func_stub<1, R, A...>), 1);
+      lua_pushnil(L_);
+      lua_pushnil(L_);
+      lua_pushcclosure(L_, (detail::func_stub<1, R, A...>), 3);
 
       detail::rawsetfield(L_, -2, name);
 
