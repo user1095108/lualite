@@ -224,8 +224,7 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
 
   if (lua_istable(L, tableIndex))
   {
-    lua_pushnil(L);
-    lua_copy(L, tableIndex, -1);
+    lua_pushvalue(L, tableIndex);
   }
   else
   {
@@ -326,8 +325,7 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
 
     lua_setmetatable(L, -2);
 
-    lua_pushnil(L);
-    lua_copy(L, -2, -1);
+    lua_pushvalue(L, -1);
     lua_replace(L, tableIndex);
   }
 
