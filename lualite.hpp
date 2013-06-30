@@ -220,47 +220,35 @@ int default_setter(lua_State* const L)
 template <class D>
 inline void create_wrapper_table(lua_State* const L, D* const instance)
 {
-  lua_createtable(L, 0, 1);
-
-  // instance
   lua_pushlightuserdata(L, instance);
-  rawsetfield(L, -2, "__instance");
+  lua_rawget(L, LUA_REGISTRYINDEX);
 
-  for (auto const i: as_const(lualite::class_<D>::inherited_.inherited_defs))
+  if (lua_isnil(L, -1))
   {
-    for (auto& mi: *i)
-    {
-      assert(lua_istable(L, -1));
+    lua_pop(L, 1);
 
-      lua_pushlightuserdata(L, instance);
-      lua_pushlightuserdata(L, &mi.func);
+    lua_createtable(L, 0, 1);
 
-      lua_pushcclosure(L, mi.callback, 2);
-
-      rawsetfield(L, -2, mi.name);
-    }
-  }
-
-  for (auto& mi: lualite::class_<D>::defs_)
-  {
-    assert(lua_istable(L, -1));
-
+    // instance
     lua_pushlightuserdata(L, instance);
-    lua_pushlightuserdata(L, &mi.func);
+    rawsetfield(L, -2, "__instance");
 
-    lua_pushcclosure(L, mi.callback, 2);
+    for (auto const i: as_const(lualite::class_<D>::inherited_.inherited_defs))
+    {
+      for (auto& mi: *i)
+      {
+        assert(lua_istable(L, -1));
 
-    rawsetfield(L, -2, mi.name);
-  }
+        lua_pushlightuserdata(L, instance);
+        lua_pushlightuserdata(L, &mi.func);
 
-  // metatable
-  assert(lua_istable(L, -1));
-  lua_createtable(L, 0, 1);
+        lua_pushcclosure(L, mi.callback, 2);
 
-  for (auto const i: as_const(
-    lualite::class_<D>::inherited_.inherited_metadefs))
-  {
-    for (auto& mi: *i)
+        rawsetfield(L, -2, mi.name);
+      }
+    }
+
+    for (auto& mi: lualite::class_<D>::defs_)
     {
       assert(lua_istable(L, -1));
 
@@ -271,49 +259,76 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
 
       rawsetfield(L, -2, mi.name);
     }
-  }
 
-  for (auto& mi: lualite::class_<D>::metadefs_)
-  {
+    // metatable
     assert(lua_istable(L, -1));
+    lua_createtable(L, 0, 1);
 
-    if (std::strcmp("__gc", mi.name))
+    for (auto const i: as_const(
+      lualite::class_<D>::inherited_.inherited_metadefs))
     {
+      for (auto& mi: *i)
+      {
+        assert(lua_istable(L, -1));
+
+        lua_pushlightuserdata(L, instance);
+        lua_pushlightuserdata(L, &mi.func);
+
+        lua_pushcclosure(L, mi.callback, 2);
+
+        rawsetfield(L, -2, mi.name);
+      }
+    }
+
+    for (auto& mi: lualite::class_<D>::metadefs_)
+    {
+      assert(lua_istable(L, -1));
+
+      if (std::strcmp("__gc", mi.name))
+      {
+        lua_pushlightuserdata(L, instance);
+        lua_pushlightuserdata(L, &mi.func);
+
+        lua_pushcclosure(L, mi.callback, 2);
+
+        rawsetfield(L, -2, mi.name);
+      }
+      // else do nothing
+    }
+
+    if (!lualite::class_<D>::has_index)
+    {
+      assert(lua_istable(L, -1));
       lua_pushlightuserdata(L, instance);
-      lua_pushlightuserdata(L, &mi.func);
+      lua_pushlightuserdata(L, 0);
 
-      lua_pushcclosure(L, mi.callback, 2);
+      lua_pushcclosure(L, default_getter<D>, 2);
 
-      rawsetfield(L, -2, mi.name);
+      rawsetfield(L, -2, "__index");
     }
     // else do nothing
-  }
 
-  if (!lualite::class_<D>::has_index)
-  {
-    assert(lua_istable(L, -1));
+    if (!lualite::class_<D>::has_newindex)
+    {
+      assert(lua_istable(L, -1));
+      lua_pushlightuserdata(L, instance);
+      lua_pushlightuserdata(L, 0);
+
+      lua_pushcclosure(L, default_setter<D>, 2);
+
+      rawsetfield(L, -2, "__newindex");
+    }
+    // else do nothing
+
+    lua_setmetatable(L, -2);
+
     lua_pushlightuserdata(L, instance);
-    lua_pushlightuserdata(L, 0);
+    lua_pushnil(L);
+    lua_copy(L, -3, -1);
 
-    lua_pushcclosure(L, default_getter<D>, 2);
-
-    rawsetfield(L, -2, "__index");
+    lua_rawset(L, LUA_REGISTRYINDEX);
   }
   // else do nothing
-
-  if (!lualite::class_<D>::has_newindex)
-  {
-    assert(lua_istable(L, -1));
-    lua_pushlightuserdata(L, instance);
-    lua_pushlightuserdata(L, 0);
-
-    lua_pushcclosure(L, default_setter<D>, 2);
-
-    rawsetfield(L, -2, "__newindex");
-  }
-  // else do nothing
-
-  lua_setmetatable(L, -2);
 
   assert(lua_istable(L, -1));
 }
@@ -1027,7 +1042,14 @@ get_arg(lua_State* const L)
 template <class C>
 int default_finalizer(lua_State* const L)
 {
-  delete static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1)));
+  auto const instance(lua_touserdata(L, lua_upvalueindex(1)));
+
+  lua_pushlightuserdata(L, instance);
+  lua_pushnil(L);
+
+  lua_rawset(L, LUA_REGISTRYINDEX);
+
+  delete static_cast<C*>(instance);
 
   return 0;
 }
@@ -1057,7 +1079,6 @@ int constructor_stub(lua_State* const L)
     for (auto& mi: *i)
     {
       assert(lua_istable(L, -1));
-
       lua_pushlightuserdata(L, instance);
       lua_pushlightuserdata(L, &mi.func);
 
@@ -1070,7 +1091,6 @@ int constructor_stub(lua_State* const L)
   for (auto& mi: lualite::class_<C>::defs_)
   {
     assert(lua_istable(L, -1));
-
     lua_pushlightuserdata(L, instance);
     lua_pushlightuserdata(L, &mi.func);
 
@@ -1089,7 +1109,6 @@ int constructor_stub(lua_State* const L)
     for (auto& mi: *i)
     {
       assert(lua_istable(L, -1));
-
       lua_pushlightuserdata(L, instance);
       lua_pushlightuserdata(L, &mi.func);
 
@@ -1163,7 +1182,6 @@ typename std::enable_if<std::is_void<R>::value, int>::type
 func_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
-
   typedef R (* const ptr_to_func_type)(A...);
 
   forward<O, R, A...>(L,
@@ -1179,7 +1197,6 @@ typename std::enable_if<!std::is_void<R>::value, int>::type
 func_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
-
   typedef R (* const ptr_to_func_type)(A...);
 
   return set_result(L, forward<O, R, A...>(L,
