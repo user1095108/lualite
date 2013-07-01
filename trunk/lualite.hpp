@@ -220,14 +220,13 @@ int default_setter(lua_State* const L)
 template <class D>
 inline void create_wrapper_table(lua_State* const L, D* const instance)
 {
-  auto const tableIndex(lua_upvalueindex(3));
+  lua_pushlightuserdata(L, instance);
+  lua_rawget(L, LUA_REGISTRYINDEX);
 
-  if (lua_istable(L, tableIndex))
+  if (lua_isnil(L, -1))
   {
-    lua_pushvalue(L, tableIndex);
-  }
-  else
-  {
+    lua_pop(L, 1);
+
     lua_createtable(L, 0, 1);
 
     // instance
@@ -242,9 +241,8 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
 
         lua_pushlightuserdata(L, instance);
         lua_pushlightuserdata(L, &mi.func);
-        lua_pushnil(L);
 
-        lua_pushcclosure(L, mi.callback, 3);
+        lua_pushcclosure(L, mi.callback, 2);
 
         rawsetfield(L, -2, mi.name);
       }
@@ -256,9 +254,8 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
 
       lua_pushlightuserdata(L, instance);
       lua_pushlightuserdata(L, &mi.func);
-      lua_pushnil(L);
 
-      lua_pushcclosure(L, mi.callback, 3);
+      lua_pushcclosure(L, mi.callback, 2);
 
       rawsetfield(L, -2, mi.name);
     }
@@ -325,8 +322,9 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
 
     lua_setmetatable(L, -2);
 
-    lua_pushvalue(L, -1);
-    lua_replace(L, tableIndex);
+    lua_pushlightuserdata(L, instance);
+    lua_pushvalue(L, -2);
+    lua_rawset(L, LUA_REGISTRYINDEX);
   }
 
   assert(lua_istable(L, -1));
@@ -1073,9 +1071,8 @@ int constructor_stub(lua_State* const L)
       assert(lua_istable(L, -1));
       lua_pushlightuserdata(L, instance);
       lua_pushlightuserdata(L, &mi.func);
-      lua_pushnil(L);
 
-      lua_pushcclosure(L, mi.callback, 3);
+      lua_pushcclosure(L, mi.callback, 2);
  
       rawsetfield(L, -2, mi.name);
     }
@@ -1086,9 +1083,8 @@ int constructor_stub(lua_State* const L)
     assert(lua_istable(L, -1));
     lua_pushlightuserdata(L, instance);
     lua_pushlightuserdata(L, &mi.func);
-    lua_pushnil(L);
 
-    lua_pushcclosure(L, mi.callback, 3);
+    lua_pushcclosure(L, mi.callback, 2);
   
     rawsetfield(L, -2, mi.name);
   }
@@ -1337,9 +1333,7 @@ protected:
       {
         assert(lua_istable(L, -1));
         lua_pushlightuserdata(L, i.func);
-        lua_pushnil(L);
-        lua_pushnil(L);
-        lua_pushcclosure(L, i.callback, 3);
+        lua_pushcclosure(L, i.callback, 1);
 
         detail::rawsetfield(L, -2, i.name);
       }
@@ -1358,9 +1352,7 @@ protected:
       for (auto& i: as_const(functions_))
       {
         lua_pushlightuserdata(L, i.func);
-        lua_pushnil(L);
-        lua_pushnil(L);
-        lua_pushcclosure(L, i.callback, 3);
+        lua_pushcclosure(L, i.callback, 1);
 
         lua_setglobal(L, i.name);
       }
@@ -1513,9 +1505,7 @@ public:
       assert(lua_istable(L_, -1));
 
       lua_pushlightuserdata(L_, &address_pool_.front());
-      lua_pushnil(L_);
-      lua_pushnil(L_);
-      lua_pushcclosure(L_, (detail::func_stub<1, R, A...>), 3);
+      lua_pushcclosure(L_, (detail::func_stub<1, R, A...>), 1);
 
       detail::rawsetfield(L_, -2, name);
 
