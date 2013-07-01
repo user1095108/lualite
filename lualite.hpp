@@ -1037,7 +1037,13 @@ get_arg(lua_State* const L)
 template <class C>
 int default_finalizer(lua_State* const L)
 {
-  delete static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1)));
+  auto const instance(lua_touserdata(L, lua_upvalueindex(1)));
+
+  lua_pushlightuserdata(L, instance);
+  lua_pushnil(L);
+  lua_rawset(L, LUA_REGISTRYINDEX);
+
+  delete static_cast<C*>(instance);
 
   return 0;
 }
