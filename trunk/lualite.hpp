@@ -225,8 +225,6 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
 
   if (lua_isnil(L, -1))
   {
-    lua_pop(L, 1);
-
     lua_createtable(L, 0, 1);
 
     // instance
