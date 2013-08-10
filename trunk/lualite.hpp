@@ -86,8 +86,8 @@ template<typename T> constexpr inline T const& as_const(T& t) { return t; }
 template <typename T>
 using is_nc_lvalue_reference
   = std::integral_constant<bool,
-      std::is_lvalue_reference<T>::value
-      && !std::is_const<typename std::remove_reference<T>::type>::value
+      std::is_lvalue_reference<T>{}
+      && !std::is_const<typename std::remove_reference<T>::type>{}
     >;
 
 // key is at the top of the stack
@@ -327,8 +327,8 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
 
 template <typename T>
 inline typename std::enable_if<
-  std::is_floating_point<typename std::remove_reference<T>::type>::value
-  && !is_nc_lvalue_reference<T>::value,
+  std::is_floating_point<typename std::remove_reference<T>::type>{}
+  && !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T && v)
 {
@@ -339,9 +339,9 @@ set_result(lua_State* const L, T && v)
 
 template <typename T>
 inline typename std::enable_if<
-  std::is_integral<typename std::remove_reference<T>::type>::value
-  && std::is_signed<typename std::remove_reference<T>::type>::value
-  && !is_nc_lvalue_reference<T>::value,
+  std::is_integral<typename std::remove_reference<T>::type>{}
+  && std::is_signed<typename std::remove_reference<T>::type>{}
+  && !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -352,9 +352,9 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename std::enable_if<
-  std::is_integral<typename std::remove_reference<T>::type>::value
-  && !std::is_signed<typename std::remove_reference<T>::type>::value
-  && !is_nc_lvalue_reference<T>::value,
+  std::is_integral<typename std::remove_reference<T>::type>{}
+  && !std::is_signed<typename std::remove_reference<T>::type>{}
+  && !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -365,8 +365,8 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename std::enable_if<
-  std::is_same<typename std::decay<T>::type, bool>::value
-  && !is_nc_lvalue_reference<T>::value,
+  std::is_same<typename std::decay<T>::type, bool>{}
+  && !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -377,8 +377,8 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename std::enable_if<
-  std::is_same<typename std::decay<T>::type, char const*>::value
-  && !is_nc_lvalue_reference<T>::value,
+  std::is_same<typename std::decay<T>::type, char const*>{}
+  && !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -389,8 +389,8 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename std::enable_if<
-  std::is_same<typename std::decay<T>::type, void const*>::value
-  && !is_nc_lvalue_reference<T>::value,
+  std::is_same<typename std::decay<T>::type, void const*>{}
+  && !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -401,9 +401,9 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename std::enable_if<
-  std::is_pointer<T>::value
-  && !std::is_const<typename std::remove_pointer<T>::type>::value
-  && !std::is_class<typename std::remove_pointer<T>::type>::value,
+  std::is_pointer<T>{}
+  && !std::is_const<typename std::remove_pointer<T>::type>{}
+  && !std::is_class<typename std::remove_pointer<T>::type>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -414,8 +414,8 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename std::enable_if<
-  is_nc_lvalue_reference<T>::value
-  && !std::is_class<typename std::remove_reference<T>::type>::value,
+  is_nc_lvalue_reference<T>{}
+  && !std::is_class<typename std::remove_reference<T>::type>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -426,9 +426,9 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename std::enable_if<
-  std::is_pointer<T>::value
-  && !std::is_const<typename std::remove_pointer<T>::type>::value
-  && std::is_class<typename std::remove_pointer<T>::type>::value,
+  std::is_pointer<T>{}
+  && !std::is_const<typename std::remove_pointer<T>::type>{}
+  && std::is_class<typename std::remove_pointer<T>::type>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -439,8 +439,8 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename std::enable_if<
-  is_nc_lvalue_reference<T>::value
-  && std::is_class<typename std::remove_reference<T>::type>::value,
+  is_nc_lvalue_reference<T>{}
+  && std::is_class<typename std::remove_reference<T>::type>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -451,8 +451,8 @@ set_result(lua_State* const L, T&& v)
 
 template <int I, typename T>
 inline typename std::enable_if<
-  std::is_floating_point<typename std::decay<T>::type>::value
-  && !is_nc_lvalue_reference<T>::value,
+  std::is_floating_point<typename std::decay<T>::type>{}
+  && !is_nc_lvalue_reference<T>{},
   typename std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
@@ -462,9 +462,9 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename std::enable_if<
-  std::is_integral<typename std::decay<T>::type>::value
-  && std::is_signed<typename std::decay<T>::type>::value
-  && !is_nc_lvalue_reference<T>::value,
+  std::is_integral<typename std::decay<T>::type>{}
+  && std::is_signed<typename std::decay<T>::type>{}
+  && !is_nc_lvalue_reference<T>{},
   typename std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
@@ -474,9 +474,9 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename std::enable_if<
-  std::is_integral<typename std::decay<T>::type>::value
-  && std::is_unsigned<typename std::decay<T>::type>::value
-  && !is_nc_lvalue_reference<T>::value,
+  std::is_integral<typename std::decay<T>::type>{}
+  && std::is_unsigned<typename std::decay<T>::type>{}
+  && !is_nc_lvalue_reference<T>{},
   typename std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
@@ -486,8 +486,8 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename std::enable_if<std::is_same<
-  typename std::decay<T>::type, bool>::value
-  && !is_nc_lvalue_reference<T>::value,
+  typename std::decay<T>::type, bool>{}
+  && !is_nc_lvalue_reference<T>{},
   typename std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
@@ -497,8 +497,8 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename std::enable_if<std::is_same<
-  typename std::decay<T>::type, char const*>::value
-  && !is_nc_lvalue_reference<T>::value,
+  typename std::decay<T>::type, char const*>{}
+  && !is_nc_lvalue_reference<T>{},
   typename std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
@@ -508,8 +508,8 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename std::enable_if<
-  std::is_pointer<T>::value
-  && !std::is_same<typename std::decay<T>::type, char const*>::value,
+  std::is_pointer<T>{}
+  && !std::is_same<typename std::decay<T>::type, char const*>{},
   typename std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
@@ -518,7 +518,7 @@ get_arg(lua_State* const L)
 }
 
 template <int I, typename T>
-inline typename std::enable_if<is_nc_lvalue_reference<T>::value, T>::type
+inline typename std::enable_if<is_nc_lvalue_reference<T>{}, T>::type
 get_arg(lua_State* const L)
 {
   assert(lua_islightuserdata(L, I));
@@ -585,8 +585,8 @@ struct is_std_vector<std::vector<T, Alloc> > : std::true_type { };
 
 template <typename T>
 inline typename std::enable_if<
-  std::is_same<typename std::decay<T>::type, std::string>::value
-  && !is_nc_lvalue_reference<T>::value,
+  std::is_same<typename std::decay<T>::type, std::string>{}
+  && !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& s)
 {
@@ -597,8 +597,8 @@ set_result(lua_State* const L, T&& s)
 
 template <typename C>
 inline typename std::enable_if<
-  is_std_pair<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_pair<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   int>::type
 set_result(lua_State* const L, C&& p)
 {
@@ -617,22 +617,22 @@ inline void set_tuple_result(lua_State* const L,
 
 template <typename C>
 inline typename std::enable_if<
-  is_std_tuple<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_tuple<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   int>::type
 set_result(lua_State* const L, C&& t)
 {
   typedef typename std::decay<C>::type result_type;
 
-  set_tuple_result(L, t, make_indices<std::tuple_size<C>::value>());
+  set_tuple_result(L, t, make_indices<std::tuple_size<C>{}>());
 
-  return std::tuple_size<result_type>::value;
+  return std::tuple_size<result_type>{};
 }
 
 template <typename C>
 inline typename std::enable_if<
-  is_std_array<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_array<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   int>::type
 set_result(lua_State* const L, C&& a)
 {
@@ -652,8 +652,8 @@ set_result(lua_State* const L, C&& a)
 
 template <typename C>
 inline typename std::enable_if<
-  is_std_deque<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_deque<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   int>::type
 set_result(lua_State* const L, C&& d)
 {
@@ -673,8 +673,8 @@ set_result(lua_State* const L, C&& d)
 
 template <typename C>
 inline typename std::enable_if<
-  is_std_forward_list<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_forward_list<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   int>::type
 set_result(lua_State* const L, C&& l)
 {
@@ -696,8 +696,8 @@ set_result(lua_State* const L, C&& l)
 
 template <typename C>
 inline typename std::enable_if<
-  is_std_list<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_list<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   int>::type
 set_result(lua_State* const L, C&& l)
 {
@@ -719,8 +719,8 @@ set_result(lua_State* const L, C&& l)
 
 template <typename C>
 inline typename std::enable_if<
-  is_std_map<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_map<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   int>::type
 set_result(lua_State* const L, C&& m)
 {
@@ -741,8 +741,8 @@ set_result(lua_State* const L, C&& m)
 
 template <typename C>
 inline typename std::enable_if<
-  is_std_unordered_map<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_unordered_map<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   int>::type
 set_result(lua_State* const L, C&& m)
 {
@@ -763,8 +763,8 @@ set_result(lua_State* const L, C&& m)
 
 template <typename C>
 inline typename std::enable_if<
-  is_std_vector<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_vector<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   int>::type
 set_result(lua_State* const L, C&& v)
 {
@@ -784,8 +784,8 @@ set_result(lua_State* const L, C&& v)
 
 template <int I, class C>
 inline typename std::enable_if<
-  std::is_same<typename std::decay<C>::type, std::string>::value
-  && !is_nc_lvalue_reference<C>::value,
+  std::is_same<typename std::decay<C>::type, std::string>{}
+  && !is_nc_lvalue_reference<C>{},
   typename std::decay<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -800,8 +800,8 @@ get_arg(lua_State* const L)
 
 template<int I, class C>
 inline typename std::enable_if<
-  is_std_pair<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_pair<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   typename std::decay<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -836,8 +836,8 @@ inline C get_tuple_arg(lua_State* const L, indices<I...> const)
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_tuple<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_tuple<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   typename std::decay<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -851,8 +851,8 @@ get_arg(lua_State* const L)
 
 template<int I, class C>
 inline typename std::enable_if<
-  is_std_array<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_array<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   typename std::decay<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -877,8 +877,8 @@ get_arg(lua_State* const L)
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_deque<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_deque<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   typename std::decay<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -903,8 +903,8 @@ get_arg(lua_State* const L)
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_forward_list<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_forward_list<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   typename std::decay<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -929,8 +929,8 @@ get_arg(lua_State* const L)
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_list<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_list<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   typename std::decay<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -955,8 +955,8 @@ get_arg(lua_State* const L)
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_vector<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_vector<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   typename std::decay<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -981,8 +981,8 @@ get_arg(lua_State* const L)
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_map<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_map<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   typename std::decay<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -1006,8 +1006,8 @@ get_arg(lua_State* const L)
 
 template <int I, class C>
 inline typename std::enable_if<
-  is_std_unordered_map<typename std::decay<C>::type>::value
-  && !is_nc_lvalue_reference<C>::value,
+  is_std_unordered_map<typename std::decay<C>::type>{}
+  && !is_nc_lvalue_reference<C>{},
   typename std::decay<C>::type>::type
 get_arg(lua_State* const L)
 {
@@ -1168,7 +1168,7 @@ inline R forward(lua_State* const L, R (* const f)(A...), indices<I...> const)
 }
 
 template <std::size_t O, class R, class ...A>
-typename std::enable_if<std::is_void<R>::value, int>::type
+typename std::enable_if<std::is_void<R>{}, int>::type
 func_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
@@ -1183,7 +1183,7 @@ func_stub(lua_State* const L)
 }
 
 template <std::size_t O, class R, class ...A>
-typename std::enable_if<!std::is_void<R>::value, int>::type
+typename std::enable_if<!std::is_void<R>{}, int>::type
 func_stub(lua_State* const L)
 {
 //std::cout << lua_gettop(L) << " " << sizeof...(A) << std::endl;
@@ -1205,7 +1205,7 @@ inline R forward(lua_State* const L, C* const c,
 }
 
 template <std::size_t O, class C, class R, class ...A>
-typename std::enable_if<std::is_void<R>::value, int>::type
+typename std::enable_if<std::is_void<R>{}, int>::type
 member_stub(lua_State* const L)
 {
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
@@ -1222,7 +1222,7 @@ member_stub(lua_State* const L)
 }
 
 template <std::size_t O, class C, class R, class ...A>
-typename std::enable_if<!std::is_void<R>::value, int>::type
+typename std::enable_if<!std::is_void<R>{}, int>::type
 member_stub(lua_State* const L)
 {
 //std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << std::endl;
