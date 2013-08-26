@@ -826,7 +826,7 @@ inline C get_tuple_arg(lua_State* const L, indices<I...> const)
 {
   std::initializer_list<int>{ (lua_rawgeti(L, O, I + 1), 0)... };
 
-  C result(std::make_tuple(get_arg<int(I - sizeof...(I)),
+  C const result(std::make_tuple(get_arg<int(I - sizeof...(I)),
     typename std::tuple_element<I, C>::type>(L)...));
 
   lua_pop(L, int(sizeof...(I)));
