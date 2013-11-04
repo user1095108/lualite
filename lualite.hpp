@@ -153,11 +153,11 @@ struct dummy_
   void dummy();
 };
 
-typedef struct { char p[sizeof(&dummy)]; } func_type;
+struct func_type { char p[sizeof(&dummy)]; };
 
-typedef struct { char p[sizeof(&dummy_::dummy)]; } member_func_type;
+struct member_func_type { char p[sizeof(&dummy_::dummy)]; };
 
-typedef ::std::vector<::std::pair<char const* const, int const> > enum_info_type;
+using enum_info_type = ::std::vector<::std::pair<char const* const, int const> >;
 
 struct func_info_type
 {
@@ -623,7 +623,7 @@ inline typename ::std::enable_if<
   int>::type
 set_result(lua_State* const L, C&& t)
 {
-  typedef typename ::std::decay<C>::type result_type;
+  using result_type = typename ::std::decay<C>::type;
 
   set_tuple_result(L, t, make_indices<::std::tuple_size<C>{}>());
 
@@ -808,7 +808,7 @@ get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
  
-  typedef typename ::std::decay<C>::type result_type;
+  using result_type = typename ::std::decay<C>::type;
 
   lua_rawgeti(L, -1, 1);
   lua_rawgeti(L, -2, 2);
@@ -844,7 +844,7 @@ get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  typedef typename ::std::decay<C>::type result_type;
+  using result_type = typename ::std::decay<C>::type;
 
   return get_tuple_arg<I, result_type>(L,
     make_indices<::std::tuple_size<result_type>{}>());
@@ -859,7 +859,7 @@ get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  typedef typename ::std::decay<C>::type result_type;
+  using result_type = typename ::std::decay<C>::type;
   result_type result;
 
   auto const end(::std::min(lua_rawlen(L, I), result.size()) + 1);
@@ -885,7 +885,7 @@ get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  typedef typename ::std::decay<C>::type result_type;
+  using result_type = typename ::std::decay<C>::type;
   result_type result;
 
   auto const end(lua_rawlen(L, I) + 1);
@@ -911,7 +911,7 @@ get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  typedef typename ::std::decay<C>::type result_type;
+  using result_type = typename ::std::decay<C>::type;
   result_type result;
 
   auto const len(lua_rawlen(L, I));
@@ -937,7 +937,7 @@ get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  typedef typename ::std::decay<C>::type result_type;
+  using result_type = typename ::std::decay<C>::type;
   result_type result;
 
   auto const end(lua_rawlen(L, I) + 1);
@@ -963,7 +963,7 @@ get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  typedef typename ::std::decay<C>::type result_type;
+  using result_type = typename ::std::decay<C>::type;
   result_type result;
 
   auto const end(lua_rawlen(L, I) + 1);
@@ -989,7 +989,7 @@ get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  typedef typename ::std::decay<C>::type result_type;
+  using result_type = typename ::std::decay<C>::type;
   result_type result;
 
   lua_pushnil(L);
@@ -1014,7 +1014,7 @@ get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  typedef typename ::std::decay<C>::type result_type;
+  using result_type = typename ::std::decay<C>::type;
   result_type result;
 
   lua_pushnil(L);
@@ -1173,7 +1173,7 @@ typename ::std::enable_if<::std::is_void<R>{}, int>::type
 func_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
-  typedef R (* const ptr_to_func_type)(A...);
+  using ptr_to_func_type = R (* const)(A...);
 
   forward<O, R, A...>(L,
     *static_cast<ptr_to_func_type const*>(
@@ -1189,7 +1189,7 @@ func_stub(lua_State* const L)
 {
 //::std::cout << lua_gettop(L) << " " << sizeof...(A) << ::std::endl;
   assert(sizeof...(A) == lua_gettop(L));
-  typedef R (* const ptr_to_func_type)(A...);
+  using ptr_to_func_type = R (* const)(A...);
 
   return set_result(L, forward<O, R, A...>(L,
     *static_cast<ptr_to_func_type const*>(
@@ -1210,8 +1210,7 @@ typename ::std::enable_if<::std::is_void<R>{}, int>::type
 member_stub(lua_State* const L)
 {
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
-
-  typedef R (C::* const ptr_to_member_type)(A...);
+  using ptr_to_member_type = R (C::* const )(A...);
 
   forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
@@ -1228,8 +1227,7 @@ member_stub(lua_State* const L)
 {
 //::std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << ::std::endl;
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
-
-  typedef R (C::* const ptr_to_member_type)(A...);
+  using ptr_to_member_type = R (C::* const)(A...);
 
   return set_result(L, static_cast<R>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1))),
