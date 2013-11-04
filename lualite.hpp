@@ -1447,16 +1447,16 @@ protected:
     }
   }
 
-protected:
   using address_pool_type = ::std::forward_list<detail::func_type>;
 
-  address_pool_type& address_pool()
+  static address_pool_type& address_pool()
   {
     static address_pool_type address_pool;
 
     return address_pool;
   }
 
+protected:
   ::std::vector<detail::func_info_type> functions_;
 
   char const* const name_;
