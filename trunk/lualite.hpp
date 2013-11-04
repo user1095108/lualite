@@ -235,7 +235,8 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
     lua_pushlightuserdata(L, instance);
     rawsetfield(L, -2, "__instance");
 
-    for (auto const i: as_const(lualite::class_<D>::inherited_.inherited_defs))
+    for (auto const i: detail::as_const(
+      lualite::class_<D>::inherited_.inherited_defs))
     {
       for (auto& mi: *i)
       {
@@ -266,7 +267,7 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
     assert(lua_istable(L, -1));
     lua_createtable(L, 0, 1);
 
-    for (auto const i: as_const(
+    for (auto const i: detail::as_const(
       lualite::class_<D>::inherited_.inherited_metadefs))
     {
       for (auto& mi: *i)
@@ -1072,7 +1073,8 @@ int constructor_stub(lua_State* const L)
   lua_pushlightuserdata(L, instance);
   rawsetfield(L, -2, "__instance");
 
-  for (auto const i: as_const(lualite::class_<C>::inherited_.inherited_defs))
+  for (auto const i: detail::as_const(
+    lualite::class_<C>::inherited_.inherited_defs))
   {
     for (auto& mi: *i)
     {
@@ -1101,7 +1103,7 @@ int constructor_stub(lua_State* const L)
   assert(lua_istable(L, -1));
   lua_createtable(L, 0, 1);
 
-  for (auto const i: as_const(
+  for (auto const i: detail::as_const(
     lualite::class_<C>::inherited_.inherited_metadefs))
   {
     for (auto& mi: *i)
@@ -1330,7 +1332,7 @@ protected:
         detail::rawsetfield(L, -2, i.first);
       }
 
-      for (auto& i: as_const(functions_))
+      for (auto& i: detail::as_const(functions_))
       {
         assert(lua_istable(L, -1));
         lua_pushlightuserdata(L, i.func);
@@ -1350,7 +1352,7 @@ protected:
         lua_setglobal(L, i.first);
       }
 
-      for (auto& i: as_const(functions_))
+      for (auto& i: detail::as_const(functions_))
       {
         lua_pushlightuserdata(L, i.func);
         lua_pushcclosure(L, i.callback, 1);
