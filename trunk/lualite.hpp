@@ -1737,8 +1737,8 @@ private:
     static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
 
-    defs_.push_back(detail::member_info_type{ name,
-      detail::member_stub<O, C, R, A...>, convert(ptr_to_member) });
+    defs_.push_back(detail::member_info_type{name,
+      detail::member_stub<O, C, R, A...>, convert(ptr_to_member)});
   }
 
   template <::std::size_t O = 2, class R, class ...A>
@@ -1748,8 +1748,8 @@ private:
     static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
 
-    defs_.push_back(detail::member_info_type{ name,
-      detail::member_stub<O, C, R, A...>, convert(ptr_to_member) });
+    defs_.push_back(detail::member_info_type{name,
+      detail::member_stub<O, C, R, A...>, convert(ptr_to_member)});
   }
 
 public:
