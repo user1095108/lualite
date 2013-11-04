@@ -681,9 +681,9 @@ set_result(lua_State* const L, C&& l)
 {
   lua_createtable(L, l.size(), 0);
 
-  auto const cend(l.cend());
-
   auto j(typename ::std::decay<C>::type::size_type(1));
+
+  auto const cend(l.cend());
 
   for (auto i(l.cbegin()); i != cend; ++i, ++j)
   {
@@ -704,9 +704,9 @@ set_result(lua_State* const L, C&& l)
 {
   lua_createtable(L, l.size(), 0);
 
-  auto const cend(l.cend());
-
   auto j(typename ::std::decay<C>::type::size_type(1));
+
+  auto const cend(l.cend());
 
   for (auto i(l.cbegin()); i != cend; ++i, ++j)
   {
@@ -1743,22 +1743,7 @@ private:
       detail::member_stub<O, C, R, A...>, convert(ptr_to_member) });
   }
 
-private:
-  template <class C_>
-  friend class class_;
-
-  template <class C_>
-  friend void detail::create_wrapper_table(lua_State*, C_*);
-
-  template <::std::size_t O, class C_, class ...A>
-  friend int detail::constructor_stub(lua_State* const);
-
-  template <class C_>
-  friend int detail::default_getter(lua_State*);
-
-  template <class C_>
-  friend int detail::default_setter(lua_State*);
-
+public:
   struct inherited_info
   {
     ::std::vector<::std::vector<detail::member_info_type>*> inherited_defs;
