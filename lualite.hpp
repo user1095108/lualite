@@ -1295,10 +1295,10 @@ public:
   template <class R, class ...A>
   scope& def(char const* const name, R (* const ptr_to_func)(A...))
   {
-    address_pool_.push_front(convert(ptr_to_func));
+    address_pool().push_front(convert(ptr_to_func));
 
     functions_.push_back(detail::func_info_type{
-      name, detail::func_stub<1, R, A...>, &address_pool_.front() });
+      name, detail::func_stub<1, R, A...>, &address_pool().front() });
 
     return *this;
   }
@@ -1448,7 +1448,14 @@ protected:
   }
 
 protected:
-  static ::std::forward_list<detail::func_type> address_pool_;
+  using address_pool_type = ::std::forward_list<detail::func_type>;
+
+  address_pool_type& address_pool()
+  {
+    static address_pool_type address_pool;
+
+    return address_pool;
+  }
 
   ::std::vector<detail::func_info_type> functions_;
 
@@ -1465,8 +1472,6 @@ private:
 
   scope* next_{};
 };
-
-::std::forward_list<detail::func_type> scope::address_pool_;
 
 class module : public scope
 {
@@ -1494,14 +1499,14 @@ public:
   template <class R, class ...A>
   module& def(char const* const name, R (* const ptr_to_func)(A...))
   {
-    address_pool_.push_front(convert(ptr_to_func));
+    address_pool().push_front(convert(ptr_to_func));
 
     if (name_)
     {
       scope::get_scope(L_);
       assert(lua_istable(L_, -1));
 
-      lua_pushlightuserdata(L_, &address_pool_.front());
+      lua_pushlightuserdata(L_, &address_pool().front());
       lua_pushcclosure(L_, (detail::func_stub<1, R, A...>), 1);
 
       detail::rawsetfield(L_, -2, name);
@@ -1510,7 +1515,7 @@ public:
     }
     else
     {
-      lua_pushlightuserdata(L_, &address_pool_.front());
+      lua_pushlightuserdata(L_, &address_pool().front());
       lua_pushcclosure(L_, (detail::func_stub<1, R, A...>), 1);
 
       lua_setglobal(L_, name);
