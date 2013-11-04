@@ -1457,11 +1457,11 @@ protected:
   }
 
 protected:
-  ::std::vector<detail::func_info_type> functions_;
-
   char const* const name_;
 
   scope* parent_scope_{};
+
+  ::std::vector<detail::func_info_type> functions_;
 
 private:
   friend class module;
