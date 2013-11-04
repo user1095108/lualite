@@ -150,7 +150,7 @@ void dummy();
 
 struct dummy_
 {
-  void dummy();
+  virtual void dummy();
 };
 
 struct alignas (decltype(&dummy)) func_type
@@ -1250,7 +1250,7 @@ member_stub(lua_State* const L)
 #endif // __GNUC__
 
 template <class R, class ...A>
-constexpr inline detail::func_type convert(
+inline constexpr detail::func_type convert(
   R (*func_ptr)(A...))
 {
   return *static_cast<detail::func_type*>(
@@ -1258,7 +1258,7 @@ constexpr inline detail::func_type convert(
 }
 
 template <class C, class R, class ...A>
-constexpr inline detail::member_func_type convert(
+inline constexpr detail::member_func_type convert(
   R (C::*func_ptr)(A...))
 {
   return *static_cast<detail::member_func_type*>(
@@ -1266,7 +1266,7 @@ constexpr inline detail::member_func_type convert(
 }
 
 template <class C, class R, class ...A>
-constexpr inline detail::member_func_type convert(
+inline constexpr detail::member_func_type convert(
   R (C::*func_ptr)(A...) const)
 {
   return *static_cast<detail::member_func_type*>(
