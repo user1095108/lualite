@@ -153,9 +153,15 @@ struct dummy_
   void dummy();
 };
 
-struct func_type { char p[sizeof(&dummy)]; };
+struct alignas (decltype(&dummy)) func_type
+{
+  char p[sizeof(&dummy)];
+};
 
-struct member_func_type { char p[sizeof(&dummy_::dummy)]; };
+struct alignas (decltype(&dummy_::dummy)) member_func_type
+{
+  char p[sizeof(&dummy_::dummy)];
+};
 
 using enum_info_type = ::std::vector<::std::pair<char const* const, int const> >;
 
