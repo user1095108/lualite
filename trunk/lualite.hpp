@@ -221,22 +221,18 @@ int default_setter(lua_State* const L)
   return {};
 }
 
-template <class D>
-inline void create_wrapper_table(lua_State* const L, D* const instance)
+template <class C>
+inline void create_wrapper_table(lua_State* const L, C* const instance)
 {
   lua_pushlightuserdata(L, instance);
   lua_rawget(L, LUA_REGISTRYINDEX);
 
   if (lua_isnil(L, -1))
   {
-    lua_createtable(L, 0, 1);
-
-    // instance
-    lua_pushlightuserdata(L, instance);
-    rawsetfield(L, -2, "__instance");
+    lua_createtable(L, 0, 10);
 
     for (auto const i: detail::as_const(
-      lualite::class_<D>::inherited_.inherited_defs))
+      lualite::class_<C>::inherited_.inherited_defs))
     {
       for (auto& mi: *i)
       {
@@ -251,7 +247,7 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
       }
     }
 
-    for (auto& mi: lualite::class_<D>::defs_)
+    for (auto& mi: lualite::class_<C>::defs_)
     {
       assert(lua_istable(L, -1));
 
@@ -268,7 +264,7 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
     lua_createtable(L, 0, 1);
 
     for (auto const i: detail::as_const(
-      lualite::class_<D>::inherited_.inherited_metadefs))
+      lualite::class_<C>::inherited_.inherited_metadefs))
     {
       for (auto& mi: *i)
       {
@@ -283,7 +279,7 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
       }
     }
 
-    for (auto& mi: lualite::class_<D>::metadefs_)
+    for (auto& mi: lualite::class_<C>::metadefs_)
     {
       assert(lua_istable(L, -1));
 
@@ -299,25 +295,25 @@ inline void create_wrapper_table(lua_State* const L, D* const instance)
       // else do nothing
     }
 
-    if (!lualite::class_<D>::has_index)
+    if (!lualite::class_<C>::has_index)
     {
       assert(lua_istable(L, -1));
       lua_pushlightuserdata(L, instance);
       lua_pushlightuserdata(L, 0);
 
-      lua_pushcclosure(L, default_getter<D>, 2);
+      lua_pushcclosure(L, default_getter<C>, 2);
 
       rawsetfield(L, -2, "__index");
     }
     // else do nothing
 
-    if (!lualite::class_<D>::has_newindex)
+    if (!lualite::class_<C>::has_newindex)
     {
       assert(lua_istable(L, -1));
       lua_pushlightuserdata(L, instance);
-      lua_pushlightuserdata(L, 0);
+      lua_pushlightuserdata(L, nullptr);
 
-      lua_pushcclosure(L, default_setter<D>, 2);
+      lua_pushcclosure(L, default_setter<C>, 2);
 
       rawsetfield(L, -2, "__newindex");
     }
@@ -1067,11 +1063,7 @@ int constructor_stub(lua_State* const L)
   auto const instance(forward<O, C, A...>(L, make_indices<sizeof...(A)>()));
 
   // table
-  lua_createtable(L, 0, 1);
-
-  // instance
-  lua_pushlightuserdata(L, instance);
-  rawsetfield(L, -2, "__instance");
+  lua_createtable(L, 0, 10);
 
   for (auto const i: detail::as_const(
     lualite::class_<C>::inherited_.inherited_defs))
@@ -1156,7 +1148,7 @@ int constructor_stub(lua_State* const L)
   {
     assert(lua_istable(L, -1));
     lua_pushlightuserdata(L, instance);
-    lua_pushlightuserdata(L, 0);
+    lua_pushlightuserdata(L, nullptr);
 
     lua_pushcclosure(L, default_setter<C>, 2);
 
@@ -1166,6 +1158,7 @@ int constructor_stub(lua_State* const L)
 
   assert(lua_istable(L, -2));
   lua_setmetatable(L, -2);
+  assert(lua_istable(L, -1));
 
   return 1;
 }
