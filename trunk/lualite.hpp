@@ -1297,7 +1297,7 @@ public:
     address_pool().push_front(convert(ptr_to_func));
 
     functions_.push_back(detail::func_info_type{
-      name, detail::func_stub<1, R, A...>, &address_pool().front() });
+      name, detail::func_stub<1, R, A...>, &address_pool().front()});
 
     return *this;
   }
