@@ -1304,7 +1304,7 @@ public:
 
   scope& enum_(char const* const name, int value)
   {
-    enums_.push_back(::std::make_pair(name, value));
+    enums_.emplace_back(name, value);
 
     return *this;
   }
