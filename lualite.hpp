@@ -1296,8 +1296,8 @@ public:
   {
     address_pool().push_front(convert(ptr_to_func));
 
-    functions_.push_back(detail::func_info_type{
-      name, detail::func_stub<1, R, A...>, &address_pool().front()});
+    functions_.push_back({name, detail::func_stub<1, R, A...>,
+      &address_pool().front()});
 
     return *this;
   }
@@ -1566,8 +1566,7 @@ public:
   template <class ...A>
   class_& constructor(char const* const name = "new")
   {
-    constructors_.push_back(detail::func_info_type{
-      name, detail::constructor_stub<1, C, A...> });
+    constructors_.push_back({name, detail::constructor_stub<1, C, A...> });
 
     return *this;
   }
@@ -1732,8 +1731,8 @@ private:
     static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
 
-    defs_.push_back(detail::member_info_type{name,
-      detail::member_stub<O, C, R, A...>, convert(ptr_to_member)});
+    defs_.push_back({name, detail::member_stub<O, C, R, A...>,
+      convert(ptr_to_member)});
   }
 
   template <::std::size_t O = 2, class R, class ...A>
@@ -1743,8 +1742,8 @@ private:
     static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
 
-    defs_.push_back(detail::member_info_type{name,
-      detail::member_stub<O, C, R, A...>, convert(ptr_to_member)});
+    defs_.push_back({name, detail::member_stub<O, C, R, A...>,
+      convert(ptr_to_member)});
   }
 
 public:
