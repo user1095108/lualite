@@ -182,9 +182,9 @@ int main(int argc, char* argv[])
     )
   )
   .enum_("apple", 1)
-  .def("testfunc", &testfunc)
+  .def<decltype(testfunc), &testfunc>("testfunc") // faster way
   .def("testpair", &testpair)
-  .def("testtuple", &testtuple);
+  .def<decltype(testtuple), &testtuple>("testtuple"); // faster way
 
   luaL_dostring(
     L,

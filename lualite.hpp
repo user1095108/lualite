@@ -1095,6 +1095,25 @@ inline R forward(lua_State* const L, R (* const f)(A...), indices<I...> const)
   return (*f)(get_arg<I + O, A>(L)...);
 }
 
+template <typename F, F* f, ::std::size_t O, class R, class ...A>
+typename ::std::enable_if<::std::is_void<R>{}, int>::type
+func_stub(lua_State* const L)
+{
+  assert(sizeof...(A) == lua_gettop(L));
+
+  forward<O, R, A...>(L, f, make_indices<sizeof...(A)>());
+
+  return {};
+}
+
+template <typename F, F* f, ::std::size_t O, class R, class ...A>
+typename ::std::enable_if<!::std::is_void<R>{}, int>::type
+func_stub(lua_State* const L)
+{
+  return set_result(L, forward<O, R, A...>(L, f,
+    make_indices<sizeof...(A)>()));
+}
+
 template <::std::size_t O, class R, class ...A>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
 func_stub(lua_State* const L)
@@ -1217,6 +1236,14 @@ public:
 
   scope& operator=(scope const&) = delete;
 
+  template <typename FP, FP* fp>
+  scope& def(char const* const name)
+  {
+    push_function<FP, fp>(name, fp);
+
+    return *this;
+  }
+
   template <class R, class ...A>
   scope& def(char const* const name, R (* const ptr_to_func)(A...))
   {
@@ -1254,8 +1281,16 @@ protected:
       for (auto& i: detail::as_const(functions_))
       {
         assert(lua_istable(L, -1));
-        lua_pushlightuserdata(L, i.func);
-        lua_pushcclosure(L, i.callback, 1);
+
+        if (i.func)
+        {
+          lua_pushlightuserdata(L, i.func);
+          lua_pushcclosure(L, i.callback, 1);
+        }
+        else
+        {
+          lua_pushcclosure(L, i.callback, 0);
+        }
 
         detail::rawsetfield(L, -2, i.name);
       }
@@ -1273,8 +1308,15 @@ protected:
 
       for (auto& i: detail::as_const(functions_))
       {
-        lua_pushlightuserdata(L, i.func);
-        lua_pushcclosure(L, i.callback, 1);
+        if (i.func)
+        {
+          lua_pushlightuserdata(L, i.func);
+          lua_pushcclosure(L, i.callback, 1);
+        }
+        else
+        {
+          lua_pushcclosure(L, i.callback, 0);
+        }
 
         lua_setglobal(L, i.name);
       }
@@ -1389,6 +1431,14 @@ protected:
   ::std::vector<detail::func_info_type> functions_;
 
 private:
+  template <typename FP, FP* fp, typename R, typename ...A>
+  void push_function(char const* const name, R (* const)(A...))
+  {
+    functions_.push_back(
+      {name, detail::func_stub<FP, fp, 1, R, A...>, nullptr});
+  }
+
+private:
   friend class module;
 
   bool scope_create_{true};
@@ -1419,6 +1469,30 @@ public:
     [](...){ }((args.set_parent_scope(this), 0)...);
 
     scope::apply(L);
+  }
+
+  template <typename FP, FP* fp>
+  module& def(char const* const name)
+  {
+    if (name_)
+    {
+      scope::get_scope(L_);
+      assert(lua_istable(L_, -1));
+
+      push_function<FP, fp>(name, fp);
+
+      detail::rawsetfield(L_, -2, name);
+
+      lua_pop(L_, 1);
+    }
+    else
+    {
+      push_function<FP, fp>(name, fp);
+
+      lua_setglobal(L_, name);
+    }
+
+    return *this;
   }
 
   template <class R, class ...A>
@@ -1469,6 +1543,13 @@ public:
     }
 
     return *this;
+  }
+
+private:
+  template <typename FP, FP* fp, typename R, typename ...A>
+  void push_function(char const* const name, R (* const)(A...))
+  {
+    lua_pushcclosure(L_, (detail::func_stub<FP, fp, 1, R, A...>), 0);
   }
 
 private:
