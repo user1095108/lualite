@@ -263,61 +263,23 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
     assert(lua_istable(L, -1));
     lua_createtable(L, 0, 1);
 
-    for (auto const i: detail::as_const(
-      lualite::class_<C>::inherited_.inherited_metadefs))
-    {
-      for (auto& mi: *i)
-      {
-        assert(lua_istable(L, -1));
+    // getters
+    assert(lua_istable(L, -1));
+    lua_pushlightuserdata(L, instance);
+    lua_pushlightuserdata(L, 0);
 
-        lua_pushlightuserdata(L, instance);
-        lua_pushlightuserdata(L, &mi.func);
+    lua_pushcclosure(L, default_getter<C>, 2);
 
-        lua_pushcclosure(L, mi.callback, 2);
+    rawsetfield(L, -2, "__index");
 
-        rawsetfield(L, -2, mi.name);
-      }
-    }
+    // setters
+    assert(lua_istable(L, -1));
+    lua_pushlightuserdata(L, instance);
+    lua_pushlightuserdata(L, nullptr);
 
-    for (auto& mi: lualite::class_<C>::metadefs_)
-    {
-      assert(lua_istable(L, -1));
+    lua_pushcclosure(L, default_setter<C>, 2);
 
-      if (::std::strcmp("__gc", mi.name))
-      {
-        lua_pushlightuserdata(L, instance);
-        lua_pushlightuserdata(L, &mi.func);
-
-        lua_pushcclosure(L, mi.callback, 2);
-
-        rawsetfield(L, -2, mi.name);
-      }
-      // else do nothing
-    }
-
-    if (!lualite::class_<C>::has_index)
-    {
-      assert(lua_istable(L, -1));
-      lua_pushlightuserdata(L, instance);
-      lua_pushlightuserdata(L, 0);
-
-      lua_pushcclosure(L, default_getter<C>, 2);
-
-      rawsetfield(L, -2, "__index");
-    }
-    // else do nothing
-
-    if (!lualite::class_<C>::has_newindex)
-    {
-      assert(lua_istable(L, -1));
-      lua_pushlightuserdata(L, instance);
-      lua_pushlightuserdata(L, nullptr);
-
-      lua_pushcclosure(L, default_setter<C>, 2);
-
-      rawsetfield(L, -2, "__newindex");
-    }
-    // else do nothing
+    rawsetfield(L, -2, "__newindex");
 
     lua_setmetatable(L, -2);
 
@@ -1095,68 +1057,32 @@ int constructor_stub(lua_State* const L)
   assert(lua_istable(L, -1));
   lua_createtable(L, 0, 1);
 
-  for (auto const i: detail::as_const(
-    lualite::class_<C>::inherited_.inherited_metadefs))
-  {
-    for (auto& mi: *i)
-    {
-      assert(lua_istable(L, -1));
-      lua_pushlightuserdata(L, instance);
-      lua_pushlightuserdata(L, &mi.func);
+  // gc
+  assert(lua_istable(L, -1));
+  lua_pushlightuserdata(L, instance);
 
-      lua_pushcclosure(L, mi.callback, 2);
-    
-      rawsetfield(L, -2, mi.name);
-    }
-  }
+  lua_pushcclosure(L, default_finalizer<C>, 1);
 
-  for (auto& mi: lualite::class_<C>::metadefs_)
-  {
-    assert(lua_istable(L, -1));
-    lua_pushlightuserdata(L, instance);
-    lua_pushlightuserdata(L, &mi.func);
+  rawsetfield(L, -2, "__gc");
 
-    lua_pushcclosure(L, mi.callback, 2);
-  
-    rawsetfield(L, -2, mi.name);
-  }
+  // getters
+  assert(lua_istable(L, -1));
+  lua_pushlightuserdata(L, instance);
+  lua_pushnil(L);
 
-  if (!lualite::class_<C>::has_gc)
-  {
-    assert(lua_istable(L, -1));
-    lua_pushlightuserdata(L, instance);
+  lua_pushcclosure(L, default_getter<C>, 2);
 
-    lua_pushcclosure(L, default_finalizer<C>, 1);
+  rawsetfield(L, -2, "__index");
 
-    rawsetfield(L, -2, "__gc");
-  }
-  // else do nothing
+  // setters
+  assert(lua_istable(L, -1));
+  lua_pushlightuserdata(L, instance);
+  lua_pushlightuserdata(L, nullptr);
 
-  if (!lualite::class_<C>::has_index)
-  {
-    assert(lua_istable(L, -1));
-    lua_pushlightuserdata(L, instance);
-    lua_pushnil(L);
+  lua_pushcclosure(L, default_setter<C>, 2);
 
-    lua_pushcclosure(L, default_getter<C>, 2);
+  rawsetfield(L, -2, "__newindex");
 
-    rawsetfield(L, -2, "__index");
-  }
-  // else do nothing
-
-  if (!lualite::class_<C>::has_newindex)
-  {
-    assert(lua_istable(L, -1));
-    lua_pushlightuserdata(L, instance);
-    lua_pushlightuserdata(L, nullptr);
-
-    lua_pushcclosure(L, default_setter<C>, 2);
-
-    rawsetfield(L, -2, "__newindex");
-  }
-  // else do nothing
-
-  assert(lua_istable(L, -2));
   lua_setmetatable(L, -2);
   assert(lua_istable(L, -1));
 
@@ -1576,7 +1502,6 @@ public:
   {
     ::std::initializer_list<int>{(
       inherited_.inherited_defs.push_back(&class_<A>::defs_),
-      inherited_.inherited_metadefs.push_back(&class_<A>::metadefs_),
       0)...};
 
     ::std::initializer_list<int>{(
@@ -1619,35 +1544,6 @@ public:
   class_& enum_(char const* const name, int const value)
   {
     scope::enum_(name, value);
-
-    return *this;
-  }
-
-  template <class R, class ...A>
-  class_& metadef(char const* const name, R (C::* const ptr_to_member)(A...))
-  {
-    has_gc = has_gc || !::std::strcmp("__gc", name);
-
-    has_index = has_index || !::std::strcmp("__index", name);
-
-    has_newindex = has_newindex || !::std::strcmp("__newindex", name);
-
-    member_function(name, ptr_to_member);
-
-    return *this;
-  }
-
-  template <class R, class ...A>
-  class_& metadef(char const* const name,
-    R (C::* const ptr_to_member)(A...) const)
-  {
-    has_gc = has_gc || !::std::strcmp("__gc", name);
-
-    has_index = has_index || !::std::strcmp("__index", name);
-
-    has_newindex = has_newindex || !::std::strcmp("__newindex", name);
-
-    const_member_function(name, ptr_to_member);
 
     return *this;
   }
@@ -1750,7 +1646,6 @@ public:
   struct inherited_info
   {
     ::std::vector<::std::vector<detail::member_info_type>*> inherited_defs;
-    ::std::vector<::std::vector<detail::member_info_type>*> inherited_metadefs;
   };
 
   static struct inherited_info inherited_;
@@ -1762,8 +1657,6 @@ public:
   static ::std::vector<detail::func_info_type> constructors_;
 
   static ::std::vector<detail::member_info_type> defs_;
-
-  static ::std::vector<detail::member_info_type> metadefs_;
 
   static ::std::unordered_map<char const*, detail::map_member_info_type,
     detail::unordered_hash, detail::unordered_eq> getters_;
@@ -1788,9 +1681,6 @@ template <class C>
 
 template <class C>
 ::std::vector<detail::member_info_type> class_<C>::defs_;
-
-template <class C>
-::std::vector<detail::member_info_type> class_<C>::metadefs_;
 
 template <class C>
 ::std::unordered_map<char const*, detail::map_member_info_type,
