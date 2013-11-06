@@ -1664,15 +1664,6 @@ template <class C>
 struct class_<C>::inherited_info class_<C>::inherited_;
 
 template <class C>
-bool class_<C>::has_gc;
-
-template <class C>
-bool class_<C>::has_index;
-
-template <class C>
-bool class_<C>::has_newindex;
-
-template <class C>
 ::std::vector<detail::func_info_type> class_<C>::constructors_;
 
 template <class C>
