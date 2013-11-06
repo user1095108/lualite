@@ -1650,10 +1650,6 @@ public:
 
   static struct inherited_info inherited_;
 
-  static bool has_gc;
-  static bool has_index;
-  static bool has_newindex;
-
   static ::std::vector<detail::func_info_type> constructors_;
 
   static ::std::vector<detail::member_info_type> defs_;
