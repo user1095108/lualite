@@ -1285,12 +1285,10 @@ protected:
         if (i.func)
         {
           lua_pushlightuserdata(L, i.func);
-          lua_pushcclosure(L, i.callback, 1);
         }
-        else
-        {
-          lua_pushcclosure(L, i.callback, 0);
-        }
+        // else do nothing
+
+        lua_pushcclosure(L, i.callback, !!i.func);
 
         detail::rawsetfield(L, -2, i.name);
       }
@@ -1311,12 +1309,10 @@ protected:
         if (i.func)
         {
           lua_pushlightuserdata(L, i.func);
-          lua_pushcclosure(L, i.callback, 1);
         }
-        else
-        {
-          lua_pushcclosure(L, i.callback, 0);
-        }
+        // else do nothing
+
+        lua_pushcclosure(L, i.callback, !!i.func);
 
         lua_setglobal(L, i.name);
       }
