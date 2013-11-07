@@ -224,8 +224,7 @@ int default_setter(lua_State* const L)
 template <class C>
 inline void create_wrapper_table(lua_State* const L, C* const instance)
 {
-  lua_pushinteger(L, lua_Integer(instance));
-  lua_rawget(L, LUA_REGISTRYINDEX);
+  lua_pushvalue(L, lua_upvalueindex(3));
 
   if (lua_isnil(L, -1))
   {
@@ -240,8 +239,9 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
         lua_pushlightuserdata(L, instance);
         lua_pushlightuserdata(L, &mi.func);
+        lua_pushnil(L);
 
-        lua_pushcclosure(L, mi.callback, 2);
+        lua_pushcclosure(L, mi.callback, 3);
 
         rawsetfield(L, -2, mi.name);
       }
@@ -253,8 +253,9 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
       lua_pushlightuserdata(L, instance);
       lua_pushlightuserdata(L, &mi.func);
+      lua_pushnil(L);
 
-      lua_pushcclosure(L, mi.callback, 2);
+      lua_pushcclosure(L, mi.callback, 3);
 
       rawsetfield(L, -2, mi.name);
     }
@@ -266,26 +267,26 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
     // getters
     assert(lua_istable(L, -1));
     lua_pushlightuserdata(L, instance);
-    lua_pushlightuserdata(L, 0);
+    lua_pushnil(L);
+    lua_pushnil(L);
 
-    lua_pushcclosure(L, default_getter<C>, 2);
+    lua_pushcclosure(L, default_getter<C>, 3);
 
     rawsetfield(L, -2, "__index");
 
     // setters
     assert(lua_istable(L, -1));
     lua_pushlightuserdata(L, instance);
-    lua_pushlightuserdata(L, nullptr);
+    lua_pushnil(L);
+    lua_pushnil(L);
 
-    lua_pushcclosure(L, default_setter<C>, 2);
+    lua_pushcclosure(L, default_setter<C>, 3);
 
     rawsetfield(L, -2, "__newindex");
 
     lua_setmetatable(L, -2);
 
-    lua_pushinteger(L, lua_Integer(instance));
-    lua_pushvalue(L, -2);
-    lua_rawset(L, LUA_REGISTRYINDEX);
+    lua_copy(L, -1, lua_upvalueindex(3));
   }
 
   assert(lua_istable(L, -1));
@@ -1000,12 +1001,7 @@ get_arg(lua_State* const L)
 template <class C>
 int default_finalizer(lua_State* const L)
 {
-  auto const instance(lua_touserdata(L, lua_upvalueindex(1)));
-
-  lua_pushnil(L);
-  lua_rawsetp(L, LUA_REGISTRYINDEX, instance);
-
-  delete static_cast<C*>(instance);
+  delete static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1)));
 
   return {};
 }
@@ -1034,8 +1030,9 @@ int constructor_stub(lua_State* const L)
       assert(lua_istable(L, -1));
       lua_pushlightuserdata(L, instance);
       lua_pushlightuserdata(L, &mi.func);
+      lua_pushnil(L);
 
-      lua_pushcclosure(L, mi.callback, 2);
+      lua_pushcclosure(L, mi.callback, 3);
 
       rawsetfield(L, -2, mi.name);
     }
@@ -1046,8 +1043,9 @@ int constructor_stub(lua_State* const L)
     assert(lua_istable(L, -1));
     lua_pushlightuserdata(L, instance);
     lua_pushlightuserdata(L, &mi.func);
+    lua_pushnil(L);
 
-    lua_pushcclosure(L, mi.callback, 2);
+    lua_pushcclosure(L, mi.callback, 3);
 
     rawsetfield(L, -2, mi.name);
   }
@@ -1068,17 +1066,19 @@ int constructor_stub(lua_State* const L)
   assert(lua_istable(L, -1));
   lua_pushlightuserdata(L, instance);
   lua_pushnil(L);
+  lua_pushnil(L);
 
-  lua_pushcclosure(L, default_getter<C>, 2);
+  lua_pushcclosure(L, default_getter<C>, 3);
 
   rawsetfield(L, -2, "__index");
 
   // setters
   assert(lua_istable(L, -1));
   lua_pushlightuserdata(L, instance);
-  lua_pushlightuserdata(L, nullptr);
+  lua_pushnil(L);
+  lua_pushnil(L);
 
-  lua_pushcclosure(L, default_setter<C>, 2);
+  lua_pushcclosure(L, default_setter<C>, 3);
 
   rawsetfield(L, -2, "__newindex");
 
@@ -1544,7 +1544,7 @@ private:
   template <typename FP, FP* fp, typename R, typename ...A>
   void push_function(char const* const name, R (* const)(A...))
   {
-    lua_pushcclosure(L_, (detail::func_stub<FP, fp, 1, R, A...>), 0);
+    lua_pushcfunction(L_, (detail::func_stub<FP, fp, 1, R, A...>));
   }
 
 private:
@@ -1555,8 +1555,7 @@ template <class C>
 class class_ : public scope
 {
 public:
-  class_(char const* const name)
-    : scope(name)
+  class_(char const* const name) : scope(name)
   {
   }
 
@@ -1688,8 +1687,8 @@ private:
       detail::rawsetfield(L, -2, i.name);
     }
 
-    lua_pushstring(L, name_);
-    detail::rawsetfield(L, -2, "__classname");
+    // lua_pushstring(L, name_);
+    // detail::rawsetfield(L, -2, "__classname");
 
     lua_pop(L, 1);
 
