@@ -90,35 +90,6 @@ using is_nc_lvalue_reference =
     !::std::is_const<typename ::std::remove_reference<T>::type>{}
   >;
 
-template <typename>
-struct needs_cache : ::std::false_type
-{
-};
-
-template <typename R, typename ...A>
-struct needs_cache<R (*)(A...)> :
-  ::std::integral_constant<bool,
-  ((::std::is_pointer<R>{} &&
-    !::std::is_const<typename ::std::remove_pointer<R>::type>{} &&
-    ::std::is_class<typename ::std::remove_pointer<R>::type>{}) ||
-  (is_nc_lvalue_reference<R>{} &&
-    ::std::is_class<typename ::std::remove_reference<R>::type>{}))
-  >
-{
-};
-
-template <class C, typename R, typename ...A>
-struct needs_cache<R (C::*)(A...)> :
-  ::std::integral_constant<bool,
-  ((::std::is_pointer<R>{} &&
-    !::std::is_const<typename ::std::remove_pointer<R>::type>{} &&
-    ::std::is_class<typename ::std::remove_pointer<R>::type>{}) ||
-  (is_nc_lvalue_reference<R>{} &&
-    ::std::is_class<typename ::std::remove_reference<R>::type>{}))
-  >
-{
-};
-
 // key is at the top of the stack
 inline void rawgetfield(lua_State* const L, int const index,
   char const* const key)
