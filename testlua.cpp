@@ -195,7 +195,6 @@ int main(int argc, char* argv[])
     "testtuple(r)\n"
     "print(a.y)\n"
     "print(apple)\n"
-    "print(testclass.__classname)\n"
     "print(testclass.smell)\n"
     "local b = testclass.defaultNew()\n"
     "print(\"---\")\n"
