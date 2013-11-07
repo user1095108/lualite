@@ -268,6 +268,7 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
     // getters
     assert(lua_istable(L, -1));
+
     lua_pushnil(L);
     lua_pushlightuserdata(L, instance);
     lua_pushnil(L);
@@ -278,6 +279,7 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
     // setters
     assert(lua_istable(L, -1));
+
     lua_pushnil(L);
     lua_pushlightuserdata(L, instance);
     lua_pushnil(L);
@@ -1032,6 +1034,7 @@ int constructor_stub(lua_State* const L)
     for (auto& mi: *i)
     {
       assert(lua_istable(L, -1));
+
       lua_pushnil(L);
       lua_pushlightuserdata(L, instance);
       lua_pushlightuserdata(L, &mi.func);
@@ -1045,6 +1048,7 @@ int constructor_stub(lua_State* const L)
   for (auto& mi: lualite::class_<C>::defs_)
   {
     assert(lua_istable(L, -1));
+
     lua_pushnil(L);
     lua_pushlightuserdata(L, instance);
     lua_pushlightuserdata(L, &mi.func);
@@ -1068,6 +1072,7 @@ int constructor_stub(lua_State* const L)
 
   // getters
   assert(lua_istable(L, -1));
+
   lua_pushnil(L);
   lua_pushlightuserdata(L, instance);
   lua_pushnil(L);
@@ -1078,6 +1083,7 @@ int constructor_stub(lua_State* const L)
 
   // setters
   assert(lua_istable(L, -1));
+
   lua_pushnil(L);
   lua_pushlightuserdata(L, instance);
   lua_pushnil(L);
