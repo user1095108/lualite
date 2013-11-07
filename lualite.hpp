@@ -224,7 +224,7 @@ int default_setter(lua_State* const L)
 template <class C>
 inline void create_wrapper_table(lua_State* const L, C* const instance)
 {
-  lua_pushlightuserdata(L, instance);
+  lua_pushinteger(L, lua_Integer(instance));
   lua_rawget(L, LUA_REGISTRYINDEX);
 
   if (lua_isnil(L, -1))
@@ -283,7 +283,7 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
     lua_setmetatable(L, -2);
 
-    lua_pushlightuserdata(L, instance);
+    lua_pushinteger(L, lua_Integer(instance));
     lua_pushvalue(L, -2);
     lua_rawset(L, LUA_REGISTRYINDEX);
   }
