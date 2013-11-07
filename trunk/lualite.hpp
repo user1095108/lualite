@@ -288,7 +288,9 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
     lua_copy(L, -1, lua_upvalueindex(3));
   }
+  // else do nothing
 
+  assert(lua_istable(L, lua_upvalueindex(3)));
   assert(lua_istable(L, -1));
 }
 
