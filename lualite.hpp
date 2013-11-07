@@ -1002,9 +1002,8 @@ int default_finalizer(lua_State* const L)
 {
   auto const instance(lua_touserdata(L, lua_upvalueindex(1)));
 
-  lua_pushinteger(L, lua_Integer(instance));
   lua_pushnil(L);
-  lua_rawset(L, LUA_REGISTRYINDEX);
+  lua_rawsetp(L, LUA_REGISTRYINDEX, instance);
 
   delete static_cast<C*>(instance);
 
