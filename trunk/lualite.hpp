@@ -84,11 +84,11 @@ namespace detail
 template<typename T> constexpr inline T const& as_const(T& t) { return t; }
 
 template <typename T>
-using is_nc_lvalue_reference
-  = ::std::integral_constant<bool,
-      ::std::is_lvalue_reference<T>{}
-      && !::std::is_const<typename ::std::remove_reference<T>::type>{}
-    >;
+using is_nc_lvalue_reference =
+  ::std::integral_constant<bool,
+    ::std::is_lvalue_reference<T>{} &&
+    !::std::is_const<typename ::std::remove_reference<T>::type>{}
+  >;
 
 // key is at the top of the stack
 inline void rawgetfield(lua_State* const L, int const index,
