@@ -1002,7 +1002,7 @@ int default_finalizer(lua_State* const L)
 {
   auto const instance(lua_touserdata(L, lua_upvalueindex(1)));
 
-  lua_pushlightuserdata(L, instance);
+  lua_pushinteger(L, lua_Integer(instance));
   lua_pushnil(L);
   lua_rawset(L, LUA_REGISTRYINDEX);
 
