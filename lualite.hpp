@@ -1104,22 +1104,22 @@ inline R forward(lua_State* const L, R (* const f)(A...), indices<I...> const)
   return (*f)(get_arg<I + O, A>(L)...);
 }
 
-template <typename F, F* f, ::std::size_t O, class R, class ...A>
+template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
 func_stub(lua_State* const L)
 {
   assert(sizeof...(A) == lua_gettop(L));
 
-  forward<O, R, A...>(L, f, make_indices<sizeof...(A)>());
+  forward<O, R, A...>(L, fp, make_indices<sizeof...(A)>());
 
   return {};
 }
 
-template <typename F, F* f, ::std::size_t O, class R, class ...A>
+template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
 typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 func_stub(lua_State* const L)
 {
-  return set_result(L, forward<O, R, A...>(L, f,
+  return set_result(L, forward<O, R, A...>(L, fp,
     make_indices<sizeof...(A)>()));
 }
 
@@ -1275,7 +1275,13 @@ public:
   template <typename FT, FT* fp>
   scope& def(char const* const name)
   {
-    push_function<FT, fp>(name, fp);
+    return def<FT*, fp>(name, fp);
+  }
+
+  template <typename FP, FP fp>
+  scope& def(char const* const name)
+  {
+    push_function<FP, fp>(name, fp);
 
     return *this;
   }
@@ -1467,11 +1473,11 @@ protected:
   ::std::vector<detail::func_info_type> functions_;
 
 private:
-  template <typename FT, FT* fp, typename R, typename ...A>
+  template <typename FP, FP fp, typename R, typename ...A>
   void push_function(char const* const name, R (* const)(A...))
   {
     functions_.push_back(
-      {name, detail::func_stub<FT, fp, 1, R, A...>, nullptr});
+      {name, detail::func_stub<FP, fp, 1, R, A...>, nullptr});
   }
 
 private:
@@ -1507,7 +1513,7 @@ public:
     scope::apply(L);
   }
 
-  template <typename FT, FT* fp>
+  template <typename FP, FP fp>
   module& def(char const* const name)
   {
     if (name_)
@@ -1515,7 +1521,7 @@ public:
       scope::get_scope(L_);
       assert(lua_istable(L_, -1));
 
-      push_function<FT, fp>(name, fp);
+      push_function<FP, fp>(name, fp);
 
       detail::rawsetfield(L_, -2, name);
 
@@ -1523,7 +1529,7 @@ public:
     }
     else
     {
-      push_function<FT, fp>(name, fp);
+      push_function<FP, fp>(name, fp);
 
       lua_setglobal(L_, name);
     }
@@ -1586,11 +1592,11 @@ public:
   }
 
 private:
-  template <typename FT, FT* fp, typename R, typename ...A>
+  template <typename FP, FP fp, typename R, typename ...A>
   void push_function(char const* const name, R (* const)(A...))
   {
     lua_pushnil(L_);
-    lua_pushcclosure(L_, detail::func_stub<FT, fp, 1, R, A...>, 1);
+    lua_pushcclosure(L_, detail::func_stub<FP, fp, 1, R, A...>, 1);
   }
 
 private:
@@ -1679,6 +1685,15 @@ public:
     return *this;
   }
 
+  template <class FP, FP fp>
+  class_& property(char const* const name)
+  {
+    getters_.emplace(name, detail::map_member_info_type{
+      member_stub<FP, fp>(), convert(fp)});
+
+    return *this;
+  }
+
   template <class R, class ...A>
   class_& property(char const* const name,
     R (C::* const ptr_to_const_member)(A...) const)
@@ -1695,6 +1710,17 @@ public:
   {
     getters_.emplace(name, detail::map_member_info_type{
       detail::member_stub<3, C, R, A...>, convert(ptr_to_member)});
+
+    return *this;
+  }
+
+  template <typename FPA, FPA fpa, typename FPB, FPB fpb>
+  class_& property(char const* const name)
+  {
+    getters_.emplace(name, detail::map_member_info_type{
+      member_stub<FPA, fpa, 3>(fpa), convert(fpa)});
+    setters_.emplace(name, detail::map_member_info_type{
+      member_stub<FPB, fpb, 3>(fpb), convert(fpb)});
 
     return *this;
   }
@@ -1749,6 +1775,20 @@ private:
     lua_pop(L, 1);
 
     assert(!lua_gettop(L));
+  }
+
+  using member_stub_type = int (*)(lua_State*);
+
+  template <typename FP, FP fp, ::std::size_t O = 3, class R, class ...A>
+  member_stub_type member_stub(R (C::* const)(A...) const)
+  {
+    return &detail::member_stub<FP, fp, O, C, R, A...>;
+  }
+
+  template <typename FP, FP fp, ::std::size_t O = 3, class R, class ...A>
+  member_stub_type member_stub(R (C::* const)(A...))
+  {
+    return &detail::member_stub<FP, fp, O, C, R, A...>;
   }
 
   template <::std::size_t O = 2, class R, class ...A>

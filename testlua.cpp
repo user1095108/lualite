@@ -167,9 +167,10 @@ int main(int argc, char* argv[])
       .enum_("smell", 9)
       .def("print", (std::tuple<int, std::string, char const*> (testclass::*)(int))&testclass::print)
       .def("print_", (std::vector<std::string> (testclass::*)(std::string) const)&testclass::print)
-      .def<decltype(&testclass::pointer), &testclass::pointer>("pointer") // faster way, less memory taken
+      .def<decltype(&testclass::pointer), &testclass::pointer>("pointer") // faster way
       .def("reference", &testclass::reference)
-      .property("a", &testclass::a, &testclass::set_a)
+      .property<decltype(&testclass::a), &testclass::a,
+        decltype(&testclass::set_a), &testclass::set_a>("a")
       .def("test_array", &testclass::test_array),
     lualite::scope("subscope",
       lualite::class_<testclass>("testclass")
@@ -182,9 +183,9 @@ int main(int argc, char* argv[])
     )
   )
   .enum_("apple", 1)
-  .def<decltype(testfunc), &testfunc>("testfunc") // faster way, less memory taken
+  .def<decltype(&testfunc), &testfunc>("testfunc") // faster way, less memory taken
   .def("testpair", &testpair)
-  .def<decltype(testtuple), &testtuple>("testtuple"); // faster way, less memory taken
+  .def<decltype(&testtuple), &testtuple>("testtuple"); // faster way, less memory taken
 
   luaL_dostring(
     L,
