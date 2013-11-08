@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
       .def<decltype(&testclass::pointer), &testclass::pointer>("pointer") // faster way
       .def("reference", &testclass::reference)
       .property<decltype(&testclass::a), &testclass::a,
-        decltype(&testclass::set_a), &testclass::set_a>("a")
+        decltype(&testclass::set_a), &testclass::set_a>("a") // faster way
       .def("test_array", &testclass::test_array),
     lualite::scope("subscope",
       lualite::class_<testclass>("testclass")
