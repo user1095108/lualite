@@ -1291,9 +1291,10 @@ protected:
       {
         assert(lua_istable(L, -1));
 
+        lua_pushnil(L);
+
         if (i.func)
         {
-          lua_pushnil(L);
           lua_pushlightuserdata(L, i.func);
         }
         // else do nothing
@@ -1316,9 +1317,10 @@ protected:
 
       for (auto& i: detail::as_const(functions_))
       {
+        lua_pushnil(L);
+
         if (i.func)
         {
-          lua_pushnil(L);
           lua_pushlightuserdata(L, i.func);
         }
         // else do nothing
