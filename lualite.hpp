@@ -1701,8 +1701,7 @@ private:
     {
       assert(lua_istable(L, -1));
 
-      lua_pushnil(L);
-      lua_pushcclosure(L, i.callback, 1);
+      lua_pushcfunction(L, i.callback);
 
       detail::rawsetfield(L, -2, i.name);
     }
