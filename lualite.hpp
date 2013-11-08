@@ -1245,10 +1245,10 @@ public:
 
   scope& operator=(scope const&) = delete;
 
-  template <typename FP, FP* fp>
+  template <typename FT, FT* fp>
   scope& def(char const* const name)
   {
-    push_function<FP, fp>(name, fp);
+    push_function<FT, fp>(name, fp);
 
     return *this;
   }
@@ -1440,11 +1440,11 @@ protected:
   ::std::vector<detail::func_info_type> functions_;
 
 private:
-  template <typename FP, FP* fp, typename R, typename ...A>
+  template <typename FT, FT* fp, typename R, typename ...A>
   void push_function(char const* const name, R (* const)(A...))
   {
     functions_.push_back(
-      {name, detail::func_stub<FP, fp, 1, R, A...>, nullptr});
+      {name, detail::func_stub<FT, fp, 1, R, A...>, nullptr});
   }
 
 private:
@@ -1480,7 +1480,7 @@ public:
     scope::apply(L);
   }
 
-  template <typename FP, FP* fp>
+  template <typename FT, FT* fp>
   module& def(char const* const name)
   {
     if (name_)
@@ -1488,7 +1488,7 @@ public:
       scope::get_scope(L_);
       assert(lua_istable(L_, -1));
 
-      push_function<FP, fp>(name, fp);
+      push_function<FT, fp>(name, fp);
 
       detail::rawsetfield(L_, -2, name);
 
@@ -1496,7 +1496,7 @@ public:
     }
     else
     {
-      push_function<FP, fp>(name, fp);
+      push_function<FT, fp>(name, fp);
 
       lua_setglobal(L_, name);
     }
@@ -1517,7 +1517,7 @@ public:
       lua_pushnil(L_);
       lua_pushlightuserdata(L_, &address_pool().front());
 
-      lua_pushcclosure(L_, (detail::func_stub<1, R, A...>), 2);
+      lua_pushcclosure(L_, detail::func_stub<1, R, A...>, 2);
 
       detail::rawsetfield(L_, -2, name);
 
@@ -1528,7 +1528,7 @@ public:
       lua_pushnil(L_);
       lua_pushlightuserdata(L_, &address_pool().front());
 
-      lua_pushcclosure(L_, (detail::func_stub<1, R, A...>), 2);
+      lua_pushcclosure(L_, detail::func_stub<1, R, A...>, 2);
 
       lua_setglobal(L_, name);
     }
@@ -1559,11 +1559,11 @@ public:
   }
 
 private:
-  template <typename FP, FP* fp, typename R, typename ...A>
+  template <typename FT, FT* fp, typename R, typename ...A>
   void push_function(char const* const name, R (* const)(A...))
   {
     lua_pushnil(L_);
-    lua_pushcclosure(L_, (detail::func_stub<FP, fp, 1, R, A...>), 1);
+    lua_pushcclosure(L_, detail::func_stub<FT, fp, 1, R, A...>, 1);
   }
 
 private:
