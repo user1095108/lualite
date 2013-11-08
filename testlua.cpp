@@ -167,7 +167,7 @@ int main(int argc, char* argv[])
       .enum_("smell", 9)
       .def("print", (std::tuple<int, std::string, char const*> (testclass::*)(int))&testclass::print)
       .def("print_", (std::vector<std::string> (testclass::*)(std::string) const)&testclass::print)
-      .def("pointer", &testclass::pointer)
+      .def<decltype(&testclass::pointer), &testclass::pointer>("pointer") // faster way, less memory taken
       .def("reference", &testclass::reference)
       .property("a", &testclass::a, &testclass::set_a)
       .def("test_array", &testclass::test_array),

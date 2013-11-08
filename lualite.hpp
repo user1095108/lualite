@@ -1160,7 +1160,7 @@ inline R forward(lua_State* const L, C* const c,
   return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
 }
 
-template <typename F, F* f, ::std::size_t O, class C, class R, class ...A>
+template <typename F, F f, ::std::size_t O, class C, class R, class ...A>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
 member_stub(lua_State* const L)
 {
@@ -1174,7 +1174,7 @@ member_stub(lua_State* const L)
   return {};
 }
 
-template <typename F, F* f, ::std::size_t O, class C, class R, class ...A>
+template <typename F, F f, ::std::size_t O, class C, class R, class ...A>
 typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 member_stub(lua_State* const L)
 {
@@ -1646,8 +1646,17 @@ public:
     return *this;
   }
 
+  template <typename FP, FP fp>
+  class_& def(char const* const name)
+  {
+    member_function<FP, fp>(name, fp);
+
+    return *this;
+  }
+
   template <class R, class ...A>
-  class_& def(char const* const name, R (C::* const ptr_to_member)(A...))
+  class_& def(char const* const name,
+    R (C::* const ptr_to_member)(A...) const)
   {
     member_function(name, ptr_to_member);
 
@@ -1655,9 +1664,10 @@ public:
   }
 
   template <class R, class ...A>
-  class_& def(char const* const name, R (C::* const ptr_to_member)(A...) const)
+  class_& def(char const* const name,
+    R (C::* const ptr_to_member)(A...))
   {
-    const_member_function(name, ptr_to_member);
+    member_function(name, ptr_to_member);
 
     return *this;
   }
@@ -1743,7 +1753,7 @@ private:
 
   template <::std::size_t O = 2, class R, class ...A>
   void member_function(char const* const name,
-    R (C::* const ptr_to_member)(A...))
+    R (C::* const ptr_to_member)(A...) const)
   {
     static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
@@ -1753,13 +1763,37 @@ private:
   }
 
   template <::std::size_t O = 2, class R, class ...A>
-  void const_member_function(char const* const name,
-    R (C::* const ptr_to_member)(A...) const)
+  void member_function(char const* const name,
+    R (C::* const ptr_to_member)(A...))
   {
     static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
 
     defs_.push_back({name, detail::member_stub<O, C, R, A...>,
+      convert(ptr_to_member)});
+  }
+
+  template <typename FP, FP fp, ::std::size_t O = 2, typename R,
+    typename ...A>
+  void member_function(char const* const name,
+    R (C::* const ptr_to_member)(A...) const)
+  {
+    static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
+      "pointer size mismatch");
+
+    defs_.push_back({name, detail::member_stub<FP, fp, O, C, R, A...>,
+      convert(ptr_to_member)});
+  }
+
+  template <typename FP, FP fp, ::std::size_t O = 2, typename R,
+    typename ...A>
+  void member_function(char const* const name,
+    R (C::* const ptr_to_member)(A...))
+  {
+    static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
+      "pointer size mismatch");
+
+    defs_.push_back({name, detail::member_stub<FP, fp, O, C, R, A...>,
       convert(ptr_to_member)});
   }
 
