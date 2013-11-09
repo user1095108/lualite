@@ -182,7 +182,7 @@ int default_setter(lua_State* const L)
 
   if (lualite::class_<C>::setters_.end() != i)
   {
-    (i->second(L), 0);
+    i->second(L);
   }
   // else do nothing
 
