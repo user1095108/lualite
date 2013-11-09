@@ -1123,7 +1123,6 @@ member_stub(lua_State* const L)
 {
 //::std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << ::std::endl;
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
-  using ptr_to_member_type = R (C::* const )(A...);
 
   return set_result(L,
     forward<O, C, R, A...>(L,
