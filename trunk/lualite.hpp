@@ -1290,12 +1290,6 @@ public:
 
   scope& operator=(scope const&) = delete;
 
-  template <typename FT, FT* fp>
-  scope& def(char const* const name)
-  {
-    return def<FT*, fp>(name, fp);
-  }
-
   template <typename FP, FP fp>
   scope& def(char const* const name)
   {
