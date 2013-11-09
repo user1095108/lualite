@@ -1515,7 +1515,7 @@ class module : public scope
 public:
   template <typename ...A>
   module(lua_State* const L, A&&... args) :
-    scope(0),
+    scope(nullptr),
     L_(L)
   {
     [](...){ }((args.set_parent_scope(this), 0)...);
