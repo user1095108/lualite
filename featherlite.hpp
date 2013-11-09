@@ -180,9 +180,13 @@ int default_setter(lua_State* const L)
   assert(3 == lua_gettop(L));
   auto const i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
 
-  return lualite::class_<C>::setters_.end() == i ?
-    0 :
+  if (lualite::class_<C>::setters_.end() != i)
+  {
     (i->second(L), 0);
+  }
+  // else do nothing
+
+  return {};
 }
 
 template <class C>
