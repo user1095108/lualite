@@ -37,11 +37,7 @@
 
 #include <cstring>
 
-#include <stdexcept>
-
 #include <type_traits>
-
-#include <forward_list>
 
 #include <unordered_map>
 
@@ -52,6 +48,8 @@
 #include <array>
 
 #include <deque>
+
+#include <forward_list>
 
 #include <list>
 

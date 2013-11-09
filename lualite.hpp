@@ -37,8 +37,6 @@
 
 #include <cstring>
 
-#include <stdexcept>
-
 #include <type_traits>
 
 #include <forward_list>
