@@ -154,9 +154,9 @@ using enum_info_type = ::std::vector<::std::pair<char const* const, int const> >
 
 struct func_info_type
 {
-  char const* name;
+  char const* const name;
 
-  lua_CFunction callback;
+  lua_CFunction const callback;
 };
 
 using map_member_info_type = lua_CFunction;
