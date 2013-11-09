@@ -267,7 +267,7 @@ inline typename ::std::enable_if<
   ::std::is_floating_point<typename ::std::remove_reference<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
   int>::type
-set_result(lua_State* const L, T && v)
+set_result(lua_State* const L, T&& v)
 {
   lua_pushnumber(L, v);
 
