@@ -1090,6 +1090,14 @@ func_stub(lua_State* const L)
 template <::std::size_t O, typename C, typename R,
   typename ...A, ::std::size_t ...I>
 inline R forward(lua_State* const L, C* const c,
+  R (C::* const ptr_to_member)(A...) const, indices<I...> const)
+{
+  return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
+}
+
+template <::std::size_t O, typename C, typename R,
+  typename ...A, ::std::size_t ...I>
+inline R forward(lua_State* const L, C* const c,
   R (C::* const ptr_to_member)(A...), indices<I...> const)
 {
   return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
@@ -1100,11 +1108,10 @@ typename ::std::enable_if<::std::is_void<R>{}, int>::type
 member_stub(lua_State* const L)
 {
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
-  using ptr_to_member_type = R (C::* const )(A...);
 
   forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
-    ptr_to_member_type(fp),
+    fp,
     make_indices<sizeof...(A)>());
 
   return {};
@@ -1120,7 +1127,7 @@ member_stub(lua_State* const L)
 
   return set_result(L, static_cast<R>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
-    ptr_to_member_type(fp),
+    fp,
     make_indices<sizeof...(A)>())));
 }
 
