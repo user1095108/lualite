@@ -178,6 +178,8 @@ struct map_member_info_type
 {
   lua_CFunction callback;
 
+  bool special;
+
   member_func_type func;
 };
 
@@ -186,6 +188,8 @@ struct member_info_type
   char const* name;
 
   lua_CFunction callback;
+
+  bool special;
 
   member_func_type func;
 };
@@ -196,11 +200,21 @@ int default_getter(lua_State* const L)
   assert(2 == lua_gettop(L));
   auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
-  return lualite::class_<C>::getters_.end() == i
-    ? 0
-    : (lua_pushlightuserdata(L, &i->second.func),
-      lua_replace(L, lua_upvalueindex(3)),
-      (i->second.callback)(L));
+  if (lualite::class_<C>::getters_.end() == i)
+  {
+    return {};
+  }
+  else
+  {
+    if (!i->second.special)
+    {
+      lua_pushlightuserdata(L, &i->second.func);
+      lua_replace(L, lua_upvalueindex(3));
+    }
+    // else do nothing
+
+    return i->second.callback(L);
+  }
 }
 
 template <class C>
@@ -211,10 +225,14 @@ int default_setter(lua_State* const L)
 
   if (lualite::class_<C>::setters_.end() != i)
   {
-    lua_pushlightuserdata(L, &i->second.func);
-    lua_replace(L, lua_upvalueindex(3));
+    if (!i->second.special)
+    {
+      lua_pushlightuserdata(L, &i->second.func);
+      lua_replace(L, lua_upvalueindex(3));
+    }
+    // else do nothing
 
-    (i->second.callback)(L);
+    i->second.callback(L);
   }
   // else do nothing
 
@@ -1477,7 +1495,7 @@ private:
   void push_function(char const* const name, R (* const)(A...))
   {
     functions_.push_back(
-      {name, detail::func_stub<FP, fp, 1, R, A...>, nullptr});
+      {name, detail::func_stub<FP, fp, 1, R, A...>});
   }
 
 private:
@@ -1689,7 +1707,8 @@ public:
   class_& property(char const* const name)
   {
     getters_.emplace(name, detail::map_member_info_type{
-      member_stub<FP, fp>(), convert(fp)});
+      member_stub<FP, fp>(),
+      true});
 
     return *this;
   }
@@ -1699,7 +1718,9 @@ public:
     R (C::* const ptr_to_const_member)(A...) const)
   {
     getters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, R, A...>, convert(ptr_to_const_member)});
+      detail::member_stub<3, C, R, A...>,
+      false,
+      convert(ptr_to_const_member)});
 
     return *this;
   }
@@ -1709,7 +1730,9 @@ public:
     R (C::* const ptr_to_member)(A...))
   {
     getters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, R, A...>, convert(ptr_to_member)});
+      detail::member_stub<3, C, R, A...>,
+      false,
+      convert(ptr_to_member)});
 
     return *this;
   }
@@ -1718,9 +1741,11 @@ public:
   class_& property(char const* const name)
   {
     getters_.emplace(name, detail::map_member_info_type{
-      member_stub<FPA, fpa, 3>(fpa), convert(fpa)});
+      member_stub<FPA, fpa, 3>(fpa),
+      true});
     setters_.emplace(name, detail::map_member_info_type{
-      member_stub<FPB, fpb, 3>(fpb), convert(fpb)});
+      member_stub<FPB, fpb, 3>(fpb),
+      true});
 
     return *this;
   }
@@ -1731,9 +1756,13 @@ public:
     RB (C::* const ptr_to_memberb)(B...))
   {
     getters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, RA, A...>, convert(ptr_to_membera)});
+      detail::member_stub<3, C, RA, A...>,
+      false,
+      convert(ptr_to_membera)});
     setters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, RB, B...>, convert(ptr_to_memberb)});
+      detail::member_stub<3, C, RB, B...>,
+      false,
+      convert(ptr_to_memberb)});
 
     return *this;
   }
@@ -1744,9 +1773,13 @@ public:
     RB (C::* const ptr_to_memberb)(B...))
   {
     getters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, RA, A...>, convert(ptr_to_membera)});
+      detail::member_stub<3, C, RA, A...>,
+      false,
+      convert(ptr_to_membera)});
     setters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, RB, B...>, convert(ptr_to_memberb)});
+      detail::member_stub<3, C, RB, B...>,
+      false,
+      convert(ptr_to_memberb)});
 
     return *this;
   }
@@ -1777,16 +1810,14 @@ private:
     assert(!lua_gettop(L));
   }
 
-  using member_stub_type = int (*)(lua_State*);
-
   template <typename FP, FP fp, ::std::size_t O = 3, class R, class ...A>
-  member_stub_type member_stub(R (C::* const)(A...) const)
+  lua_CFunction member_stub(R (C::* const)(A...) const)
   {
     return &detail::member_stub<FP, fp, O, C, R, A...>;
   }
 
   template <typename FP, FP fp, ::std::size_t O = 3, class R, class ...A>
-  member_stub_type member_stub(R (C::* const)(A...))
+  lua_CFunction member_stub(R (C::* const)(A...))
   {
     return &detail::member_stub<FP, fp, O, C, R, A...>;
   }
@@ -1798,7 +1829,9 @@ private:
     static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
 
-    defs_.push_back({name, detail::member_stub<O, C, R, A...>,
+    defs_.push_back({name,
+      detail::member_stub<O, C, R, A...>,
+      false,
       convert(ptr_to_member)});
   }
 
@@ -1809,7 +1842,9 @@ private:
     static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
 
-    defs_.push_back({name, detail::member_stub<O, C, R, A...>,
+    defs_.push_back({name,
+      detail::member_stub<O, C, R, A...>,
+      false,
       convert(ptr_to_member)});
   }
 
@@ -1821,8 +1856,9 @@ private:
     static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
 
-    defs_.push_back({name, detail::member_stub<FP, fp, O, C, R, A...>,
-      convert(ptr_to_member)});
+    defs_.push_back({name,
+      detail::member_stub<FP, fp, O, C, R, A...>,
+      true});
   }
 
   template <typename FP, FP fp, ::std::size_t O = 2, typename R,
@@ -1833,8 +1869,9 @@ private:
     static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
       "pointer size mismatch");
 
-    defs_.push_back({name, detail::member_stub<FP, fp, O, C, R, A...>,
-      convert(ptr_to_member)});
+    defs_.push_back({name,
+      detail::member_stub<FP, fp, O, C, R, A...>,
+      true});
   }
 
 public:
