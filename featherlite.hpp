@@ -243,7 +243,6 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
     lua_pushnil(L);
     lua_pushlightuserdata(L, instance);
-    lua_pushnil(L);
 
     lua_pushcclosure(L, default_getter<C>, 2);
 
@@ -254,7 +253,6 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
     lua_pushnil(L);
     lua_pushlightuserdata(L, instance);
-    lua_pushnil(L);
 
     lua_pushcclosure(L, default_setter<C>, 2);
 
@@ -1104,10 +1102,11 @@ typename ::std::enable_if<::std::is_void<R>{}, int>::type
 member_stub(lua_State* const L)
 {
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
+  using ptr_to_member_type = R (C::* const )(A...);
 
   forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
-    fp,
+    ptr_to_member_type(fp),
     make_indices<sizeof...(A)>());
 
   return {};
@@ -1119,10 +1118,11 @@ member_stub(lua_State* const L)
 {
 //::std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << ::std::endl;
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
+  using ptr_to_member_type = R (C::* const )(A...);
 
   return set_result(L, static_cast<R>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
-    fp,
+    ptr_to_member_type(fp),
     make_indices<sizeof...(A)>())));
 }
 

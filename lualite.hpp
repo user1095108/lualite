@@ -1183,10 +1183,11 @@ typename ::std::enable_if<::std::is_void<R>{}, int>::type
 member_stub(lua_State* const L)
 {
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
+  using ptr_to_member_type = R (C::* const )(A...);
 
   forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
-    fp,
+    ptr_to_member_type(fp),
     make_indices<sizeof...(A)>());
 
   return {};
@@ -1198,10 +1199,11 @@ member_stub(lua_State* const L)
 {
 //::std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << ::std::endl;
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
+  using ptr_to_member_type = R (C::* const )(A...);
 
   return set_result(L, static_cast<R>(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
-    fp,
+    ptr_to_member_type(fp),
     make_indices<sizeof...(A)>())));
 }
 
@@ -1289,6 +1291,12 @@ public:
   scope(scope const&) = delete;
 
   scope& operator=(scope const&) = delete;
+
+  template <typename FT, FT* fp>
+  scope& def(char const* const name)
+  {
+    return def<FT*, fp>(name, fp);
+  }
 
   template <typename FP, FP fp>
   scope& def(char const* const name)
