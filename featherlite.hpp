@@ -159,17 +159,9 @@ struct func_info_type
   lua_CFunction callback;
 };
 
-struct map_member_info_type
-{
-  lua_CFunction callback;
-};
+using map_member_info_type = lua_CFunction;
 
-struct member_info_type
-{
-  char const* name;
-
-  lua_CFunction callback;
-};
+using member_info_type = func_info_type;
 
 template <class C>
 int default_getter(lua_State* const L)
@@ -179,7 +171,7 @@ int default_getter(lua_State* const L)
 
   return lualite::class_<C>::getters_.end() == i ?
     0 :
-    i->second.callback(L);
+    i->second(L);
 }
 
 template <class C>
@@ -190,7 +182,7 @@ int default_setter(lua_State* const L)
 
   return lualite::class_<C>::setters_.end() == i ?
     0 :
-    (i->second.callback(L), 0);
+    (i->second(L), 0);
 }
 
 template <class C>
