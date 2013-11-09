@@ -264,8 +264,8 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
 template <typename T>
 inline typename ::std::enable_if<
-  ::std::is_floating_point<typename ::std::remove_reference<T>::type>{}
-  && !is_nc_lvalue_reference<T>{},
+  ::std::is_floating_point<typename ::std::remove_reference<T>::type>{} &&
+  !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T && v)
 {
@@ -276,9 +276,9 @@ set_result(lua_State* const L, T && v)
 
 template <typename T>
 inline typename ::std::enable_if<
-  ::std::is_integral<typename ::std::remove_reference<T>::type>{}
-  && ::std::is_signed<typename ::std::remove_reference<T>::type>{}
-  && !is_nc_lvalue_reference<T>{},
+  ::std::is_integral<typename ::std::remove_reference<T>::type>{} &&
+  ::std::is_signed<typename ::std::remove_reference<T>::type>{} &&
+  !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -289,9 +289,9 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename ::std::enable_if<
-  ::std::is_integral<typename ::std::remove_reference<T>::type>{}
-  && !::std::is_signed<typename ::std::remove_reference<T>::type>{}
-  && !is_nc_lvalue_reference<T>{},
+  ::std::is_integral<typename ::std::remove_reference<T>::type>{} &&
+  !::std::is_signed<typename ::std::remove_reference<T>::type>{} &&
+  !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -302,8 +302,8 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::decay<T>::type, bool>{}
-  && !is_nc_lvalue_reference<T>{},
+  ::std::is_same<typename ::std::decay<T>::type, bool>{} &&
+  !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -314,8 +314,8 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::decay<T>::type, char const*>{}
-  && !is_nc_lvalue_reference<T>{},
+  ::std::is_same<typename ::std::decay<T>::type, char const*>{} &&
+  !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -326,8 +326,8 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::decay<T>::type, void const*>{}
-  && !is_nc_lvalue_reference<T>{},
+  ::std::is_same<typename ::std::decay<T>::type, void const*>{} &&
+  !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -338,9 +338,9 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename ::std::enable_if<
-  ::std::is_pointer<T>{}
-  && !::std::is_const<typename ::std::remove_pointer<T>::type>{}
-  && !::std::is_class<typename ::std::remove_pointer<T>::type>{},
+  ::std::is_pointer<T>{} &&
+  !::std::is_const<typename ::std::remove_pointer<T>::type>{} &&
+  !::std::is_class<typename ::std::remove_pointer<T>::type>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -351,8 +351,8 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename ::std::enable_if<
-  is_nc_lvalue_reference<T>{}
-  && !::std::is_class<typename ::std::remove_reference<T>::type>{},
+  is_nc_lvalue_reference<T>{} &&
+  !::std::is_class<typename ::std::remove_reference<T>::type>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -363,9 +363,9 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename ::std::enable_if<
-  ::std::is_pointer<T>{}
-  && !::std::is_const<typename ::std::remove_pointer<T>::type>{}
-  && ::std::is_class<typename ::std::remove_pointer<T>::type>{},
+  ::std::is_pointer<T>{} &&
+  !::std::is_const<typename ::std::remove_pointer<T>::type>{} &&
+  ::std::is_class<typename ::std::remove_pointer<T>::type>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -376,8 +376,8 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename ::std::enable_if<
-  is_nc_lvalue_reference<T>{}
-  && ::std::is_class<typename ::std::remove_reference<T>::type>{},
+  is_nc_lvalue_reference<T>{} &&
+  ::std::is_class<typename ::std::remove_reference<T>::type>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
@@ -388,8 +388,8 @@ set_result(lua_State* const L, T&& v)
 
 template <int I, typename T>
 inline typename ::std::enable_if<
-  ::std::is_floating_point<typename ::std::decay<T>::type>{}
-  && !is_nc_lvalue_reference<T>{},
+  ::std::is_floating_point<typename ::std::decay<T>::type>{} &&
+  !is_nc_lvalue_reference<T>{},
   typename ::std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
@@ -399,9 +399,9 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<
-  ::std::is_integral<typename ::std::decay<T>::type>{}
-  && ::std::is_signed<typename ::std::decay<T>::type>{}
-  && !is_nc_lvalue_reference<T>{},
+  ::std::is_integral<typename ::std::decay<T>::type>{} &&
+  ::std::is_signed<typename ::std::decay<T>::type>{} &&
+  !is_nc_lvalue_reference<T>{},
   typename ::std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
@@ -411,9 +411,9 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<
-  ::std::is_integral<typename ::std::decay<T>::type>{}
-  && ::std::is_unsigned<typename ::std::decay<T>::type>{}
-  && !is_nc_lvalue_reference<T>{},
+  ::std::is_integral<typename ::std::decay<T>::type>{} &&
+  ::std::is_unsigned<typename ::std::decay<T>::type>{} &&
+  !is_nc_lvalue_reference<T>{},
   typename ::std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
@@ -423,8 +423,8 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<::std::is_same<
-  typename ::std::decay<T>::type, bool>{}
-  && !is_nc_lvalue_reference<T>{},
+  typename ::std::decay<T>::type, bool>{} &&
+  !is_nc_lvalue_reference<T>{},
   typename ::std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
@@ -434,8 +434,8 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<::std::is_same<
-  typename ::std::decay<T>::type, char const*>{}
-  && !is_nc_lvalue_reference<T>{},
+  typename ::std::decay<T>::type, char const*>{} &&
+  !is_nc_lvalue_reference<T>{},
   typename ::std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
@@ -445,8 +445,8 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<
-  ::std::is_pointer<T>{}
-  && !::std::is_same<typename ::std::decay<T>::type, char const*>{},
+  ::std::is_pointer<T>{} &&
+  !::std::is_same<typename ::std::decay<T>::type, char const*>{},
   typename ::std::decay<T>::type>::type
 get_arg(lua_State* const L)
 {
