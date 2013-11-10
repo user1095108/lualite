@@ -975,7 +975,7 @@ get_arg(lua_State* const L)
 template <class C>
 int default_finalizer(lua_State* const L)
 {
-  delete static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)));
+  delete static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1)));
 
   return {};
 }
