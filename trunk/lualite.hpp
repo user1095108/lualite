@@ -1713,6 +1713,9 @@ public:
   class_& def(char const* const name,
     R (C::* const ptr_to_member)(A...) const)
   {
+    static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
+      "pointer size mismatch");
+
     defs_.push_back({name,
       detail::member_stub<2, C, R, A...>,
       false,
