@@ -82,10 +82,14 @@ namespace detail
 template<typename T> constexpr inline T const& as_const(T& t) { return t; }
 
 template <typename>
-struct is_function_pointer : ::std::false_type {};
+struct is_function_pointer : ::std::false_type
+{
+};
 
 template <typename R, typename ...A>
-struct is_function_pointer<R (*)(A...)> : ::std::true_type {};
+struct is_function_pointer<R (*)(A...)> : ::std::true_type
+{
+};
 
 template <typename T>
 using is_nc_lvalue_reference =
@@ -140,12 +144,12 @@ template <::std::size_t...> struct indices
 {
 };
 
-template <::std::size_t M, ::std::size_t... Is>
+template <::std::size_t M, ::std::size_t ...Is>
 struct make_indices : make_indices<M - 1, M - 1, Is...>
 {
 };
 
-template <::std::size_t... Is>
+template <::std::size_t ...Is>
 struct make_indices<0, Is...> : indices<Is...>
 {
 };
