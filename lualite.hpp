@@ -81,6 +81,12 @@ namespace detail
 
 template<typename T> constexpr inline T const& as_const(T& t) { return t; }
 
+template <typename>
+struct is_function_pointer : ::std::false_type {};
+
+template <typename R, typename ...A>
+struct is_function_pointer<R (*)(A...)> : ::std::true_type {};
+
 template <typename T>
 using is_nc_lvalue_reference =
   ::std::integral_constant<bool,
@@ -1669,6 +1675,18 @@ public:
     return *this;
   }
 
+  template <typename FP, FP fp>
+  typename ::std::enable_if<
+    detail::is_function_pointer<FP>{},
+    class_&
+  >::type
+  def(char const* const name)
+  {
+    scope::def<FP, fp>(name);
+
+    return *this;
+  }
+
   template <class R, class ...A>
   class_& def(char const* const name, R (* const ptr_to_func)(A...))
   {
@@ -1678,7 +1696,11 @@ public:
   }
 
   template <typename FP, FP fp>
-  class_& def(char const* const name)
+  typename ::std::enable_if<
+    !detail::is_function_pointer<FP>{},
+    class_&
+  >::type
+  def(char const* const name)
   {
     member_function<FP, fp>(name, fp);
 
