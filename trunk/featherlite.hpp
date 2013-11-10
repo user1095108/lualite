@@ -1425,7 +1425,7 @@ public:
   template <class ...A>
   class_& constructor(char const* const name = "new")
   {
-    constructors_.push_back({name, detail::constructor_stub<1, C, A...> });
+    constructors_.push_back({name, detail::constructor_stub<1, C, A...>});
 
     return *this;
   }
@@ -1542,7 +1542,8 @@ private:
 public:
   struct inherited_info
   {
-    ::std::vector<::std::vector<detail::member_info_type>*> inherited_defs;
+    ::std::vector<::std::vector<detail::member_info_type> const*>
+      inherited_defs;
   };
 
   static struct inherited_info inherited_;
