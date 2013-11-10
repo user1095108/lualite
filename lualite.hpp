@@ -82,10 +82,14 @@ namespace detail
 template<typename T> constexpr inline T const& as_const(T& t) { return t; }
 
 template <typename>
-struct is_function_pointer : ::std::false_type {};
+struct is_function_pointer : ::std::false_type
+{
+};
 
 template <typename R, typename ...A>
-struct is_function_pointer<R (*)(A...)> : ::std::true_type {};
+struct is_function_pointer<R (*)(A...)> : ::std::true_type
+{
+};
 
 template <typename T>
 using is_nc_lvalue_reference =
