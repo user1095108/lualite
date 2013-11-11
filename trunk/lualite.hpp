@@ -1742,7 +1742,7 @@ public:
   template <typename T>
   typename ::std::enable_if<
     ::std::is_arithmetic<T>{} &&
-    !::std::is_same<bool, T>{},
+    !::std::is_same<typename ::std::decay<T>::type, bool>{},
     class_&
   >::type
   constant(char const* const name, T const value)
