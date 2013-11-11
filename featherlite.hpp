@@ -1564,7 +1564,25 @@ public:
   }
 
   template <typename T>
-  class_& constant(char const* const name, T&& value)
+  typename ::std::enable_if<
+    ::std::is_arithmetic<T>{} &&
+    !::std::is_same<bool, T>{},
+    class_&
+  >::type
+  constant(char const* const name, T const value)
+  {
+    scope::constant(name, lua_Number(value));
+
+    return *this;
+  }
+
+  template <typename T>
+  typename ::std::enable_if<
+    !::std::is_arithmetic<T>{} ||
+    ::std::is_same<typename ::std::decay<T>::type, bool>{},
+    class_&
+  >::type
+  constant(char const* const name, T&& value)
   {
     scope::constant(name, ::std::forward<T>(value));
 
