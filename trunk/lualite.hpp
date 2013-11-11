@@ -1745,7 +1745,7 @@ public:
     !::std::is_same<typename ::std::decay<T>::type, bool>{},
     class_&
   >::type
-  constant(char const* const name, T const value)
+  constant(char const* const name, T&& value)
   {
     scope::constant(name, lua_Number(value));
 
