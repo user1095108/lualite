@@ -159,6 +159,8 @@ int main(int argc, char* argv[])
 
   lualite::module(L,
     lualite::class_<testbase>("testbase")
+      .constant("__classname", "testbase")
+      .constant("__pi", 3.1459)
       .def<decltype(&testbase::dummy), &testbase::dummy>("dummy"),
     lualite::class_<testclass>("testclass")
       .constructor("defaultNew")
@@ -197,6 +199,8 @@ int main(int argc, char* argv[])
     "print(a.y)\n"
     "print(apple)\n"
     "print(testclass.smell)\n"
+    "print(testbase.__classname)\n"
+    "print(testbase.__pi)\n"
     "local b = testclass.defaultNew()\n"
     "print(\"---\")\n"
     "print(b.a)\n"

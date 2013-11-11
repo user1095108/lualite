@@ -171,7 +171,27 @@ struct alignas (decltype(&dummy_::dummy)) member_func_type
   char p[sizeof(&dummy_::dummy)];
 };
 
-using enum_info_type = ::std::vector<::std::pair<char const* const, int const> >;
+enum constant_type
+{
+  BOOLEAN,
+  STRING,
+  NUMBER
+};
+
+struct constant_info_type
+{
+  enum constant_type type;
+
+  union
+  {
+    bool boolean;
+    lua_Number number;
+    char const* string;
+  } u;
+};
+
+using constants_type = ::std::vector<::std::pair<char const* const,
+  struct constant_info_type> >;
 
 struct func_info_type
 {
@@ -1307,6 +1327,44 @@ public:
 
   scope& operator=(scope const&) = delete;
 
+  scope& constant(char const* const name, bool const value)
+  {
+    struct detail::constant_info_type const ci {
+      detail::BOOLEAN,
+      value
+    };
+
+    constants_.emplace_back(name, ci);
+
+    return *this;
+  }
+
+  scope& constant(char const* const name, lua_Number const value)
+  {
+    struct detail::constant_info_type ci {
+      detail::NUMBER
+    };
+
+    ci.u.number = value;
+
+    constants_.emplace_back(name, ci);
+
+    return *this;
+  }
+
+  scope& constant(char const* const name, char const* const value)
+  {
+    struct detail::constant_info_type ci {
+      detail::STRING
+    };
+
+    ci.u.string = value;
+
+    constants_.emplace_back(name, ci);
+
+    return *this;
+  }
+
   template <typename FT, FT* fp>
   scope& def(char const* const name)
   {
@@ -1332,9 +1390,9 @@ public:
     return *this;
   }
 
-  scope& enum_(char const* const name, int value)
+  scope& enum_(char const* const name, int const value)
   {
-    enums_.emplace_back(name, value);
+    constant(name, lua_Number(value));
 
     return *this;
   }
@@ -1347,10 +1405,27 @@ protected:
       scope::get_scope(L);
       assert(lua_istable(L, -1));
 
-      for (auto& i: detail::as_const(enums_))
+      for (auto& i: detail::as_const(constants_))
       {
         assert(lua_istable(L, -1));
-        lua_pushinteger(L, i.second);
+        switch (i.second.type)
+        {
+          default:
+            assert(0);
+
+          case detail::BOOLEAN:
+            lua_pushboolean(L, i.second.u.boolean);
+
+            break;
+
+          case detail::STRING:
+            lua_pushstring(L, i.second.u.string);
+
+            break;
+
+          case detail::NUMBER:
+            lua_pushnumber(L, i.second.u.number);
+        }
 
         detail::rawsetfield(L, -2, i.first);
       }
@@ -1376,9 +1451,27 @@ protected:
     }
     else
     {
-      for (auto& i: detail::as_const(enums_))
+      for (auto& i: detail::as_const(constants_))
       {
-        lua_pushinteger(L, i.second);
+        assert(lua_istable(L, -1));
+        switch (i.second.type)
+        {
+          default:
+            assert(0);
+
+          case detail::BOOLEAN:
+            lua_pushboolean(L, i.second.u.boolean);
+
+            break;
+
+          case detail::STRING:
+            lua_pushstring(L, i.second.u.string);
+
+            break;
+
+          case detail::NUMBER:
+            lua_pushnumber(L, i.second.u.number);
+        }
 
         lua_setglobal(L, i.first);
       }
@@ -1518,9 +1611,9 @@ private:
 private:
   friend class module;
 
-  bool scope_create_{true};
+  detail::constants_type constants_;
 
-  detail::enum_info_type enums_;
+  bool scope_create_{true};
 
   scope* next_{};
 };
@@ -1646,6 +1739,14 @@ public:
   {
   }
 
+  template <typename T>
+  class_& constant(char const* const name, T&& value)
+  {
+    scope::constant(name, ::std::forward<T>(value));
+
+    return *this;
+  }
+
   class_& constructor(char const* const name = "new")
   {
     return constructor<>(name);
@@ -1745,7 +1846,7 @@ public:
 
   class_& enum_(char const* const name, int const value)
   {
-    scope::enum_(name, value);
+    scope::constant(name, lua_Number(value));
 
     return *this;
   }
