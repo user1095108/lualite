@@ -63,11 +63,7 @@
 
 #endif // LUALITE_NO_STD_CONTAINERS
 
-extern "C" {
-
-# include "lua/lauxlib.h"
-
-}
+#include "lua/lua.hpp"
 
 namespace lualite
 {
