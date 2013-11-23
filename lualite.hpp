@@ -1544,8 +1544,9 @@ protected:
       {
         scope_create_ = false;
 
-        if (lua_gettop(L) && lua_istable(L, -1))
+        if (lua_gettop(L))
         {
+          assert(lua_istable(L, -1));
           lua_createtable(L, 0, detail::default_nrec);
           detail::rawsetfield(L, -2, name_);
         }
