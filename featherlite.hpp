@@ -1165,7 +1165,7 @@ public:
   scope(char const* const name, A&&... args) :
     name_(name)
   {
-    [](...){ }((args.set_parent_scope(this), 0)...);
+    [](...){}((args.set_parent_scope(this), 0)...);
   }
 
   scope(scope const&) = delete;
@@ -1320,12 +1320,12 @@ protected:
     assert(!lua_gettop(L));
   }
 
-  void set_apply_instance(scope* const instance)
+  void append_child_scope(scope* const instance)
   {
-    auto next(next_);
-
-    if (next)
+    if (next_)
     {
+      auto next(next_);
+
       while (next->next_)
       {
         next = next->next_;
@@ -1343,7 +1343,7 @@ protected:
   {
     parent_scope_ = parent_scope;
 
-    parent_scope->set_apply_instance(this);
+    parent_scope->append_child_scope(this);
   }
 
   void get_scope(lua_State* const L)
@@ -1420,9 +1420,9 @@ private:
 
   detail::constants_type constants_;
 
-  bool scope_create_{true};
-
   scope* next_{};
+
+  bool scope_create_{true};
 };
 
 class module : public scope
@@ -1433,7 +1433,7 @@ public:
     scope(nullptr),
     L_(L)
   {
-    [](...){ }((args.set_parent_scope(this), 0)...);
+    [](...){}((args.set_parent_scope(this), 0)...);
 
     scope::apply(L);
   }
@@ -1443,7 +1443,7 @@ public:
     scope(name),
     L_(L)
   {
-    [](...){ }((args.set_parent_scope(this), 0)...);
+    [](...){}((args.set_parent_scope(this), 0)...);
 
     scope::apply(L);
   }
