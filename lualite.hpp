@@ -79,6 +79,8 @@ template <class C> class class_;
 namespace detail
 {
 
+static constexpr auto const default_nrec = 10;
+
 template<typename T> constexpr inline T const& as_const(T& t) { return t; }
 
 template <typename>
@@ -276,7 +278,7 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
   if (lua_isnil(L, -1))
   {
-    lua_createtable(L, 0, 10);
+    lua_createtable(L, 0, default_nrec);
 
     for (auto const i: detail::as_const(
       lualite::class_<C>::inherited_.inherited_defs))
@@ -310,7 +312,7 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
     // metatable
     assert(lua_istable(L, -1));
-    lua_createtable(L, 0, 1);
+    lua_createtable(L, 0, 2);
 
     // getters
     assert(lua_istable(L, -1));
@@ -1072,7 +1074,7 @@ int constructor_stub(lua_State* const L)
   auto const instance(forward<O, C, A...>(L, make_indices<sizeof...(A)>()));
 
   // table
-  lua_createtable(L, 0, 10);
+  lua_createtable(L, 0, default_nrec);
 
   for (auto const i: detail::as_const(
     lualite::class_<C>::inherited_.inherited_defs))
@@ -1106,7 +1108,7 @@ int constructor_stub(lua_State* const L)
 
   // metatable
   assert(lua_istable(L, -1));
-  lua_createtable(L, 0, 1);
+  lua_createtable(L, 0, 3);
 
   // gc
   assert(lua_istable(L, -1));
@@ -1544,12 +1546,12 @@ protected:
 
         if (lua_gettop(L) && lua_istable(L, -1))
         {
-          lua_createtable(L, 0, 1);
+          lua_createtable(L, 0, detail::default_nrec);
           detail::rawsetfield(L, -2, name_);
         }
         else
         {
-          lua_createtable(L, 0, 1);
+          lua_createtable(L, 0, detail::default_nrec);
           lua_setglobal(L, name_);
         }
       }
@@ -1571,7 +1573,7 @@ protected:
       {
         scope_create_ = false;
 
-        lua_createtable(L, 0, 1);
+        lua_createtable(L, 0, detail::default_nrec);
         lua_setglobal(L, name_);
       }
       // else do nothing
