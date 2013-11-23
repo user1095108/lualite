@@ -1525,9 +1525,9 @@ protected:
 
   void set_parent_scope(scope* const parent_scope)
   {
-    parent_scope_ = parent_scope;
-
     parent_scope->append_child_scope(this);
+
+    parent_scope_ = parent_scope;
   }
 
   void get_scope(lua_State* const L)
