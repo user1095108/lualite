@@ -185,7 +185,7 @@ using map_member_info_type = lua_CFunction;
 using member_info_type = func_info_type;
 
 template <class C>
-int default_getter(lua_State* const L)
+int getter(lua_State* const L)
 {
   assert(2 == lua_gettop(L));
   auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
@@ -196,7 +196,7 @@ int default_getter(lua_State* const L)
 }
 
 template <class C>
-int default_setter(lua_State* const L)
+int setter(lua_State* const L)
 {
   assert(3 == lua_gettop(L));
   auto const i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
@@ -259,7 +259,7 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
     lua_pushnil(L);
     lua_pushlightuserdata(L, instance);
 
-    lua_pushcclosure(L, default_getter<C>, 2);
+    lua_pushcclosure(L, getter<C>, 2);
 
     rawsetfield(L, -2, "__index");
 
@@ -269,7 +269,7 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
     lua_pushnil(L);
     lua_pushlightuserdata(L, instance);
 
-    lua_pushcclosure(L, default_setter<C>, 2);
+    lua_pushcclosure(L, setter<C>, 2);
 
     rawsetfield(L, -2, "__newindex");
 
@@ -1059,7 +1059,7 @@ int constructor_stub(lua_State* const L)
   lua_pushnil(L);
   lua_pushlightuserdata(L, instance);
 
-  lua_pushcclosure(L, default_getter<C>, 2);
+  lua_pushcclosure(L, getter<C>, 2);
 
   rawsetfield(L, -2, "__index");
 
@@ -1069,7 +1069,7 @@ int constructor_stub(lua_State* const L)
   lua_pushnil(L);
   lua_pushlightuserdata(L, instance);
 
-  lua_pushcclosure(L, default_setter<C>, 2);
+  lua_pushcclosure(L, setter<C>, 2);
 
   rawsetfield(L, -2, "__newindex");
 
