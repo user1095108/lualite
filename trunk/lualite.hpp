@@ -191,8 +191,8 @@ int getter(lua_State* const L)
   auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
   return lualite::class_<C>::getters_.end() == i ?
-    (lualite::class_<C>::default_getters_.size() ?
-      lualite::class_<C>::default_getters_.back()(L) :
+    (lualite::class_<C>::default_getter_ ?
+      lualite::class_<C>::default_getter_(L) :
       0) :
     i->second(L);
 }
@@ -205,9 +205,9 @@ int setter(lua_State* const L)
 
   if (lualite::class_<C>::setters_.end() == i)
   {
-    if (lualite::class_<C>::default_setters_.size())
+    if (lualite::class_<C>::default_setter_)
     {
-      lualite::class_<C>::default_setters_.back()(L);
+      lualite::class_<C>::default_setter_(L);
     }
     // else do nothing
   }
@@ -1614,12 +1614,16 @@ public:
   class_& inherits()
   {
     ::std::initializer_list<int>{(
-      default_getters_.insert(class_<A>::default_getters_),
-      0)...};
+      default_getter_ = class_<A>::default_getter_ && !default_getter_ ?
+        class_<A>::default_getter_ :
+        nullptr,
+        0)...};
 
     ::std::initializer_list<int>{(
-      default_setters_.insert(class_<A>::default_setters_),
-      0)...};
+      default_setter_ = class_<A>::default_setter_ && !default_setter_ ?
+        class_<A>::default_setter_ :
+        nullptr,
+        0)...};
 
     ::std::initializer_list<int>{(
       inherited_.inherited_defs.push_back(&class_<A>::defs_),
@@ -1669,7 +1673,7 @@ public:
   >::type
   def_getter()
   {
-    default_getters_.push_back(member_stub<FP, fp, 3>(fp));
+    default_getter_ = member_stub<FP, fp, 3>(fp);
   }
 
   template <typename FP, FP fp>
@@ -1679,7 +1683,7 @@ public:
   >::type
   def_setter()
   {
-    default_setters_.push_back(member_stub<FP, fp, 3>(fp));
+    default_setter_ = member_stub<FP, fp, 3>(fp);
   }
 
   class_& enum_(char const* const name, int const value)
@@ -1748,8 +1752,8 @@ private:
   }
 
 public:
-  static ::std::vector<detail::map_member_info_type> default_getters_;
-  static ::std::vector<detail::map_member_info_type> default_setters_;
+  static detail::map_member_info_type default_getter_;
+  static detail::map_member_info_type default_setter_;
 
   struct inherited_info
   {
@@ -1770,9 +1774,9 @@ public:
 };
 
 template <class C>
-::std::vector<detail::map_member_info_type> class_<C>::default_getters_;
+detail::map_member_info_type class_<C>::default_getter_;
 template <class C>
-::std::vector<detail::map_member_info_type> class_<C>::default_setters_;
+detail::map_member_info_type class_<C>::default_setter_;
 
 template <class C>
 struct class_<C>::inherited_info class_<C>::inherited_;
