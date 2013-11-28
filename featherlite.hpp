@@ -115,8 +115,7 @@ inline void rawsetfield(lua_State* const L, int const index,
 
 struct unordered_eq
 {
-  inline bool operator()(char const* const s1,
-    char const* const s2) const noexcept
+  bool operator()(char const* const s1, char const* const s2) const noexcept
   {
     return !::std::strcmp(s1, s2);
   }
@@ -124,7 +123,7 @@ struct unordered_eq
 
 struct unordered_hash
 {
-  inline ::std::size_t operator()(char const* s) const noexcept
+  ::std::size_t operator()(char const* s) const noexcept
   {
     ::std::size_t h{};
 
