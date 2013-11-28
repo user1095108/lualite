@@ -191,7 +191,9 @@ int getter(lua_State* const L)
   auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
   return lualite::class_<C>::getters_.end() == i ?
-    0 :
+    (lualite::class_<C>::default_getter_ ?
+      lualite::class_<C>::default_getter_(L) :
+      0) :
     i->second(L);
 }
 
@@ -201,7 +203,15 @@ int setter(lua_State* const L)
   assert(3 == lua_gettop(L));
   auto const i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
 
-  if (lualite::class_<C>::setters_.end() != i)
+  if (lualite::class_<C>::setters_.end() == i)
+  {
+    if (lualite::class_<C>::default_setter_)
+    {
+      lualite::class_<C>::default_setter_(L);
+    }
+    // else do nothing
+  }
+  else
   {
     i->second(L);
   }
@@ -1710,6 +1720,9 @@ private:
   }
 
 public:
+  static detail::map_member_info_type default_getter_;
+  static detail::map_member_info_type default_setter_;
+
   struct inherited_info
   {
     ::std::vector<::std::vector<detail::member_info_type> const*>
@@ -1727,6 +1740,11 @@ public:
   static ::std::unordered_map<char const*, detail::map_member_info_type,
     detail::unordered_hash, detail::unordered_eq> setters_;
 };
+
+template <class C>
+detail::map_member_info_type class_<C>::default_getter_;
+template <class C>
+detail::map_member_info_type class_<C>::default_setter_;
 
 template <class C>
 struct class_<C>::inherited_info class_<C>::inherited_;
