@@ -162,33 +162,33 @@ int main(int argc, char* argv[])
       .constant("__classname", "testbase")
       .constant("__b", true)
       .constant("__pi", 3.1459)
-      .def("dummy", &testbase::dummy),
+      .def<decltype(&testbase::dummy), &testbase::dummy>("dummy"),
     lualite::class_<testclass>("testclass")
       .constructor("defaultNew")
       .constructor<int>()
       .inherits<testbase>()
       .enum_("smell", 9)
-      .def("print", (std::tuple<int, std::string, char const*> (testclass::*)(int))&testclass::print)
-      .def("print_", (std::vector<std::string> (testclass::*)(std::string) const)&testclass::print)
-      .def<decltype(&testclass::pointer), &testclass::pointer>("pointer") // faster way
-      .def("reference", &testclass::reference)
+      .def<std::tuple<int, std::string, char const*> (testclass::*)(int), &testclass::print>("print")
+      .def<std::vector<std::string> (testclass::*)(std::string) const, &testclass::print>("print_")
+      .def<decltype(&testclass::pointer), &testclass::pointer>("pointer")
+      .def<decltype(&testclass::reference), &testclass::reference>("reference")
       .property<decltype(&testclass::a), &testclass::a,
-        decltype(&testclass::set_a), &testclass::set_a>("a") // faster way
-      .def("test_array", &testclass::test_array),
+        decltype(&testclass::set_a), &testclass::set_a>("a")
+      .def<decltype(&testclass::test_array), &testclass::test_array>("test_array"),
     lualite::scope("subscope",
       lualite::class_<testclass>("testclass")
         .constructor<>("defaultNew")
         .constructor<int>()
         .enum_("smell", 10)
-        .def("testfunc", &testfunc)
-        .def("print", (std::tuple<int, std::string, char const*> (testclass::*)(int))&testclass::print)
-        .def("print_", (std::vector<std::string> (testclass::*)(std::string) const)&testclass::print)
+        .def<decltype(&testfunc), &testfunc>("testfunc")
+        .def<std::tuple<int, std::string, char const*> (testclass::*)(int), &testclass::print>("print")
+        .def<std::vector<std::string> (testclass::*)(std::string) const, &testclass::print>("print_")
     )
   )
   .enum_("apple", 1)
-  .def<decltype(&testfunc), &testfunc>("testfunc") // faster way, less memory taken
-  .def("testpair", &testpair)
-  .def<decltype(&testtuple), &testtuple>("testtuple"); // faster way, less memory taken
+  .def<decltype(&testfunc), &testfunc>("testfunc")
+  .def<decltype(&testpair), &testpair>("testpair")
+  .def<decltype(&testtuple), &testtuple>("testtuple");
 
   luaL_dostring(
     L,

@@ -26,8 +26,8 @@
 */
 
 #pragma once
-#ifndef LUALITE_HPP
-# define LUALITE_HPP
+#ifndef FEATHERLITE_HPP
+# define FEATHERLITE_HPP
 
 #if __cplusplus < 201103L
 # error "You need a C++11 compiler to use lualite"
@@ -39,8 +39,6 @@
 
 #include <type_traits>
 
-#include <forward_list>
-
 #include <unordered_map>
 
 #include <vector>
@@ -50,6 +48,8 @@
 #include <array>
 
 #include <deque>
+
+#include <forward_list>
 
 #include <list>
 
@@ -141,31 +141,14 @@ template <::std::size_t...> struct indices
 {
 };
 
-template <::std::size_t M, ::std::size_t... Is>
+template <::std::size_t M, ::std::size_t ...Is>
 struct make_indices : make_indices<M - 1, M - 1, Is...>
 {
 };
 
-template <::std::size_t... Is>
+template <::std::size_t ...Is>
 struct make_indices<0, Is...> : indices<Is...>
 {
-};
-
-void dummy();
-
-struct dummy_
-{
-  virtual void dummy();
-};
-
-struct alignas (decltype(&dummy)) func_type
-{
-  char p[sizeof(&dummy)];
-};
-
-struct alignas (decltype(&dummy_::dummy)) member_func_type
-{
-  char p[sizeof(&dummy_::dummy)];
 };
 
 enum constant_type
@@ -192,32 +175,14 @@ using constants_type = ::std::vector<::std::pair<char const* const,
 
 struct func_info_type
 {
-  char const* name;
+  char const* const name;
 
-  lua_CFunction callback;
-
-  void* func;
+  lua_CFunction const callback;
 };
 
-struct map_member_info_type
-{
-  lua_CFunction callback;
+using map_member_info_type = lua_CFunction;
 
-  bool special;
-
-  member_func_type func;
-};
-
-struct member_info_type
-{
-  char const* name;
-
-  lua_CFunction callback;
-
-  bool special;
-
-  member_func_type func;
-};
+using member_info_type = func_info_type;
 
 template <class C>
 int getter(lua_State* const L)
@@ -225,21 +190,11 @@ int getter(lua_State* const L)
   assert(2 == lua_gettop(L));
   auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
-  if (lualite::class_<C>::getters_.end() == i)
-  {
-    return {};
-  }
-  else
-  {
-    if (!i->second.special)
-    {
-      lua_pushlightuserdata(L, &i->second.func);
-      lua_replace(L, lua_upvalueindex(3));
-    }
-    // else do nothing
-
-    return i->second.callback(L);
-  }
+  return lualite::class_<C>::getters_.end() == i ?
+    (lualite::class_<C>::default_getter_ ?
+      lualite::class_<C>::default_getter_(L) :
+      0) :
+    i->second(L);
 }
 
 template <class C>
@@ -248,16 +203,17 @@ int setter(lua_State* const L)
   assert(3 == lua_gettop(L));
   auto const i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
 
-  if (lualite::class_<C>::setters_.end() != i)
+  if (lualite::class_<C>::setters_.end() == i)
   {
-    if (!i->second.special)
+    if (lualite::class_<C>::default_setter_)
     {
-      lua_pushlightuserdata(L, &i->second.func);
-      lua_replace(L, lua_upvalueindex(3));
+      lualite::class_<C>::default_setter_(L);
     }
     // else do nothing
-
-    i->second.callback(L);
+  }
+  else
+  {
+    i->second(L);
   }
   // else do nothing
 
@@ -284,9 +240,8 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
         lua_pushnil(L);
         lua_pushlightuserdata(L, instance);
-        lua_pushlightuserdata(L, &mi.func);
 
-        lua_pushcclosure(L, mi.callback, 3);
+        lua_pushcclosure(L, mi.callback, 2);
 
         rawsetfield(L, -2, mi.name);
       }
@@ -298,9 +253,8 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
       lua_pushnil(L);
       lua_pushlightuserdata(L, instance);
-      lua_pushlightuserdata(L, &mi.func);
 
-      lua_pushcclosure(L, mi.callback, 3);
+      lua_pushcclosure(L, mi.callback, 2);
 
       rawsetfield(L, -2, mi.name);
     }
@@ -314,9 +268,8 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
     lua_pushnil(L);
     lua_pushlightuserdata(L, instance);
-    lua_pushnil(L);
 
-    lua_pushcclosure(L, getter<C>, 3);
+    lua_pushcclosure(L, getter<C>, 2);
 
     rawsetfield(L, -2, "__index");
 
@@ -325,9 +278,8 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
     lua_pushnil(L);
     lua_pushlightuserdata(L, instance);
-    lua_pushnil(L);
 
-    lua_pushcclosure(L, setter<C>, 3);
+    lua_pushcclosure(L, setter<C>, 2);
 
     rawsetfield(L, -2, "__newindex");
 
@@ -628,7 +580,7 @@ template <typename ...Types, ::std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
   ::std::tuple<Types...> const& t, indices<I...> const)
 {
-  ::std::initializer_list<int>{ (set_result(L, ::std::get<I>(t)), 0)... };
+  ::std::initializer_list<int>{(set_result(L, ::std::get<I>(t)), 0)...};
 }
 
 template <typename C>
@@ -1080,9 +1032,8 @@ int constructor_stub(lua_State* const L)
 
       lua_pushnil(L);
       lua_pushlightuserdata(L, instance);
-      lua_pushlightuserdata(L, &mi.func);
 
-      lua_pushcclosure(L, mi.callback, 3);
+      lua_pushcclosure(L, mi.callback, 2);
 
       rawsetfield(L, -2, mi.name);
     }
@@ -1094,9 +1045,8 @@ int constructor_stub(lua_State* const L)
 
     lua_pushnil(L);
     lua_pushlightuserdata(L, instance);
-    lua_pushlightuserdata(L, &mi.func);
 
-    lua_pushcclosure(L, mi.callback, 3);
+    lua_pushcclosure(L, mi.callback, 2);
 
     rawsetfield(L, -2, mi.name);
   }
@@ -1118,9 +1068,8 @@ int constructor_stub(lua_State* const L)
 
   lua_pushnil(L);
   lua_pushlightuserdata(L, instance);
-  lua_pushnil(L);
 
-  lua_pushcclosure(L, getter<C>, 3);
+  lua_pushcclosure(L, getter<C>, 2);
 
   rawsetfield(L, -2, "__index");
 
@@ -1129,9 +1078,8 @@ int constructor_stub(lua_State* const L)
 
   lua_pushnil(L);
   lua_pushlightuserdata(L, instance);
-  lua_pushnil(L);
 
-  lua_pushcclosure(L, setter<C>, 3);
+  lua_pushcclosure(L, setter<C>, 2);
 
   rawsetfield(L, -2, "__newindex");
 
@@ -1163,35 +1111,6 @@ typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 func_stub(lua_State* const L)
 {
   return set_result(L, forward<O, R, A...>(L, fp,
-    make_indices<sizeof...(A)>()));
-}
-
-template <::std::size_t O, class R, class ...A>
-typename ::std::enable_if<::std::is_void<R>{}, int>::type
-func_stub(lua_State* const L)
-{
-  assert(sizeof...(A) == lua_gettop(L));
-  using ptr_to_func_type = R (* const)(A...);
-
-  forward<O, R, A...>(L,
-    *static_cast<ptr_to_func_type const*>(
-      lua_touserdata(L, lua_upvalueindex(2))),
-    make_indices<sizeof...(A)>());
-
-  return {};
-}
-
-template <::std::size_t O, class R, class ...A>
-typename ::std::enable_if<!::std::is_void<R>{}, int>::type
-func_stub(lua_State* const L)
-{
-//::std::cout << lua_gettop(L) << " " << sizeof...(A) << ::std::endl;
-  assert(sizeof...(A) == lua_gettop(L));
-  using ptr_to_func_type = R (* const)(A...);
-
-  return set_result(L, forward<O, R, A...>(L,
-    *static_cast<ptr_to_func_type const*>(
-      lua_touserdata(L, lua_upvalueindex(2))),
     make_indices<sizeof...(A)>()));
 }
 
@@ -1239,71 +1158,7 @@ member_stub(lua_State* const L)
       make_indices<sizeof...(A)>()));
 }
 
-template <::std::size_t O, class C, class R, class ...A>
-typename ::std::enable_if<::std::is_void<R>{}, int>::type
-member_stub(lua_State* const L)
-{
-  assert(sizeof...(A) + O - 1 == lua_gettop(L));
-  using ptr_to_member_type = R (C::* const )(A...);
-
-  forward<O, C, R, A...>(L,
-    static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
-    *static_cast<ptr_to_member_type const*>(
-      lua_touserdata(L, lua_upvalueindex(3))),
-    make_indices<sizeof...(A)>());
-
-  return {};
-}
-
-template <::std::size_t O, class C, class R, class ...A>
-typename ::std::enable_if<!::std::is_void<R>{}, int>::type
-member_stub(lua_State* const L)
-{
-//::std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << ::std::endl;
-  assert(sizeof...(A) + O - 1 == lua_gettop(L));
-  using ptr_to_member_type = R (C::* const)(A...);
-
-  return set_result(L, forward<O, C, R, A...>(L,
-    static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
-    *static_cast<ptr_to_member_type const*>(
-      lua_touserdata(L, lua_upvalueindex(3))),
-    make_indices<sizeof...(A)>()));
-}
-
 } // detail
-
-#ifdef __GNUC__
-# pragma GCC diagnostic push
-# pragma GCC diagnostic ignored "-Wstrict-aliasing"
-#endif // __GNUC__
-
-template <class R, class ...A>
-inline constexpr detail::func_type convert(
-  R (*func_ptr)(A...))
-{
-  return *static_cast<detail::func_type*>(
-    static_cast<void*>(&func_ptr));
-}
-
-template <class C, class R, class ...A>
-inline constexpr detail::member_func_type convert(
-  R (C::*func_ptr)(A...))
-{
-  return *static_cast<detail::member_func_type*>(
-    static_cast<void*>(&func_ptr));
-}
-
-template <class C, class R, class ...A>
-inline constexpr detail::member_func_type convert(
-  R (C::*func_ptr)(A...) const)
-{
-  return *static_cast<detail::member_func_type*>(
-    static_cast<void*>(&func_ptr));
-}
-
-#ifdef __GNUC__
-# pragma GCC diagnostic pop
-#endif // __GNUC__
 
 class scope
 {
@@ -1362,27 +1217,10 @@ public:
     return *this;
   }
 
-  template <typename FT, FT* fp>
-  scope& def(char const* const name)
-  {
-    return def<FT*, fp>(name, fp);
-  }
-
   template <typename FP, FP fp>
   scope& def(char const* const name)
   {
     push_function<FP, fp>(name, fp);
-
-    return *this;
-  }
-
-  template <class R, class ...A>
-  scope& def(char const* const name, R (* const ptr_to_func)(A...))
-  {
-    address_pool().push_front(convert(ptr_to_func));
-
-    functions_.push_back({name, detail::func_stub<1, R, A...>,
-      &address_pool().front()});
 
     return *this;
   }
@@ -1433,13 +1271,7 @@ protected:
 
         lua_pushnil(L);
 
-        if (i.func)
-        {
-          lua_pushlightuserdata(L, i.func);
-        }
-        // else do nothing
-
-        lua_pushcclosure(L, i.callback, !!i.func + 1);
+        lua_pushcclosure(L, i.callback, 1);
 
         detail::rawsetfield(L, -2, i.name);
       }
@@ -1477,13 +1309,7 @@ protected:
       {
         lua_pushnil(L);
 
-        if (i.func)
-        {
-          lua_pushlightuserdata(L, i.func);
-        }
-        // else do nothing
-
-        lua_pushcclosure(L, i.callback, !!i.func + 1);
+        lua_pushcclosure(L, i.callback, 1);
 
         lua_setglobal(L, i.name);
       }
@@ -1582,15 +1408,6 @@ protected:
     }
   }
 
-  using address_pool_type = ::std::forward_list<detail::func_type>;
-
-  static address_pool_type& address_pool()
-  {
-    static address_pool_type address_pool;
-
-    return address_pool;
-  }
-
 protected:
   char const* const name_;
 
@@ -1611,9 +1428,9 @@ private:
 
   detail::constants_type constants_;
 
-  bool scope_create_{true};
-
   scope* next_{};
+
+  bool scope_create_{true};
 };
 
 class module : public scope
@@ -1663,31 +1480,21 @@ public:
     return *this;
   }
 
-  template <class R, class ...A>
-  module& def(char const* const name, R (* const ptr_to_func)(A...))
+  module& constant(char const* const name, bool const value)
   {
-    address_pool().push_front(convert(ptr_to_func));
-
     if (name_)
     {
       scope::get_scope(L_);
       assert(lua_istable(L_, -1));
 
-      lua_pushnil(L_);
-      lua_pushlightuserdata(L_, &address_pool().front());
-
-      lua_pushcclosure(L_, detail::func_stub<1, R, A...>, 2);
-
+      lua_pushboolean(L_, value);
       detail::rawsetfield(L_, -2, name);
 
       lua_pop(L_, 1);
     }
     else
     {
-      lua_pushnil(L_);
-      lua_pushlightuserdata(L_, &address_pool().front());
-
-      lua_pushcclosure(L_, detail::func_stub<1, R, A...>, 2);
+      lua_pushboolean(L_, value);
 
       lua_setglobal(L_, name);
     }
@@ -1695,7 +1502,7 @@ public:
     return *this;
   }
 
-  module& enum_(char const* const name, int value)
+  module& constant(char const* const name, lua_Number const value)
   {
     if (name_)
     {
@@ -1715,6 +1522,33 @@ public:
     }
 
     return *this;
+  }
+
+  module& constant(char const* const name, char const* const value)
+  {
+    if (name_)
+    {
+      scope::get_scope(L_);
+      assert(lua_istable(L_, -1));
+
+      lua_pushstring(L_, value);
+      detail::rawsetfield(L_, -2, name);
+
+      lua_pop(L_, 1);
+    }
+    else
+    {
+      lua_pushstring(L_, value);
+
+      lua_setglobal(L_, name);
+    }
+
+    return *this;
+  }
+
+  module& enum_(char const* const name, int const value)
+  {
+    return constant(name, lua_Number(value));
   }
 
 private:
@@ -1808,10 +1642,14 @@ public:
     return *this;
   }
 
-  template <class R, class ...A>
-  class_& def(char const* const name, R (* const ptr_to_func)(A...))
+  template <typename FP, FP fp>
+  typename ::std::enable_if<
+    !detail::is_function_pointer<FP>{},
+    class_&
+  >::type
+  def(char const* const name)
   {
-    scope::def(name, ptr_to_func);
+    defs_.push_back({name, member_stub<FP, fp, 2>(fp)});
 
     return *this;
   }
@@ -1821,43 +1659,19 @@ public:
     !detail::is_function_pointer<FP>{},
     class_&
   >::type
-  def(char const* const name)
+  def_getter()
   {
-    defs_.push_back({name,
-      member_stub<FP, fp, 2>(fp),
-      true});
-
-    return *this;
+    default_getter_ = member_stub<FP, fp, 3>(fp);
   }
 
-  template <class R, class ...A>
-  class_& def(char const* const name,
-    R (C::* const ptr_to_member)(A...) const)
+  template <typename FP, FP fp>
+  typename ::std::enable_if<
+    !detail::is_function_pointer<FP>{},
+    class_&
+  >::type
+  def_setter()
   {
-    static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
-      "pointer size mismatch");
-
-    defs_.push_back({name,
-      detail::member_stub<2, C, R, A...>,
-      false,
-      convert(ptr_to_member)});
-
-    return *this;
-  }
-
-  template <class R, class ...A>
-  class_& def(char const* const name,
-    R (C::* const ptr_to_member)(A...))
-  {
-    static_assert(sizeof(ptr_to_member) <= sizeof(detail::member_func_type),
-      "pointer size mismatch");
-
-    defs_.push_back({name,
-      detail::member_stub<2, C, R, A...>,
-      false,
-      convert(ptr_to_member)});
-
-    return *this;
+    default_setter_ = member_stub<FP, fp, 3>(fp);
   }
 
   class_& enum_(char const* const name, int const value)
@@ -1871,32 +1685,7 @@ public:
   class_& property(char const* const name)
   {
     getters_.emplace(name, detail::map_member_info_type{
-      member_stub<FP, fp>(fp),
-      true});
-
-    return *this;
-  }
-
-  template <class R, class ...A>
-  class_& property(char const* const name,
-    R (C::* const ptr_to_const_member)(A...) const)
-  {
-    getters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, R, A...>,
-      false,
-      convert(ptr_to_const_member)});
-
-    return *this;
-  }
-
-  template <class R, class ...A>
-  class_& property(char const* const name,
-    R (C::* const ptr_to_member)(A...))
-  {
-    getters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, R, A...>,
-      false,
-      convert(ptr_to_member)});
+      member_stub<FP, fp, 3>(fp)});
 
     return *this;
   }
@@ -1905,45 +1694,9 @@ public:
   class_& property(char const* const name)
   {
     getters_.emplace(name, detail::map_member_info_type{
-      member_stub<FPA, fpa, 3>(fpa),
-      true});
+      member_stub<FPA, fpa, 3>(fpa)});
     setters_.emplace(name, detail::map_member_info_type{
-      member_stub<FPB, fpb, 3>(fpb),
-      true});
-
-    return *this;
-  }
-
-  template <class RA, class ...A, class RB, class ...B>
-  class_& property(char const* const name,
-    RA (C::* const ptr_to_membera)(A...) const,
-    RB (C::* const ptr_to_memberb)(B...))
-  {
-    getters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, RA, A...>,
-      false,
-      convert(ptr_to_membera)});
-    setters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, RB, B...>,
-      false,
-      convert(ptr_to_memberb)});
-
-    return *this;
-  }
-
-  template <class RA, class ...A, class RB, class ...B>
-  class_& property(char const* const name,
-    RA (C::* const ptr_to_membera)(A...),
-    RB (C::* const ptr_to_memberb)(B...))
-  {
-    getters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, RA, A...>,
-      false,
-      convert(ptr_to_membera)});
-    setters_.emplace(name, detail::map_member_info_type{
-      detail::member_stub<3, C, RB, B...>,
-      false,
-      convert(ptr_to_memberb)});
+      member_stub<FPB, fpb, 3>(fpb)});
 
     return *this;
   }
@@ -1987,9 +1740,13 @@ private:
   }
 
 public:
+  static detail::map_member_info_type default_getter_;
+  static detail::map_member_info_type default_setter_;
+
   struct inherited_info
   {
-    ::std::vector<::std::vector<detail::member_info_type>*> inherited_defs;
+    ::std::vector<::std::vector<detail::member_info_type> const*>
+      inherited_defs;
   };
 
   static struct inherited_info inherited_;
@@ -2003,6 +1760,11 @@ public:
   static ::std::unordered_map<char const*, detail::map_member_info_type,
     detail::unordered_hash, detail::unordered_eq> setters_;
 };
+
+template <class C>
+detail::map_member_info_type class_<C>::default_getter_;
+template <class C>
+detail::map_member_info_type class_<C>::default_setter_;
 
 template <class C>
 struct class_<C>::inherited_info class_<C>::inherited_;
@@ -2023,4 +1785,4 @@ template <class C>
 
 } // lualite
 
-#endif // LUALITE_HPP
+#endif // FEATHERLITE_HPP
