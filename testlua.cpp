@@ -172,15 +172,14 @@ int main(int argc, char* argv[])
       .def<std::vector<std::string> (testclass::*)(std::string) const, &testclass::print>("print_")
       .def<LLFUNC(testclass::pointer)>("pointer")
       .def<LLFUNC(testclass::reference)>("reference")
-      .property<decltype(&testclass::a), &testclass::a,
-        decltype(&testclass::set_a), &testclass::set_a>("a")
-      .def<decltype(&testclass::test_array), &testclass::test_array>("test_array"),
+      .property<LLFUNC(testclass::a), LLFUNC(testclass::set_a)>("a")
+      .def<LLFUNC(testclass::test_array)>("test_array"),
     lualite::scope("subscope",
       lualite::class_<testclass>("testclass")
         .constructor<>("defaultNew")
         .constructor<int>()
         .enum_("smell", 10)
-        .def<decltype(&testfunc), &testfunc>("testfunc")
+        .def<LLFUNC(testfunc)>("testfunc")
         .def<std::tuple<int, std::string, char const*> (testclass::*)(int), &testclass::print>("print")
         .def<std::vector<std::string> (testclass::*)(std::string) const, &testclass::print>("print_")
     )
