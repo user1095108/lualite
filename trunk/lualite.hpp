@@ -68,6 +68,10 @@
 namespace lualite
 {
 
+#ifndef LLFUNC
+# define LLFUNC(f) decltype(&f), &f
+#endif // LLFUNC
+
 class scope;
 
 template <class C> class class_;
