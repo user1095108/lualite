@@ -170,8 +170,8 @@ int main(int argc, char* argv[])
       .enum_("smell", 9)
       .def<std::tuple<int, std::string, char const*> (testclass::*)(int), &testclass::print>("print")
       .def<std::vector<std::string> (testclass::*)(std::string) const, &testclass::print>("print_")
-      .def<decltype(&testclass::pointer), &testclass::pointer>("pointer")
-      .def<decltype(&testclass::reference), &testclass::reference>("reference")
+      .def<LLFUNC(testclass::pointer)>("pointer")
+      .def<LLFUNC(testclass::reference)>("reference")
       .property<decltype(&testclass::a), &testclass::a,
         decltype(&testclass::set_a), &testclass::set_a>("a")
       .def<decltype(&testclass::test_array), &testclass::test_array>("test_array"),
