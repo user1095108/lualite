@@ -1675,7 +1675,7 @@ public:
     !detail::is_function_pointer<FP>{},
     class_&
   >::type
-  def_getter()
+  set_default_getter()
   {
     default_getter_ = member_stub<FP, fp, 3>(fp);
   }
@@ -1685,7 +1685,7 @@ public:
     !detail::is_function_pointer<FP>{},
     class_&
   >::type
-  def_setter()
+  set_default_setter()
   {
     default_setter_ = member_stub<FP, fp, 3>(fp);
   }
