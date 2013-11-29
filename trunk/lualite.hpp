@@ -1670,26 +1670,6 @@ public:
     return *this;
   }
 
-  template <typename FP, FP fp>
-  typename ::std::enable_if<
-    !detail::is_function_pointer<FP>{},
-    class_&
-  >::type
-  set_default_getter()
-  {
-    default_getter_ = member_stub<FP, fp, 3>(fp);
-  }
-
-  template <typename FP, FP fp>
-  typename ::std::enable_if<
-    !detail::is_function_pointer<FP>{},
-    class_&
-  >::type
-  set_default_setter()
-  {
-    default_setter_ = member_stub<FP, fp, 3>(fp);
-  }
-
   class_& enum_(char const* const name, int const value)
   {
     scope::constant(name, lua_Number(value));
@@ -1715,6 +1695,26 @@ public:
       member_stub<FPB, fpb, 3>(fpb)});
 
     return *this;
+  }
+
+  template <typename FP, FP fp>
+  typename ::std::enable_if<
+    !detail::is_function_pointer<FP>{},
+    class_&
+  >::type
+  set_default_getter()
+  {
+    default_getter_ = member_stub<FP, fp, 3>(fp);
+  }
+
+  template <typename FP, FP fp>
+  typename ::std::enable_if<
+    !detail::is_function_pointer<FP>{},
+    class_&
+  >::type
+  set_default_setter()
+  {
+    default_setter_ = member_stub<FP, fp, 3>(fp);
   }
 
 private:
