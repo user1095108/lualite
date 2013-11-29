@@ -185,9 +185,9 @@ int main(int argc, char* argv[])
     )
   )
   .enum_("apple", 1)
-  .def<decltype(&testfunc), &testfunc>("testfunc")
-  .def<decltype(&testpair), &testpair>("testpair")
-  .def<decltype(&testtuple), &testtuple>("testtuple");
+  .def<LLFUNC(testfunc)>("testfunc")
+  .def<LLFUNC(testpair)>("testpair")
+  .def<LLFUNC(testtuple)>("testtuple");
 
   luaL_dostring(
     L,
