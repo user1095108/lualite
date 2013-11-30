@@ -1705,6 +1705,8 @@ public:
   set_default_getter()
   {
     default_getter_ = member_stub<FP, fp, 3>(fp);
+
+    return *this;
   }
 
   template <typename FP, FP fp>
@@ -1715,6 +1717,8 @@ public:
   set_default_setter()
   {
     default_setter_ = member_stub<FP, fp, 3>(fp);
+
+    return *this;
   }
 
 private:
