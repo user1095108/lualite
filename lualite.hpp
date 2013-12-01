@@ -26,8 +26,8 @@
 */
 
 #pragma once
-#ifndef FEATHERLITE_HPP
-# define FEATHERLITE_HPP
+#ifndef LUALITE_HPP
+# define LUALITE_HPP
 
 #if __cplusplus < 201103L
 # error "You need a C++11 compiler to use lualite"
@@ -1805,4 +1805,4 @@ template <class C>
 
 } // lualite
 
-#endif // FEATHERLITE_HPP
+#endif // LUALITE_HPP
