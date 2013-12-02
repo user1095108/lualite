@@ -72,6 +72,8 @@ namespace lualite
 # define LLFUNC(f) decltype(&f),&f
 #endif // LLFUNC
 
+struct any { };
+
 class scope;
 
 template <class C> class class_;
@@ -496,6 +498,15 @@ get_arg(lua_State* const L)
   assert(lua_islightuserdata(L, I));
   return *static_cast<typename ::std::remove_reference<T>::type*>(
     lua_touserdata(L, I));
+}
+
+template <int I, typename T>
+inline typename ::std::enable_if<
+  ::std::is_same<typename ::std::remove_const<T>::type, any>{},
+  T>::type
+get_arg(lua_State* const L)
+{
+  return any();
 }
 
 #ifndef LUALITE_NO_STD_CONTAINERS
