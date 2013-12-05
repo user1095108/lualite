@@ -237,10 +237,10 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
   {
     lua_createtable(L, 0, default_nrec);
 
-    for (auto const i: detail::as_const(
+    for (auto& i: detail::as_const(
       lualite::class_<C>::inherited_.inherited_defs))
     {
-      for (auto& mi: *i)
+      for (auto& mi: *i.second)
       {
         assert(lua_istable(L, -1));
 
@@ -1038,10 +1038,10 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, default_nrec);
 
-  for (auto const i: detail::as_const(
+  for (auto& i: detail::as_const(
     lualite::class_<C>::inherited_.inherited_defs))
   {
-    for (auto& mi: *i)
+    for (auto& mi: *i.second)
     {
       assert(lua_istable(L, -1));
 
@@ -1641,7 +1641,8 @@ public:
         0)...};
 
     ::std::initializer_list<int>{(
-      inherited_.inherited_defs.push_back(&class_<A>::defs_),
+      inherited_.inherited_defs.push_back(
+        ::std::make_pair(cast_fp_type{}, &class_<A>::defs_)),
       0)...};
 
     ::std::initializer_list<int>{(
@@ -1774,9 +1775,12 @@ public:
   static detail::map_member_info_type default_getter_;
   static detail::map_member_info_type default_setter_;
 
+  using cast_fp_type = void* (*)(void*);
+
   struct inherited_info
   {
-    ::std::vector<::std::vector<detail::member_info_type> const*>
+    ::std::vector<::std::pair<cast_fp_type,
+      ::std::vector<detail::member_info_type> const*> >
       inherited_defs;
   };
 
