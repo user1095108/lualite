@@ -1641,8 +1641,8 @@ public:
         0)...};
 
     ::std::initializer_list<int>{(
-      inherited_.inherited_defs.push_back(
-        ::std::make_pair(cast_fp_type{}, &class_<A>::defs_)),
+      inherited_.inherited_defs.emplace_back(
+        cast_fp_type{}, &class_<A>::defs_),
       0)...};
 
     ::std::initializer_list<int>{(
