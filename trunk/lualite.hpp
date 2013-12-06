@@ -1777,11 +1777,9 @@ public:
   static detail::map_member_info_type default_getter_;
   static detail::map_member_info_type default_setter_;
 
-  using cast_fp_type = void* (*)(void*);
-
   struct inherited_info
   {
-    ::std::vector<::std::pair<cast_fp_type,
+    ::std::vector<::std::pair<void* (*)(void*),
       ::std::vector<detail::member_info_type> const*> >
       inherited_defs;
   };
