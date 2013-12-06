@@ -245,7 +245,7 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
         assert(lua_istable(L, -1));
 
         lua_pushnil(L);
-        lua_pushlightuserdata(L, instance);
+        lua_pushlightuserdata(L, i.first(instance));
 
         lua_pushcclosure(L, mi.callback, 2);
 
@@ -1046,7 +1046,7 @@ int constructor_stub(lua_State* const L)
       assert(lua_istable(L, -1));
 
       lua_pushnil(L);
-      lua_pushlightuserdata(L, instance);
+      lua_pushlightuserdata(L, i.first(instance));
 
       lua_pushcclosure(L, mi.callback, 2);
 
@@ -1641,8 +1641,7 @@ public:
         0)...};
 
     ::std::initializer_list<int>{(
-      inherited_.inherited_defs.emplace_back(
-        cast_fp_type{}, &class_<A>::defs_),
+      inherited_.inherited_defs.emplace_back(convert<A>, &class_<A>::defs_),
       0)...};
 
     ::std::initializer_list<int>{(
@@ -1758,6 +1757,9 @@ private:
 
     assert(!lua_gettop(L));
   }
+
+  template <class A>
+  static void* convert(void* const a) { return static_cast<A*>(static_cast<C*>(a)); }
 
   template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
   lua_CFunction member_stub(R (C::* const)(A...) const)
