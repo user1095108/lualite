@@ -1173,6 +1173,15 @@ member_stub(lua_State* const L)
       make_indices<sizeof...(A)>()));
 }
 
+template <typename FP, FP fp, class C>
+int vararg_member_stub(lua_State* const L)
+{
+//::std::cout << lua_gettop(L) << ::std::endl;
+  (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L);
+
+  return {};
+}
+
 } // detail
 
 class scope
@@ -1732,6 +1741,18 @@ public:
     return *this;
   }
 
+  template <typename FP, FP fp>
+  typename ::std::enable_if<
+    !detail::is_function_pointer<FP>{},
+    class_&
+  >::type
+  vararg_def(char const* const name)
+  {
+    defs_.push_back({name, vararg_member_stub<FP, fp>(fp)});
+
+    return *this;
+  }
+
 private:
   void apply(lua_State* const L)
   {
@@ -1772,6 +1793,19 @@ private:
   {
     return &detail::member_stub<FP, fp, O, C, R, A...>;
   }
+
+  template <typename FP, FP fp>
+  lua_CFunction vararg_member_stub(void (C::* const)(lua_State*) const)
+  {
+    return &detail::vararg_member_stub<FP, fp, C>;
+  }
+
+  template <typename FP, FP fp>
+  lua_CFunction vararg_member_stub(void (C::* const)(lua_State*))
+  {
+    return &detail::vararg_member_stub<FP, fp, C>;
+  }
+
 
 public:
   static detail::map_member_info_type default_getter_;
