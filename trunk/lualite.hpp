@@ -1129,6 +1129,22 @@ func_stub(lua_State* const L)
     make_indices<sizeof...(A)>()));
 }
 
+template <typename FP, FP fp, class R>
+typename ::std::enable_if<::std::is_void<R>{}, int>::type
+vararg_func_stub(lua_State* const L)
+{
+  fp(L);
+
+  return {};
+}
+
+template <typename FP, FP fp, class R>
+typename ::std::enable_if<!::std::is_void<R>{}, int>::type
+vararg_func_stub(lua_State* const L)
+{
+  return set_result(fp(L));
+}
+
 template <::std::size_t O, typename C, typename R,
   typename ...A, ::std::size_t ...I>
 inline R forward(lua_State* const L, C* const c,
@@ -1262,6 +1278,14 @@ public:
   scope& enum_(char const* const name, int const value)
   {
     constant(name, lua_Number(value));
+
+    return *this;
+  }
+
+  template <typename FP, FP fp>
+  scope& vararg_def(char const* const name)
+  {
+    push_vararg_function<FP, fp>(name, fp);
 
     return *this;
   }
@@ -1453,8 +1477,13 @@ private:
   template <typename FP, FP fp, typename R, typename ...A>
   void push_function(char const* const name, R (* const)(A...))
   {
-    functions_.push_back(
-      {name, detail::func_stub<FP, fp, 1, R, A...>});
+    functions_.push_back({name, detail::func_stub<FP, fp, 1, R, A...>});
+  }
+
+  template <typename FP, FP fp, typename R>
+  void push_vararg_function(char const* const name, R (* const)(lua_State*))
+  {
+    functions_.push_back({name, detail::vararg_func_stub<FP, fp, R>});
   }
 
 private:
