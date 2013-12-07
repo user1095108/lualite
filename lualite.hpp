@@ -1173,13 +1173,23 @@ member_stub(lua_State* const L)
       make_indices<sizeof...(A)>()));
 }
 
-template <typename FP, FP fp, class C>
-int vararg_member_stub(lua_State* const L)
+template <typename FP, FP fp, class C, class R>
+typename ::std::enable_if<::std::is_void<R>{}, int>::type
+vararg_member_stub(lua_State* const L)
 {
 //::std::cout << lua_gettop(L) << ::std::endl;
   (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L);
 
   return {};
+}
+
+template <typename FP, FP fp, class C, class R>
+typename ::std::enable_if<!::std::is_void<R>{}, int>::type
+vararg_member_stub(lua_State* const L)
+{
+//::std::cout << lua_gettop(L) << ::std::endl;
+  return set_result(L,
+    (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L));
 }
 
 } // detail
@@ -1762,7 +1772,7 @@ private:
     scope::get_scope(L);
     assert(lua_istable(L, -1));
 
-    for (auto& i: constructors_)
+    for (auto& i: detail::as_const(constructors_))
     {
       assert(lua_istable(L, -1));
 
@@ -1794,16 +1804,16 @@ private:
     return &detail::member_stub<FP, fp, O, C, R, A...>;
   }
 
-  template <typename FP, FP fp>
-  lua_CFunction vararg_member_stub(void (C::* const)(lua_State*) const)
+  template <typename FP, FP fp, class R>
+  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*) const)
   {
-    return &detail::vararg_member_stub<FP, fp, C>;
+    return &detail::vararg_member_stub<FP, fp, C, R>;
   }
 
-  template <typename FP, FP fp>
-  lua_CFunction vararg_member_stub(void (C::* const)(lua_State*))
+  template <typename FP, FP fp, class R>
+  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*))
   {
-    return &detail::vararg_member_stub<FP, fp, C>;
+    return &detail::vararg_member_stub<FP, fp, C, R>;
   }
 
 
