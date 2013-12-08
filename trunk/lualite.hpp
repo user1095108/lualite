@@ -114,9 +114,10 @@ inline void rawgetfield(lua_State* const L, int const index,
 inline void rawsetfield(lua_State* const L, int const index,
   char const* const key)
 {
+  auto const i(lua_absindex(L, index));
   lua_pushstring(L, key);
   lua_insert(L, -2);
-  lua_rawset(L, index >= 0 ? index : index - 1);
+  lua_rawset(L, i);
 }
 
 struct unordered_eq
@@ -807,7 +808,7 @@ get_arg(lua_State* const L)
 template <::std::size_t O, class C, ::std::size_t ...I>
 inline C get_tuple_arg(lua_State* const L, indices<I...> const)
 {
-  ::std::initializer_list<int>{ (lua_rawgeti(L, O, I + 1), 0)... };
+  ::std::initializer_list<int>{(lua_rawgeti(L, O, I + 1), 0)...};
 
   C result(::std::make_tuple(get_arg<int(I - sizeof...(I)),
     typename ::std::tuple_element<I, C>::type>(L)...));
@@ -1133,7 +1134,7 @@ template <typename FP, FP fp, class R>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
 vararg_func_stub(lua_State* const L)
 {
-  fp(L);
+  fp();
 
   return {};
 }
@@ -1142,7 +1143,7 @@ template <typename FP, FP fp, class R>
 typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 vararg_func_stub(lua_State* const L)
 {
-  return set_result(fp(L));
+  return set_result(fp());
 }
 
 template <::std::size_t O, typename C, typename R,
@@ -1194,7 +1195,7 @@ typename ::std::enable_if<::std::is_void<R>{}, int>::type
 vararg_member_stub(lua_State* const L)
 {
 //::std::cout << lua_gettop(L) << ::std::endl;
-  (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L);
+  (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)();
 
   return {};
 }
@@ -1205,7 +1206,7 @@ vararg_member_stub(lua_State* const L)
 {
 //::std::cout << lua_gettop(L) << ::std::endl;
   return set_result(L,
-    (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L));
+    (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)());
 }
 
 } // detail
@@ -1481,7 +1482,7 @@ private:
   }
 
   template <typename FP, FP fp, typename R>
-  void push_vararg_function(char const* const name, R (* const)(lua_State*))
+  void push_vararg_function(char const* const name, R (* const)())
   {
     functions_.push_back({name, detail::vararg_func_stub<FP, fp, R>});
   }
@@ -1517,30 +1518,6 @@ public:
     [](...){}((args.set_parent_scope(this), 0)...);
 
     scope::apply(L);
-  }
-
-  template <typename FP, FP fp>
-  module& def(char const* const name)
-  {
-    if (name_)
-    {
-      scope::get_scope(L_);
-      assert(lua_istable(L_, -1));
-
-      push_function<FP, fp>(name, fp);
-
-      detail::rawsetfield(L_, -2, name);
-
-      lua_pop(L_, 1);
-    }
-    else
-    {
-      push_function<FP, fp>(name, fp);
-
-      lua_setglobal(L_, name);
-    }
-
-    return *this;
   }
 
   module& constant(char const* const name, bool const value)
@@ -1609,9 +1586,57 @@ public:
     return *this;
   }
 
+  template <typename FP, FP fp>
+  module& def(char const* const name)
+  {
+    if (name_)
+    {
+      scope::get_scope(L_);
+      assert(lua_istable(L_, -1));
+
+      push_function<FP, fp>(name, fp);
+
+      detail::rawsetfield(L_, -2, name);
+
+      lua_pop(L_, 1);
+    }
+    else
+    {
+      push_function<FP, fp>(name, fp);
+
+      lua_setglobal(L_, name);
+    }
+
+    return *this;
+  }
+
   module& enum_(char const* const name, int const value)
   {
     return constant(name, lua_Number(value));
+  }
+
+  template <typename FP, FP fp>
+  module& vararg_def(char const* const name)
+  {
+    if (name_)
+    {
+      scope::get_scope(L_);
+      assert(lua_istable(L_, -1));
+
+      push_vararg_function<FP, fp>(name, fp);
+
+      detail::rawsetfield(L_, -2, name);
+
+      lua_pop(L_, 1);
+    }
+    else
+    {
+      push_vararg_function<FP, fp>(name, fp);
+
+      lua_setglobal(L_, name);
+    }
+
+    return *this;
   }
 
 private:
@@ -1620,6 +1645,13 @@ private:
   {
     lua_pushnil(L_);
     lua_pushcclosure(L_, detail::func_stub<FP, fp, 1, R, A...>, 1);
+  }
+
+  template <typename FP, FP fp, typename R>
+  void push_vararg_function(char const* const name, R (* const)())
+  {
+    lua_pushnil(L_);
+    lua_pushcclosure(L_, detail::vararg_func_stub<FP, fp, R>, 1);
   }
 
 private:
@@ -1834,13 +1866,13 @@ private:
   }
 
   template <typename FP, FP fp, class R>
-  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*) const)
+  lua_CFunction vararg_member_stub(R (C::* const)() const)
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
 
   template <typename FP, FP fp, class R>
-  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*))
+  lua_CFunction vararg_member_stub(R (C::* const)())
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
