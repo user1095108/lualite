@@ -1206,11 +1206,29 @@ typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 vararg_member_stub(lua_State* const L)
 {
 //::std::cout << lua_gettop(L) << ::std::endl;
-  return set_result(L,
-    (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)());
+  return set_result(L, (static_cast<C*>(
+    lua_touserdata(L, lua_upvalueindex(2)))->*fp)());
 }
 
 } // detail
+
+template <typename ...A>
+void call(lua_State* const L, int const fi, A&& ...args)
+{
+  auto const i(lua_absindex(L, fi));
+
+  int ac{};
+
+  ::std::initializer_list<int>{(
+    ac += set_result(L,
+      ::std::forward<A>(args)),
+      0)...};
+  assert(ac <= sizeof...(A));
+
+  lua_pushvalue(L, i);
+  assert(lua_isfunction(L, -1));
+  lua_call(L, ac, LUA_MULTRET);
+}
 
 class scope
 {
