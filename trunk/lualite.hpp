@@ -106,8 +106,9 @@ using is_nc_lvalue_reference =
 inline void rawgetfield(lua_State* const L, int const index,
   char const* const key)
 {
+  auto const i(lua_absindex(L, index));
   lua_pushstring(L, key);
-  lua_rawget(L, index >= 0 ? index : index - 1);
+  lua_rawget(L, i);
 }
 
 // value is at the top of the stack, key is shifted below the top
