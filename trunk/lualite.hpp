@@ -1210,24 +1210,27 @@ vararg_member_stub(lua_State* const L)
     lua_touserdata(L, lua_upvalueindex(2)))->*fp)());
 }
 
-} // detail
-
 template <typename ...A>
-void call(lua_State* const L, int const fi, A&& ...args)
+inline void call(lua_State* const L, int const fi, A&& ...args)
 {
-  auto const i(lua_absindex(L, fi));
+  lua_pushvalue(L, fi);
+  assert(lua_isfunction(L, -1));
 
   int ac{};
 
   ::std::initializer_list<int>{(
-    ac += set_result(L,
-      ::std::forward<A>(args)),
-      0)...};
+    ac += set_result(L, ::std::forward<A>(args)))...};
   assert(ac <= sizeof...(A));
 
-  lua_pushvalue(L, i);
-  assert(lua_isfunction(L, -1));
   lua_call(L, ac, LUA_MULTRET);
+}
+
+} // detail
+
+template <typename ...A>
+inline void call(lua_State* const L, int const fi, A&& ...args)
+{
+  detail::call(L, fi, ::std::forward<A>(args)...);
 }
 
 class scope
