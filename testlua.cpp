@@ -222,6 +222,9 @@ int main(int argc, char* argv[])
     "print(a:test_array(r))\n"
   );
 
+  lua_getglobal(L, "print");
+  ::lualite::call(L, -1, "--test--");
+
   lua_close(L);
 
   return EXIT_SUCCESS;
