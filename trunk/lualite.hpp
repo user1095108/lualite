@@ -425,6 +425,17 @@ set_result(lua_State* const L, T&& v)
   return 1;
 }
 
+template <typename T>
+inline typename ::std::enable_if<
+  ::std::is_same<typename ::std::remove_reference<T>::type, any>{} &&
+  !is_nc_lvalue_reference<T>{},
+  int>::type
+set_result(lua_State* const L, T&& v)
+{
+  return 1;
+}
+
+
 template <int I, typename T>
 inline typename ::std::enable_if<
   ::std::is_floating_point<typename ::std::decay<T>::type>{} &&
