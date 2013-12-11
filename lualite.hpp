@@ -1222,11 +1222,8 @@ vararg_member_stub(lua_State* const L)
 }
 
 template <typename ...A>
-inline void call(lua_State* const L, int const fi, A&& ...args)
+inline void call(lua_State* const L, A&& ...args)
 {
-  lua_pushvalue(L, fi);
-  assert(lua_isfunction(L, -1));
-
   int ac{};
 
   ::std::initializer_list<int>{(
@@ -1239,9 +1236,9 @@ inline void call(lua_State* const L, int const fi, A&& ...args)
 } // detail
 
 template <typename ...A>
-inline void call(lua_State* const L, int const fi, A&& ...args)
+inline void call(lua_State* const L, A&& ...args)
 {
-  detail::call(L, fi, ::std::forward<A>(args)...);
+  detail::call(L, ::std::forward<A>(args)...);
 }
 
 class scope
