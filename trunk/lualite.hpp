@@ -1222,7 +1222,7 @@ vararg_member_stub(lua_State* const L)
 }
 
 template <typename ...A>
-inline void call(lua_State* const L, A&& ...args)
+inline void call(lua_State* const L, int const nresults, A&& ...args)
 {
   int ac{};
 
@@ -1230,15 +1230,15 @@ inline void call(lua_State* const L, A&& ...args)
     ac += set_result(L, ::std::forward<A>(args)))...};
   assert(ac <= sizeof...(A));
 
-  lua_call(L, ac, LUA_MULTRET);
+  lua_call(L, ac, nresults);
 }
 
 } // detail
 
 template <typename ...A>
-inline void call(lua_State* const L, A&& ...args)
+inline void call(lua_State* const L, int nresults, A&& ...args)
 {
-  detail::call(L, ::std::forward<A>(args)...);
+  detail::call(L, nresults, ::std::forward<A>(args)...);
 }
 
 class scope
