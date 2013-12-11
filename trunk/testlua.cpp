@@ -223,7 +223,7 @@ int main(int argc, char* argv[])
   );
 
   lua_getglobal(L, "print");
-  ::lualite::call(L, -1, "--test--");
+  ::lualite::call(L, "--test--");
 
   lua_close(L);
 
