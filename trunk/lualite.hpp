@@ -200,6 +200,7 @@ int getter(lua_State* const L)
 
   return lualite::class_<C>::getters_.end() == i ?
     (lualite::class_<C>::default_getter_ ?
+      lua_pushlightuserdata(L, L),
       lualite::class_<C>::default_getter_(L) :
       0) :
     i->second(L);
