@@ -1274,10 +1274,8 @@ public:
 
   scope& constant(char const* const name, lua_Number const value)
   {
-    struct detail::constant_info_type ci {
-      detail::NUMBER
-    };
-
+    struct detail::constant_info_type ci;
+    ci.type = detail::NUMBER;
     ci.u.number = value;
 
     constants_.emplace_back(name, ci);
@@ -1287,10 +1285,8 @@ public:
 
   scope& constant(char const* const name, char const* const value)
   {
-    struct detail::constant_info_type ci {
-      detail::STRING
-    };
-
+    struct detail::constant_info_type ci;
+    ci.type = detail::STRING;
     ci.u.string = value;
 
     constants_.emplace_back(name, ci);
