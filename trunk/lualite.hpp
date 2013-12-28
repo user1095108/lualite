@@ -430,7 +430,7 @@ inline typename ::std::enable_if<
   ::std::is_same<typename ::std::remove_reference<T>::type, any>{} &&
   !is_nc_lvalue_reference<T>{},
   int>::type
-set_result(lua_State* const L, T&& v)
+set_result(lua_State* const, T&&)
 {
   return 1;
 }
@@ -517,7 +517,7 @@ template <int I, typename T>
 inline typename ::std::enable_if<
   ::std::is_same<typename ::std::remove_const<T>::type, any>{},
   T>::type
-get_arg(lua_State* const L)
+get_arg(lua_State* const)
 {
   return any();
 }
