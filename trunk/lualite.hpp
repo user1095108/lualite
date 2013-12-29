@@ -1236,7 +1236,7 @@ inline void call(lua_State* const L, int const nresults, A&& ...args)
 } // detail
 
 template <typename ...A>
-inline void call(lua_State* const L, int nresults, A&& ...args)
+inline void call(lua_State* const L, int const nresults, A&& ...args)
 {
   detail::call(L, nresults, ::std::forward<A>(args)...);
 }
