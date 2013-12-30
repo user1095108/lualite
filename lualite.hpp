@@ -1166,8 +1166,8 @@ vararg_func_stub(lua_State* const L)
   return set_result(fp());
 }
 
-template <::std::size_t O, typename C, typename R,
-  typename ...A, ::std::size_t ...I>
+template <::std::size_t O, typename C, typename R, typename ...A,
+  ::std::size_t ...I>
 inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
 forward(lua_State* const L, C* const c,
   R (C::* const ptr_to_member)(A...) const, indices<I...> const)
@@ -1175,8 +1175,8 @@ forward(lua_State* const L, C* const c,
   return (c->*ptr_to_member)();
 }
 
-template <::std::size_t O, typename C, typename R,
-  typename ...A, ::std::size_t ...I>
+template <::std::size_t O, typename C, typename R, typename ...A,
+  ::std::size_t ...I>
 inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
 forward(lua_State* const L, C* const c,
   R (C::* const ptr_to_member)(A...) const, indices<I...> const)
@@ -1184,8 +1184,8 @@ forward(lua_State* const L, C* const c,
   return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
 }
 
-template <::std::size_t O, typename C, typename R,
-  typename ...A, ::std::size_t ...I>
+template <::std::size_t O, typename C, typename R, typename ...A,
+  ::std::size_t ...I>
 inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
 forward(lua_State* const, C* const c,
   R (C::* const ptr_to_member)(A...), indices<I...> const)
