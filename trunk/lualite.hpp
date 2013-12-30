@@ -1118,7 +1118,15 @@ int constructor_stub(lua_State* const L)
 }
 
 template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
-inline R forward(lua_State* const L, R (* const f)(A...), indices<I...> const)
+inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
+forward(lua_State* const, R (* const f)(A...), indices<I...> const)
+{
+  return (*f)();
+}
+
+template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
+inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
+forward(lua_State* const L, R (* const f)(A...), indices<I...> const)
 {
   return (*f)(get_arg<I + O, A>(L)...);
 }
@@ -1160,7 +1168,17 @@ vararg_func_stub(lua_State* const L)
 
 template <::std::size_t O, typename C, typename R,
   typename ...A, ::std::size_t ...I>
-inline R forward(lua_State* const L, C* const c,
+inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
+forward(lua_State* const L, C* const c,
+  R (C::* const ptr_to_member)(A...) const, indices<I...> const)
+{
+  return (c->*ptr_to_member)();
+}
+
+template <::std::size_t O, typename C, typename R,
+  typename ...A, ::std::size_t ...I>
+inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
+forward(lua_State* const L, C* const c,
   R (C::* const ptr_to_member)(A...) const, indices<I...> const)
 {
   return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
@@ -1168,7 +1186,17 @@ inline R forward(lua_State* const L, C* const c,
 
 template <::std::size_t O, typename C, typename R,
   typename ...A, ::std::size_t ...I>
-inline R forward(lua_State* const L, C* const c,
+inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
+forward(lua_State* const, C* const c,
+  R (C::* const ptr_to_member)(A...), indices<I...> const)
+{
+  return (c->*ptr_to_member)();
+}
+
+template <::std::size_t O, typename C, typename R,
+  typename ...A, ::std::size_t ...I>
+inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
+forward(lua_State* const L, C* const c,
   R (C::* const ptr_to_member)(A...), indices<I...> const)
 {
   return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
