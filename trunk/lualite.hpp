@@ -1292,7 +1292,7 @@ public:
   {
     struct detail::constant_info_type const ci {
       detail::BOOLEAN,
-      value
+      {value}
     };
 
     constants_.emplace_back(name, ci);
