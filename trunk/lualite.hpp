@@ -1169,7 +1169,7 @@ vararg_func_stub(lua_State* const L)
 template <::std::size_t O, typename C, typename R, typename ...A,
   ::std::size_t ...I>
 inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
-forward(lua_State* const L, C* const c,
+forward(lua_State* const, C* const c,
   R (C::* const ptr_to_member)(A...) const, indices<I...> const)
 {
   return (c->*ptr_to_member)();
