@@ -198,11 +198,28 @@ int getter(lua_State* const L)
   assert(2 == lua_gettop(L));
   auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
-  return lualite::class_<C>::getters_.end() == i ?
-    (lualite::class_<C>::default_getter_ ?
-      lualite::class_<C>::default_getter_(L) :
-      0) :
-    i->second(L);
+  if (lualite::class_<C>::getter_filter_)
+  {
+    auto const prev_top(lua_gettop(L));
+
+    lualite::class_<C>::getter_filter_(L);
+
+    lua_Integer i;
+
+    if (lua_isnumber(L, -1) && (i = lua_tointeger(L, -1)))
+    {
+      lua_pop(L, 1);
+
+      return i;
+    }
+    else
+    {
+      lua_pop(L, 1);
+    }
+  }
+  // else do nothing
+
+  return lualite::class_<C>::getters_.end() == i ? 0 : i->second(L);
 }
 
 template <class C>
@@ -211,15 +228,22 @@ int setter(lua_State* const L)
   assert(3 == lua_gettop(L));
   auto const i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
 
-  if (lualite::class_<C>::setters_.end() == i)
+  if (lualite::class_<C>::setter_filter_)
   {
-    if (lualite::class_<C>::default_setter_)
+    lualite::class_<C>::setter_filter_(L);
+
+    if (lua_isnumber(L, -1) && lua_tointeger(L, -1))
     {
-      lualite::class_<C>::default_setter_(L);
+      return {};
     }
-    // else do nothing
+    else
+    {
+      lua_pop(L, 1);
+    }
   }
-  else
+  // else do nothing
+
+  if (lualite::class_<C>::setters_.end() != i)
   {
     i->second(L);
   }
@@ -315,6 +339,7 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename ::std::enable_if<
+  !::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   ::std::is_integral<typename ::std::remove_reference<T>::type>{} &&
   ::std::is_signed<typename ::std::remove_reference<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
@@ -328,6 +353,7 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename ::std::enable_if<
+  !::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   ::std::is_integral<typename ::std::remove_reference<T>::type>{} &&
   !::std::is_signed<typename ::std::remove_reference<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
@@ -434,7 +460,6 @@ set_result(lua_State* const, T&&)
 {
   return 1;
 }
-
 
 template <int I, typename T>
 inline typename ::std::enable_if<
@@ -789,9 +814,9 @@ get_arg(lua_State* const L)
 
   ::std::size_t len;
 
-  char const* const val(lua_tolstring(L, I, &len));
+  auto const s(lua_tolstring(L, I, &len));
 
-  return { val, len };
+  return {s, len};
 }
 
 template<int I, class C>
@@ -1763,14 +1788,14 @@ public:
   class_& inherits()
   {
     ::std::initializer_list<int>{(
-      default_getter_ = class_<A>::default_getter_ && !default_getter_ ?
-        class_<A>::default_getter_ :
+      getter_filter_ = class_<A>::getter_filter_ && !getter_filter_ ?
+        class_<A>::getter_filter_ :
         nullptr,
         0)...};
 
     ::std::initializer_list<int>{(
-      default_setter_ = class_<A>::default_setter_ && !default_setter_ ?
-        class_<A>::default_setter_ :
+      setter_filter_ = class_<A>::setter_filter_ && !setter_filter_ ?
+        class_<A>::setter_filter_ :
         nullptr,
         0)...};
 
@@ -1847,9 +1872,9 @@ public:
     !detail::is_function_pointer<FP>{},
     class_&
   >::type
-  set_default_getter()
+  set_getter_filter()
   {
-    default_getter_ = member_stub<FP, fp, 3>(fp);
+    getter_filter_ = member_stub<FP, fp, 3>(fp);
 
     return *this;
   }
@@ -1859,9 +1884,9 @@ public:
     !detail::is_function_pointer<FP>{},
     class_&
   >::type
-  set_default_setter()
+  set_setter_filter()
   {
-    default_setter_ = member_stub<FP, fp, 3>(fp);
+    setter_filter_ = member_stub<FP, fp, 3>(fp);
 
     return *this;
   }
@@ -1933,8 +1958,8 @@ private:
 
 
 public:
-  static detail::map_member_info_type default_getter_;
-  static detail::map_member_info_type default_setter_;
+  static detail::map_member_info_type getter_filter_;
+  static detail::map_member_info_type setter_filter_;
 
   struct inherited_info
   {
@@ -1956,9 +1981,9 @@ public:
 };
 
 template <class C>
-detail::map_member_info_type class_<C>::default_getter_;
+detail::map_member_info_type class_<C>::getter_filter_;
 template <class C>
-detail::map_member_info_type class_<C>::default_setter_;
+detail::map_member_info_type class_<C>::setter_filter_;
 
 template <class C>
 struct class_<C>::inherited_info class_<C>::inherited_;
