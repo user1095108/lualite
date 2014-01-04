@@ -200,8 +200,6 @@ int getter(lua_State* const L)
 
   if (lualite::class_<C>::getter_filter_)
   {
-    auto const prev_top(lua_gettop(L));
-
     lualite::class_<C>::getter_filter_(L);
 
     lua_Integer i;
