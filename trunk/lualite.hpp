@@ -200,20 +200,12 @@ int getter(lua_State* const L)
 
   if (lualite::class_<C>::getter_filter_)
   {
-    lualite::class_<C>::getter_filter_(L);
-
-    lua_Integer i;
-
-    if (lua_isnumber(L, -1) && (i = lua_tointeger(L, -1)))
+    if (int const i = (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*
+      lualite::class_<C>::getter_filter_)(&class_<C>::getters_))
     {
-      lua_pop(L, 1);
-
       return i;
     }
-    else
-    {
-      lua_pop(L, 1);
-    }
+    // else do nothing
   }
   // else do nothing
 
@@ -228,16 +220,12 @@ int setter(lua_State* const L)
 
   if (lualite::class_<C>::setter_filter_)
   {
-    lualite::class_<C>::setter_filter_(L);
-
-    if (lua_isnumber(L, -1) && lua_tointeger(L, -1))
+    if ((static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*
+      lualite::class_<C>::setter_filter_)(&class_<C>::setters_))
     {
       return {};
     }
-    else
-    {
-      lua_pop(L, 1);
-    }
+    // else do nothing
   }
   // else do nothing
 
@@ -472,6 +460,7 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<
+  !::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   ::std::is_integral<typename ::std::decay<T>::type>{} &&
   ::std::is_signed<typename ::std::decay<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
@@ -484,6 +473,7 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<
+  !::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   ::std::is_integral<typename ::std::decay<T>::type>{} &&
   ::std::is_unsigned<typename ::std::decay<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
@@ -495,8 +485,8 @@ get_arg(lua_State* const L)
 }
 
 template <int I, typename T>
-inline typename ::std::enable_if<::std::is_same<
-  typename ::std::decay<T>::type, bool>{} &&
+inline typename ::std::enable_if<
+  ::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   !is_nc_lvalue_reference<T>{},
   typename ::std::decay<T>::type>::type
 get_arg(lua_State* const L)
@@ -1735,9 +1725,15 @@ private:
   lua_State* const L_;
 };
 
+using accessors_type = ::std::unordered_map<
+  char const*, detail::map_member_info_type,
+  detail::unordered_hash, detail::unordered_eq>;
+
 template <class C>
 class class_ : public scope
 {
+  using filter_func_type = int (C::*)(accessors_type const*);
+
 public:
   class_(char const* const name) : scope(name)
   {
@@ -1865,26 +1861,16 @@ public:
     return *this;
   }
 
-  template <typename FP, FP fp>
-  typename ::std::enable_if<
-    !detail::is_function_pointer<FP>{},
-    class_&
-  >::type
-  set_getter_filter()
+  class_& set_getter_filter(filter_func_type const fp)
   {
-    getter_filter_ = member_stub<FP, fp, 3>(fp);
+    getter_filter_ = fp;
 
     return *this;
   }
 
-  template <typename FP, FP fp>
-  typename ::std::enable_if<
-    !detail::is_function_pointer<FP>{},
-    class_&
-  >::type
-  set_setter_filter()
+  class_& set_setter_filter(filter_func_type const fp)
   {
-    setter_filter_ = member_stub<FP, fp, 3>(fp);
+    setter_filter_ = fp;
 
     return *this;
   }
@@ -1956,8 +1942,8 @@ private:
 
 
 public:
-  static detail::map_member_info_type getter_filter_;
-  static detail::map_member_info_type setter_filter_;
+  static filter_func_type getter_filter_;
+  static filter_func_type setter_filter_;
 
   struct inherited_info
   {
@@ -1972,16 +1958,14 @@ public:
 
   static ::std::vector<detail::member_info_type> defs_;
 
-  static ::std::unordered_map<char const*, detail::map_member_info_type,
-    detail::unordered_hash, detail::unordered_eq> getters_;
-  static ::std::unordered_map<char const*, detail::map_member_info_type,
-    detail::unordered_hash, detail::unordered_eq> setters_;
+  static accessors_type getters_;
+  static accessors_type setters_;
 };
 
 template <class C>
-detail::map_member_info_type class_<C>::getter_filter_;
+typename class_<C>::filter_func_type class_<C>::getter_filter_;
 template <class C>
-detail::map_member_info_type class_<C>::setter_filter_;
+typename class_<C>::filter_func_type class_<C>::setter_filter_;
 
 template <class C>
 struct class_<C>::inherited_info class_<C>::inherited_;
@@ -1993,12 +1977,10 @@ template <class C>
 ::std::vector<detail::member_info_type> class_<C>::defs_;
 
 template <class C>
-::std::unordered_map<char const*, detail::map_member_info_type,
-  detail::unordered_hash, detail::unordered_eq> class_<C>::getters_;
+accessors_type class_<C>::getters_;
 
 template <class C>
-::std::unordered_map<char const*, detail::map_member_info_type,
-  detail::unordered_hash, detail::unordered_eq> class_<C>::setters_;
+accessors_type class_<C>::setters_;
 
 } // lualite
 
