@@ -642,13 +642,14 @@ set_result(lua_State* const L, C&& d)
 {
   lua_createtable(L, d.size(), 0);
 
+  auto const cbegin(d.cbegin());
   auto const cend(d.cend());
 
   for (auto i(d.cbegin()); i != cend; ++i)
   {
     set_result(L, *i);
 
-    lua_rawset(L, -2, i - d.cbegin() + 1);
+    lua_rawset(L, -2, i - cbegin + 1);
   }
 
   return 1;
@@ -753,13 +754,14 @@ set_result(lua_State* const L, C&& v)
 {
   lua_createtable(L, v.size(), 0);
 
+  auto const cbegin(v.cbegin());
   auto const cend(v.cend());
 
   for (auto i(v.cbegin()); i != cend; ++i)
   {
     set_result(L, *i);
 
-    lua_rawseti(L, -2, i - v.cbegin() + 1);
+    lua_rawseti(L, -2, i - cbegin + 1);
   }
 
   return 1;
