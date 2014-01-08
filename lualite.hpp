@@ -198,17 +198,6 @@ int getter(lua_State* const L)
   assert(2 == lua_gettop(L));
   auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
-  if (lualite::class_<C>::getter_filter_)
-  {
-    if (int const i = (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*
-      lualite::class_<C>::getter_filter_)(&class_<C>::getters_))
-    {
-      return i;
-    }
-    // else do nothing
-  }
-  // else do nothing
-
   return lualite::class_<C>::getters_.end() == i ? 0 : i->second(L);
 }
 
@@ -217,17 +206,6 @@ int setter(lua_State* const L)
 {
   assert(3 == lua_gettop(L));
   auto const i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
-
-  if (lualite::class_<C>::setter_filter_)
-  {
-    if ((static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*
-      lualite::class_<C>::setter_filter_)(&class_<C>::setters_))
-    {
-      return {};
-    }
-    // else do nothing
-  }
-  // else do nothing
 
   if (lualite::class_<C>::setters_.end() != i)
   {
@@ -1728,8 +1706,6 @@ using accessors_type = ::std::unordered_map<
 template <class C>
 class class_ : public scope
 {
-  using filter_func_type = int (C::*)(accessors_type const*);
-
 public:
   class_(char const* const name) : scope(name)
   {
@@ -1777,18 +1753,6 @@ public:
   template <class ...A>
   class_& inherits()
   {
-    ::std::initializer_list<int>{(
-      getter_filter_ = class_<A>::getter_filter_ && !getter_filter_ ?
-        class_<A>::getter_filter_ :
-        nullptr,
-        0)...};
-
-    ::std::initializer_list<int>{(
-      setter_filter_ = class_<A>::setter_filter_ && !setter_filter_ ?
-        class_<A>::setter_filter_ :
-        nullptr,
-        0)...};
-
     ::std::initializer_list<int>{(
       inherited_.inherited_defs.emplace_back(convert<A>, &class_<A>::defs_),
       0)...};
@@ -1853,20 +1817,6 @@ public:
       member_stub<FPA, fpa, 3>(fpa)});
     setters_.emplace(name, detail::map_member_info_type{
       member_stub<FPB, fpb, 3>(fpb)});
-
-    return *this;
-  }
-
-  class_& set_getter_filter(filter_func_type const fp)
-  {
-    getter_filter_ = fp;
-
-    return *this;
-  }
-
-  class_& set_setter_filter(filter_func_type const fp)
-  {
-    setter_filter_ = fp;
 
     return *this;
   }
@@ -1938,9 +1888,6 @@ private:
 
 
 public:
-  static filter_func_type getter_filter_;
-  static filter_func_type setter_filter_;
-
   struct inherited_info
   {
     ::std::vector<::std::pair<void* (*)(void*),
@@ -1957,11 +1904,6 @@ public:
   static accessors_type getters_;
   static accessors_type setters_;
 };
-
-template <class C>
-typename class_<C>::filter_func_type class_<C>::getter_filter_;
-template <class C>
-typename class_<C>::filter_func_type class_<C>::setter_filter_;
 
 template <class C>
 struct class_<C>::inherited_info class_<C>::inherited_;
