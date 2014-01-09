@@ -390,9 +390,10 @@ set_result(lua_State* const L, T&& v)
 
 template <typename T>
 inline typename ::std::enable_if<
-  ::std::is_pointer<T>{} &&
+  ::std::is_pointer<typename ::std::decay<T>::type>{} &&
   !::std::is_const<typename ::std::remove_pointer<T>::type>{} &&
-  ::std::is_class<typename ::std::remove_pointer<T>::type>{},
+  ::std::is_class<typename ::std::remove_pointer<
+    typename ::std::decay<T>::type>::type>{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
