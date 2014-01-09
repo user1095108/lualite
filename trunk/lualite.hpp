@@ -427,9 +427,9 @@ set_result(lua_State* const, T&&)
 
 template <int I, typename T>
 inline typename ::std::enable_if<
-  ::std::is_floating_point<typename ::std::decay<T>::type>{} &&
+  ::std::is_floating_point<typename ::std::remove_reference<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
-  typename ::std::decay<T>::type>::type
+  typename ::std::remove_reference<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
@@ -438,10 +438,10 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<
-  ::std::is_integral<typename ::std::decay<T>::type>{} &&
-  ::std::is_signed<typename ::std::decay<T>::type>{} &&
+  ::std::is_integral<typename ::std::remove_reference<T>::type>{} &&
+  ::std::is_signed<typename ::std::remove_reference<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
-  typename ::std::decay<T>::type>::type
+  typename ::std::remove_reference<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
@@ -450,10 +450,10 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<
-  ::std::is_integral<typename ::std::decay<T>::type>{} &&
-  ::std::is_unsigned<typename ::std::decay<T>::type>{} &&
+  ::std::is_integral<typename ::std::remove_reference<T>::type>{} &&
+  ::std::is_unsigned<typename ::std::remove_reference<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
-  typename ::std::decay<T>::type>::type
+  typename ::std::remove_reference<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isnumber(L, I));
@@ -462,9 +462,9 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::decay<T>::type, bool>{} &&
+  ::std::is_same<typename ::std::remove_reference<T>::type, bool>{} &&
   !is_nc_lvalue_reference<T>{},
-  typename ::std::decay<T>::type>::type
+  typename ::std::remove_reference<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isboolean(L, I));
@@ -473,9 +473,9 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<::std::is_same<
-  typename ::std::decay<T>::type, char const*>{} &&
+  typename ::std::remove_reference<T>::type, char const*>{} &&
   !is_nc_lvalue_reference<T>{},
-  typename ::std::decay<T>::type>::type
+  typename ::std::remove_reference<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_isstring(L, I));
@@ -485,8 +485,8 @@ get_arg(lua_State* const L)
 template <int I, typename T>
 inline typename ::std::enable_if<
   ::std::is_pointer<T>{} &&
-  !::std::is_same<typename ::std::decay<T>::type, char const*>{},
-  typename ::std::decay<T>::type>::type
+  !::std::is_same<typename ::std::remove_reference<T>::type, char const*>{},
+  typename ::std::remove_reference<T>::type>::type
 get_arg(lua_State* const L)
 {
   assert(lua_islightuserdata(L, I));
