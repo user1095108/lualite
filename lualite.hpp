@@ -393,8 +393,8 @@ inline typename ::std::enable_if<
   ::std::is_pointer<typename ::std::remove_reference<T>::type>{} &&
   !::std::is_const<typename ::std::remove_pointer<T>::type>{} &&
   ::std::is_class<typename ::std::remove_pointer<
-    typename ::std::remove_reference<T>::type
-  >::type>{},
+    typename ::std::remove_reference<T>::type>::type
+  >{},
   int>::type
 set_result(lua_State* const L, T&& v)
 {
