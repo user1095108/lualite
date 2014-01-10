@@ -1145,7 +1145,7 @@ template <typename FP, FP fp, class R>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
 vararg_func_stub(lua_State* const L)
 {
-  fp();
+  fp(L);
 
   return {};
 }
@@ -1154,7 +1154,7 @@ template <typename FP, FP fp, class R>
 typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 vararg_func_stub(lua_State* const L)
 {
-  return set_result(fp());
+  return set_result(fp(L));
 }
 
 template <::std::size_t O, typename C, typename R, typename ...A,
@@ -1226,7 +1226,7 @@ typename ::std::enable_if<::std::is_void<R>{}, int>::type
 vararg_member_stub(lua_State* const L)
 {
 //::std::cout << lua_gettop(L) << ::std::endl;
-  (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)();
+  (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L);
 
   return {};
 }
@@ -1237,7 +1237,7 @@ vararg_member_stub(lua_State* const L)
 {
 //::std::cout << lua_gettop(L) << ::std::endl;
   return set_result(L, (static_cast<C*>(
-    lua_touserdata(L, lua_upvalueindex(2)))->*fp)());
+    lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L));
 }
 
 template <typename ...A>
@@ -1527,7 +1527,7 @@ private:
   }
 
   template <typename FP, FP fp, typename R>
-  void push_vararg_function(char const* const name, R (* const)())
+  void push_vararg_function(char const* const name, R (* const)(lua_State*))
   {
     functions_.push_back({name, detail::vararg_func_stub<FP, fp, R>});
   }
@@ -1693,7 +1693,7 @@ private:
   }
 
   template <typename FP, FP fp, typename R>
-  void push_vararg_function(char const* const name, R (* const)())
+  void push_vararg_function(char const* const name, R (* const)(lua_State*))
   {
     lua_pushnil(L_);
     lua_pushcclosure(L_, detail::vararg_func_stub<FP, fp, R>, 1);
@@ -1879,13 +1879,13 @@ private:
   }
 
   template <typename FP, FP fp, class R>
-  lua_CFunction vararg_member_stub(R (C::* const)() const)
+  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*) const)
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
 
   template <typename FP, FP fp, class R>
-  lua_CFunction vararg_member_stub(R (C::* const)())
+  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*))
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
