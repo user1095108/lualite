@@ -1639,7 +1639,7 @@ public:
       scope::get_scope(L_);
       assert(lua_istable(L_, -1));
 
-      push_function<FP, fp>(name, fp);
+      push_function<FP, fp>(fp);
 
       detail::rawsetfield(L_, -2, name);
 
@@ -1647,7 +1647,7 @@ public:
     }
     else
     {
-      push_function<FP, fp>(name, fp);
+      push_function<FP, fp>(fp);
 
       lua_setglobal(L_, name);
     }
@@ -1668,7 +1668,7 @@ public:
       scope::get_scope(L_);
       assert(lua_istable(L_, -1));
 
-      push_vararg_function<FP, fp>(name, fp);
+      push_vararg_function<FP, fp>(fp);
 
       detail::rawsetfield(L_, -2, name);
 
@@ -1676,7 +1676,7 @@ public:
     }
     else
     {
-      push_vararg_function<FP, fp>(name, fp);
+      push_vararg_function<FP, fp>(fp);
 
       lua_setglobal(L_, name);
     }
@@ -1686,14 +1686,14 @@ public:
 
 private:
   template <typename FP, FP fp, typename R, typename ...A>
-  void push_function(char const* const name, R (* const)(A...))
+  void push_function(R (* const)(A...))
   {
     lua_pushnil(L_);
     lua_pushcclosure(L_, detail::func_stub<FP, fp, 1, R, A...>, 1);
   }
 
   template <typename FP, FP fp, typename R>
-  void push_vararg_function(char const* const name, R (* const)(lua_State*))
+  void push_vararg_function(R (* const)(lua_State*))
   {
     lua_pushnil(L_);
     lua_pushcclosure(L_, detail::vararg_func_stub<FP, fp, R>, 1);
