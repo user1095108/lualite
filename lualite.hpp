@@ -149,13 +149,39 @@ template <::std::size_t...> struct indices
 {
 };
 
-template <::std::size_t M, ::std::size_t ...Is>
-struct make_indices : make_indices<M - 1, M - 1, Is...>
+template<class A, class B> struct catenate_indices;
+
+template <::std::size_t ...Is, ::std::size_t ...Js>
+struct catenate_indices<indices<Is...>, indices<Js...> >
+{
+  using indices_type = indices<Is..., Js...>;
+};
+
+template <::std::size_t, ::std::size_t, typename = void> struct expand_indices;
+
+template <::std::size_t A, ::std::size_t B>
+struct expand_indices<A, B, typename ::std::enable_if<A == B>::type>
+{
+  using indices_type = indices<A>;
+};
+
+template <::std::size_t A, ::std::size_t B>
+struct expand_indices<A, B, typename ::std::enable_if<A != B>::type>
+{
+  static_assert(A < B, "A > B");
+  using indices_type = typename catenate_indices<
+    typename expand_indices<A, (A + B) / 2>::indices_type,
+    typename expand_indices<(A + B) / 2 + 1, B>::indices_type
+  >::indices_type;
+};
+
+template <::std::size_t A>
+struct make_indices : expand_indices<0, A - 1>::indices_type
 {
 };
 
-template <::std::size_t ...Is>
-struct make_indices<0, Is...> : indices<Is...>
+template <>
+struct make_indices<0> : indices<>
 {
 };
 
