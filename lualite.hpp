@@ -149,7 +149,7 @@ template <::std::size_t...> struct indices
 {
 };
 
-template<class A, class B> struct catenate_indices;
+template<class, class> struct catenate_indices;
 
 template <::std::size_t ...Is, ::std::size_t ...Js>
 struct catenate_indices<indices<Is...>, indices<Js...> >
