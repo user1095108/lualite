@@ -1053,7 +1053,7 @@ int default_finalizer(lua_State* const L)
 }
 
 template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
-constexpr inline C* forward(lua_State* const L, indices<I...> const)
+inline C* forward(lua_State* const L, indices<I...> const)
 {
   return new C(get_arg<I + O, A>(L)...);
 }
