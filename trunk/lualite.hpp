@@ -121,7 +121,7 @@ inline void rawsetfield(lua_State* const L, int const index,
   lua_rawset(L, i);
 }
 
-struct unordered_eq
+struct eq
 {
   bool operator()(char const* const s1, char const* const s2) const noexcept
   {
@@ -129,7 +129,15 @@ struct unordered_eq
   }
 };
 
-struct unordered_hash
+inline constexpr ::std::size_t chash(char const* const s,
+  ::std::size_t const h = {}) noexcept
+{
+  return *s ?
+    chash(s + 1, h ^ ((h << 5) + (h >> 2) + static_cast<unsigned char>(*s))) :
+    h;
+}
+
+struct hash
 {
   ::std::size_t operator()(char const* s) const noexcept
   {
@@ -1731,7 +1739,7 @@ private:
 
 using accessors_type = ::std::unordered_map<
   char const*, detail::map_member_info_type,
-  detail::unordered_hash, detail::unordered_eq>;
+  detail::hash, detail::eq>;
 
 template <class C>
 class class_ : public scope
