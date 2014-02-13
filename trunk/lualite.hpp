@@ -121,14 +121,6 @@ inline void rawsetfield(lua_State* const L, int const index,
   lua_rawset(L, i);
 }
 
-struct eq
-{
-  bool operator()(char const* const s1, char const* const s2) const noexcept
-  {
-    return !::std::strcmp(s1, s2);
-  }
-};
-
 inline constexpr ::std::size_t chash(char const* const s,
   ::std::size_t const h = {}) noexcept
 {
@@ -137,19 +129,32 @@ inline constexpr ::std::size_t chash(char const* const s,
     h;
 }
 
-struct hash
+inline ::std::size_t hash(char const* s) noexcept
+{
+  ::std::size_t h{};
+
+  while (*s)
+  {
+    h ^= (h << 5) + (h >> 2) + static_cast<unsigned char>(*s++);
+  }
+
+  return h;
+//return ::std::hash<::std::string>()(s);
+}
+
+struct str_eq
+{
+  bool operator()(char const* const s1, char const* const s2) const noexcept
+  {
+    return !::std::strcmp(s1, s2);
+  }
+};
+
+struct str_hash
 {
   ::std::size_t operator()(char const* s) const noexcept
   {
-    ::std::size_t h{};
-
-    while (*s)
-    {
-      h ^= (h << 5) + (h >> 2) + static_cast<unsigned char>(*s++);
-    }
-
-    return h;
-//  return ::std::hash<::std::string>()(s);
+    return hash(s);
   }
 };
 
@@ -1739,7 +1744,7 @@ private:
 
 using accessors_type = ::std::unordered_map<
   char const*, detail::map_member_info_type,
-  detail::hash, detail::eq>;
+  detail::str_hash, detail::str_eq>;
 
 template <class C>
 class class_ : public scope

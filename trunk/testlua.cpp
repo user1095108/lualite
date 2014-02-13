@@ -225,7 +225,7 @@ int main(int argc, char* argv[])
   lua_getglobal(L, "print");
   ::lualite::call(L, 0, "--test--");
 
-  ::std::cout << ::lualite::detail::hash()("test") <<
+  ::std::cout << ::lualite::detail::hash("test") <<
     " " <<
     ::lualite::detail::chash("test") <<
     ::std::endl;
