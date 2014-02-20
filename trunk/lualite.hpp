@@ -1909,13 +1909,19 @@ private:
     // lua_pushstring(L, name_);
     // detail::rawsetfield(L, -2, "__classname");
 
+    constructors_.shrink_to_fit();
+    defs_.shrink_to_fit();
+
     lua_pop(L, 1);
 
     assert(!lua_gettop(L));
   }
 
   template <class A>
-  static void* convert(void* const a) { return static_cast<A*>(static_cast<C*>(a)); }
+  static void* convert(void* const a)
+  {
+    return static_cast<A*>(static_cast<C*>(a));
+  }
 
   template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
   lua_CFunction member_stub(R (C::* const)(A...) const)
@@ -1940,7 +1946,6 @@ private:
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
-
 
 public:
   struct inherited_info
