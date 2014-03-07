@@ -83,7 +83,11 @@ namespace detail
 
 static constexpr auto const default_nrec = 10;
 
-template<typename T> constexpr inline T const& as_const(T& t) { return t; }
+template<typename T>
+inline constexpr T const& as_const(T& t) noexcept
+{
+  return t;
+}
 
 template <typename>
 struct is_function_pointer : ::std::false_type
