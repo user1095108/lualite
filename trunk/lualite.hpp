@@ -241,7 +241,28 @@ int getter(lua_State* const L)
   assert(2 == lua_gettop(L));
   auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
 
-  return lualite::class_<C>::getters_.end() == i ? 0 : i->second(L);
+  if (lualite::class_<C>::getters_.end() == i)
+  {
+    return {};
+  }
+  else
+  {
+    auto const uvi(lua_upvalueindex(2));
+
+    void* p(lua_touserdata(L, uvi));
+
+    auto const crend(i->second.first.crend());
+
+    for (auto j(i->second.first.crbegin()); j != crend; ++j)
+    {
+      p = (*j)(p);
+    }
+
+    lua_pushlightuserdata(L, p);
+    lua_replace(L, uvi);
+
+    return i->second.second(L);
+  }
 }
 
 template <class C>
@@ -252,7 +273,21 @@ int setter(lua_State* const L)
 
   if (lualite::class_<C>::setters_.end() != i)
   {
-    i->second(L);
+    auto const uvi(lua_upvalueindex(2));
+
+    void* p(lua_touserdata(L, uvi));
+
+    auto const crend(i->second.first.crend());
+
+    for (auto j(i->second.first.crbegin()); j != crend; ++j)
+    {
+      p = (*j)(p);
+    }
+
+    lua_pushlightuserdata(L, p);
+    lua_replace(L, uvi);
+
+    i->second.second(L);
   }
   // else do nothing
 
@@ -270,32 +305,26 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
   {
     lua_createtable(L, 0, default_nrec);
 
-    for (auto& i: detail::as_const(
-      lualite::class_<C>::inherited_.inherited_defs))
-    {
-      for (auto& mi: *i.second)
-      {
-        assert(lua_istable(L, -1));
-
-        lua_pushnil(L);
-        lua_pushlightuserdata(L, i.first(instance));
-
-        lua_pushcclosure(L, mi.callback, 2);
-
-        rawsetfield(L, -2, mi.name);
-      }
-    }
-
     for (auto& mi: lualite::class_<C>::defs_)
     {
       assert(lua_istable(L, -1));
 
       lua_pushnil(L);
-      lua_pushlightuserdata(L, instance);
 
-      lua_pushcclosure(L, mi.callback, 2);
+      void* p(instance);
 
-      rawsetfield(L, -2, mi.name);
+      auto const crend(mi.first.crend());
+
+      for (auto j(mi.first.crbegin()); j != crend; ++j)
+      {
+        p = (*j)(p);
+      }
+
+      lua_pushlightuserdata(L, p);
+
+      lua_pushcclosure(L, mi.second.callback, 2);
+
+      rawsetfield(L, -2, mi.second.name);
     }
 
     // metatable
@@ -1085,32 +1114,26 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, default_nrec);
 
-  for (auto& i: detail::as_const(
-    lualite::class_<C>::inherited_.inherited_defs))
-  {
-    for (auto& mi: *i.second)
-    {
-      assert(lua_istable(L, -1));
-
-      lua_pushnil(L);
-      lua_pushlightuserdata(L, i.first(instance));
-
-      lua_pushcclosure(L, mi.callback, 2);
-
-      rawsetfield(L, -2, mi.name);
-    }
-  }
-
   for (auto& mi: lualite::class_<C>::defs_)
   {
     assert(lua_istable(L, -1));
 
     lua_pushnil(L);
-    lua_pushlightuserdata(L, instance);
 
-    lua_pushcclosure(L, mi.callback, 2);
+    void* p(instance);
 
-    rawsetfield(L, -2, mi.name);
+    auto const crend(mi.first.crend());
+
+    for (auto j(mi.first.crbegin()); j != crend; ++j)
+    {
+      p = (*j)(p);
+    }
+
+    lua_pushlightuserdata(L, p);
+
+    lua_pushcclosure(L, mi.second.callback, 2);
+
+    rawsetfield(L, -2, mi.second.name);
   }
 
   // metatable
@@ -1290,7 +1313,7 @@ inline void call(lua_State* const L, int const nresults, A&& ...args)
 
   ::std::initializer_list<int>{(
     ac += set_result(L, ::std::forward<A>(args)))...};
-  assert(ac <= sizeof...(A));
+  assert(decltype(sizeof...(A))(ac) <= sizeof...(A));
 
   lua_call(L, ac, nresults);
 }
@@ -1746,9 +1769,12 @@ private:
   lua_State* const L_;
 };
 
-using accessors_type = ::std::unordered_map<
-  char const*, detail::map_member_info_type,
+using accessors_type = ::std::unordered_map<char const*,
+  ::std::pair<::std::vector<void* (*)(void*)>, detail::map_member_info_type>,
   detail::str_hash, detail::str_eq>;
+
+using defs_type = ::std::vector<::std::pair<::std::vector<void* (*)(void*)>,
+  detail::member_info_type> >;
 
 template <class C>
 class class_ : public scope
@@ -1800,19 +1826,14 @@ public:
   template <class ...A>
   class_& inherits()
   {
-    ::std::initializer_list<int>{(
-      inherited_.inherited_defs.emplace_back(convert<A>, &class_<A>::defs_),
-      0)...};
+    ::std::initializer_list<int>{(S<A>::copy_accessors(
+      class_<A>::getters_, getters_), 0)...};
 
-    ::std::initializer_list<int>{(
-      getters_.insert(class_<A>::getters_.cbegin(),
-        class_<A>::getters_.cend()),
-      0)...};
+    ::std::initializer_list<int>{(S<A>::copy_accessors(
+      class_<A>::setters_, setters_), 0)...};
 
-    ::std::initializer_list<int>{(
-      setters_.insert(class_<A>::setters_.cbegin(),
-        class_<A>::setters_.cend()),
-      0)...};
+    ::std::initializer_list<int>{(S<A>::copy_defs(
+      class_<A>::defs_, defs_), 0)...};
 
     return *this;
   }
@@ -1836,7 +1857,8 @@ public:
   >::type
   def(char const* const name)
   {
-    defs_.push_back({name, member_stub<FP, fp, 2>(fp)});
+    defs_.push_back({{},
+      detail::member_info_type{name, member_stub<FP, fp, 2>(fp)}});
 
     return *this;
   }
@@ -1848,7 +1870,8 @@ public:
   >::type
   def_func(char const* const name)
   {
-    defs_.push_back({name, member_stub<FP, fp, 1>(fp)});
+    defs_.push_back({{},
+      detail::member_info_type{name, member_stub<FP, fp, 1>(fp)}});
 
     return *this;
   }
@@ -1863,8 +1886,8 @@ public:
   template <class FP, FP fp>
   class_& property(char const* const name)
   {
-    getters_.emplace(name, detail::map_member_info_type{
-      member_stub<FP, fp, 3>(fp)});
+    getters_.emplace(name, accessors_type::mapped_type{
+      {}, member_stub<FP, fp, 3>(fp)});
 
     return *this;
   }
@@ -1872,10 +1895,10 @@ public:
   template <typename FPA, FPA fpa, typename FPB, FPB fpb>
   class_& property(char const* const name)
   {
-    getters_.emplace(name, detail::map_member_info_type{
-      member_stub<FPA, fpa, 3>(fpa)});
-    setters_.emplace(name, detail::map_member_info_type{
-      member_stub<FPB, fpb, 3>(fpb)});
+    getters_.emplace(name, accessors_type::mapped_type{
+      {}, member_stub<FPA, fpa, 3>(fpa)});
+    setters_.emplace(name, accessors_type::mapped_type{
+      {}, member_stub<FPB, fpb, 3>(fpb)});
 
     return *this;
   }
@@ -1887,12 +1910,38 @@ public:
   >::type
   vararg_def(char const* const name)
   {
-    defs_.push_back({name, vararg_member_stub<FP, fp>(fp)});
+    defs_.push_back({{},
+      detail::member_info_type{name, vararg_member_stub<FP, fp>(fp)}});
 
     return *this;
   }
 
 private:
+  template <class A>
+  struct S
+  {
+    static void copy_defs(defs_type const& src, defs_type& dst)
+    {
+      for (auto& a: src)
+      {
+        dst.push_back(a);
+
+        dst.back().first.push_back(convert<A>);
+      }
+    }
+
+    static void copy_accessors(accessors_type const& src,
+      accessors_type& dst)
+    {
+      for (auto& a: src)
+      {
+        auto& n = dst[a.first] = {a.second.first, a.second.second};
+
+        n.first.push_back(convert<A>);
+      }
+    }
+  };
+
   void apply(lua_State* const L)
   {
     assert(parent_scope_);
@@ -1952,31 +2001,22 @@ private:
   }
 
 public:
-  struct inherited_info
-  {
-    ::std::vector<::std::pair<void* (*)(void*),
-      ::std::vector<detail::member_info_type> const*> >
-      inherited_defs;
-  };
-
   static struct inherited_info inherited_;
 
   static ::std::vector<detail::func_info_type> constructors_;
 
-  static ::std::vector<detail::member_info_type> defs_;
+  static defs_type defs_;
 
   static accessors_type getters_;
   static accessors_type setters_;
 };
 
 template <class C>
-struct class_<C>::inherited_info class_<C>::inherited_;
-
-template <class C>
 ::std::vector<detail::func_info_type> class_<C>::constructors_;
 
 template <class C>
-::std::vector<detail::member_info_type> class_<C>::defs_;
+::std::vector<::std::pair<::std::vector<void* (*)(void*)>,
+  detail::member_info_type> > class_<C>::defs_;
 
 template <class C>
 accessors_type class_<C>::getters_;
