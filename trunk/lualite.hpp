@@ -390,6 +390,7 @@ template <typename T>
 inline typename ::std::enable_if<
   ::std::is_integral<typename ::std::decay<T>::type>{} &&
   ::std::is_unsigned<typename ::std::decay<T>::type>{} &&
+  !::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   !is_nc_lvalue_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v)
