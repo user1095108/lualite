@@ -1957,7 +1957,6 @@ private:
     for (auto& i: detail::as_const(constructors_))
     {
       assert(lua_istable(L, -1));
-
       lua_pushcfunction(L, i.callback);
 
       detail::rawsetfield(L, -2, i.name);
