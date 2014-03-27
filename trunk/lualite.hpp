@@ -1930,7 +1930,7 @@ private:
     {
       for (auto& a: src)
       {
-        auto& n = dst[a.first] = {a.second.first, a.second.second};
+        auto& n(dst[a.first] = {a.second.first, a.second.second});
 
         n.first.push_back(convert<A>);
         n.first.shrink_to_fit();
