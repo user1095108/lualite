@@ -251,13 +251,12 @@ int getter(lua_State* const L)
 
     void* p(lua_touserdata(L, uvi));
 
-    auto const crend(i->second.first.crend());
-
-    for (auto j(i->second.first.crbegin()); j != crend; ++j)
+    for (auto const f: i->second.first)
     {
-      p = (*j)(p);
+      p = f(p);
     }
 
+    assert(p);
     lua_pushlightuserdata(L, p);
     lua_replace(L, uvi);
 
@@ -277,13 +276,12 @@ int setter(lua_State* const L)
 
     void* p(lua_touserdata(L, uvi));
 
-    auto const crend(i->second.first.crend());
-
-    for (auto j(i->second.first.crbegin()); j != crend; ++j)
+    for (auto const f: i->second.first)
     {
-      p = (*j)(p);
+      p = f(p);
     }
 
+    assert(p);
     lua_pushlightuserdata(L, p);
     lua_replace(L, uvi);
 
@@ -313,15 +311,12 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
       void* p(instance);
 
-      auto const crend(mi.first.crend());
-
-      for (auto i(mi.first.crbegin()); i != crend; ++i)
+      for (auto const f: mi.first)
       {
-        p = (*i)(p);
+        p = f(p);
       }
 
       lua_pushlightuserdata(L, p);
-
       lua_pushcclosure(L, mi.second.callback, 2);
 
       rawsetfield(L, -2, mi.second.name);
@@ -1124,15 +1119,12 @@ int constructor_stub(lua_State* const L)
 
     void* p(instance);
 
-    auto const crend(mi.first.crend());
-
-    for (auto i(mi.first.crbegin()); i != crend; ++i)
+    for (auto const f: mi.first)
     {
-      p = (*i)(p);
+      p = f(p);
     }
 
     lua_pushlightuserdata(L, p);
-
     lua_pushcclosure(L, mi.second.callback, 2);
 
     rawsetfield(L, -2, mi.second.name);
