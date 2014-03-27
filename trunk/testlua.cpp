@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
     lualite::class_<testclass>("testclass")
       .constructor("defaultNew")
       .constructor<int>()
-      .inherits<testbase>()
+      .inherits<testbase>() // you can add more classes to inherit from
       .enum_("smell", 9)
       .def<std::tuple<int, std::string, char const*> (testclass::*)(int), &testclass::print>("print")
       .def<std::vector<std::string> (testclass::*)(std::string) const, &testclass::print>("print_")
