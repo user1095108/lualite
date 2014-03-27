@@ -315,9 +315,9 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 
       auto const crend(mi.first.crend());
 
-      for (auto j(mi.first.crbegin()); j != crend; ++j)
+      for (auto i(mi.first.crbegin()); i != crend; ++i)
       {
-        p = (*j)(p);
+        p = (*i)(p);
       }
 
       lua_pushlightuserdata(L, p);
@@ -1126,9 +1126,9 @@ int constructor_stub(lua_State* const L)
 
     auto const crend(mi.first.crend());
 
-    for (auto j(mi.first.crbegin()); j != crend; ++j)
+    for (auto i(mi.first.crbegin()); i != crend; ++i)
     {
-      p = (*j)(p);
+      p = (*i)(p);
     }
 
     lua_pushlightuserdata(L, p);
@@ -1929,6 +1929,7 @@ private:
         dst.push_back(a);
 
         dst.back().first.push_back(convert<A>);
+        dst.back().first.shrink_to_fit();
       }
     }
 
@@ -1940,6 +1941,7 @@ private:
         auto& n = dst[a.first] = {a.second.first, a.second.second};
 
         n.first.push_back(convert<A>);
+        n.first.shrink_to_fit();
       }
     }
   };
