@@ -115,7 +115,7 @@ struct testclass : testbase
 
   int const& a()
   {
-    std::cout << "getter called" << std::endl;
+    std::cout << "getter called: " << a_ << std::endl;
 
     return a_;
   }
@@ -162,7 +162,11 @@ int main(int argc, char* argv[])
       .constant("__classname", "testbase")
       .constant("__b", true)
       .constant("__pi", 3.1459)
-      .def<decltype(&testbase::dummy), &testbase::dummy>("dummy"),
+      .def<decltype(&testbase::dummy), &testbase::dummy>("dummy")
+  );
+
+  // otherwise, we don't know in what order the classes are created
+  lualite::module(L,
     lualite::class_<testclass>("testclass")
       .constructor("defaultNew")
       .constructor<int>()
@@ -206,6 +210,7 @@ int main(int argc, char* argv[])
     "print(\"---\")\n"
     "print(b.a)\n"
     "b:reference().a = 888\n"
+    "print(b.dummy)\n"
     "print(b.a .. \" \" .. b:dummy(\"test\"))\n"
     "local tmp1, tmp2, tmp3 = b:pointer():print(100)\n"
     "print(tmp1 .. \" \" .. tmp2 .. \" \" .. tmp3)\n"
