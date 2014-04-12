@@ -287,7 +287,6 @@ int setter(lua_State* const L)
       p = f(p);
     }
 
-    assert(p);
     lua_pushlightuserdata(L, p);
     lua_replace(L, uvi);
 
