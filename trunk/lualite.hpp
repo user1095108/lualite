@@ -250,17 +250,22 @@ int getter(lua_State* const L)
     auto const uvi(lua_upvalueindex(2));
 
     void* p(lua_touserdata(L, uvi));
+    void* const q(p);
 
     for (auto const f: i->second.first)
     {
       p = f(p);
     }
 
-    assert(p);
     lua_pushlightuserdata(L, p);
     lua_replace(L, uvi);
 
-    return i->second.second(L);
+    auto const r(i->second.second(L));
+
+    lua_pushlightuserdata(L, q);
+    lua_replace(L, uvi);
+
+    return r;
   }
 }
 
@@ -275,6 +280,7 @@ int setter(lua_State* const L)
     auto const uvi(lua_upvalueindex(2));
 
     void* p(lua_touserdata(L, uvi));
+    void* const q(p);
 
     for (auto const f: i->second.first)
     {
@@ -286,6 +292,9 @@ int setter(lua_State* const L)
     lua_replace(L, uvi);
 
     i->second.second(L);
+
+    lua_pushlightuserdata(L, q);
+    lua_replace(L, uvi);
   }
   // else do nothing
 
