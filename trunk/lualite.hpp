@@ -260,7 +260,19 @@ int getter(lua_State* const L)
     lua_pushlightuserdata(L, p);
     lua_replace(L, uvi);
 
-    auto const r(i->second.second(L));
+    int r;
+
+    try
+    {
+      r = i->second.second(L);
+    }
+    catch (...)
+    {
+      lua_pushlightuserdata(L, q);
+      lua_replace(L, uvi);
+
+      throw;
+    }
 
     lua_pushlightuserdata(L, q);
     lua_replace(L, uvi);
@@ -290,7 +302,17 @@ int setter(lua_State* const L)
     lua_pushlightuserdata(L, p);
     lua_replace(L, uvi);
 
-    i->second.second(L);
+    try
+    {
+      i->second.second(L);
+    }
+    catch (...)
+    {
+      lua_pushlightuserdata(L, q);
+      lua_replace(L, uvi);
+
+      throw;
+    }
 
     lua_pushlightuserdata(L, q);
     lua_replace(L, uvi);
