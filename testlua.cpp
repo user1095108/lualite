@@ -227,6 +227,9 @@ int main(int argc, char* argv[])
     "print(a:test_array(r))\n"
   );
 
+  ::std::cout << ::lualite::class_<testclass>::inherits("testbase") <<
+    ::std::endl;
+
   lua_getglobal(L, "print");
   ::lualite::call(L, 0, "--test--");
 
