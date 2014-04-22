@@ -1806,6 +1806,7 @@ class class_ : public scope
 public:
   class_(char const* const name) : scope(name)
   {
+    class_name_ = name;
   }
 
   template <typename T>
@@ -1858,6 +1859,11 @@ public:
 
     ::std::initializer_list<int>{(S<A>::copy_defs(
       class_<A>::defs_, defs_), 0)...};
+
+    ::std::initializer_list<int>{(inherited_classes_.push_back(
+      class_<A>::class_name_), 0)...};
+
+    inherited_classes_.shrink_to_fit();
 
     return *this;
   }
@@ -2026,6 +2032,10 @@ private:
   }
 
 public:
+  static char const* class_name_;
+
+  static ::std::vector<char const*> inherited_classes_;
+
   static struct inherited_info inherited_;
 
   static ::std::vector<detail::func_info_type> constructors_;
@@ -2037,17 +2047,22 @@ public:
 };
 
 template <class C>
-::std::vector<detail::func_info_type> class_<C>::constructors_;
+decltype(class_<C>::class_name_) class_<C>::class_name_;
 
 template <class C>
-::std::vector<::std::pair<::std::vector<void* (*)(void*)>,
-  detail::member_info_type> > class_<C>::defs_;
+decltype(class_<C>::inherited_classes_) class_<C>::inherited_classes_;
 
 template <class C>
-accessors_type class_<C>::getters_;
+decltype(class_<C>::constructors_) class_<C>::constructors_;
 
 template <class C>
-accessors_type class_<C>::setters_;
+decltype(class_<C>::defs_) class_<C>::defs_;
+
+template <class C>
+decltype(class_<C>::getters_) class_<C>::getters_;
+
+template <class C>
+decltype(class_<C>::setters_) class_<C>::setters_;
 
 } // lualite
 
