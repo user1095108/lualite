@@ -1860,12 +1860,35 @@ public:
     ::std::initializer_list<int>{(S<A>::copy_defs(
       class_<A>::defs_, defs_), 0)...};
 
-    ::std::initializer_list<int>{(inherited_classes_.push_back(
-      class_<A>::class_name_), 0)...};
+    ::std::initializer_list<int>{(inherits_.push_back(
+      class_<A>::inherits), 0)...};
 
-    inherited_classes_.shrink_to_fit();
+    inherits_.shrink_to_fit();
 
     return *this;
+  }
+
+  static bool inherits(char const* const name)
+  {
+    assert(class_name_);
+
+    if (::std::strcmp(name, class_name_))
+    {
+      for (auto const f: inherits_)
+      {
+        if (f(name))
+        {
+          return true;
+        }
+        // else do nothing
+      }
+
+      return false;
+    }
+    else
+    {
+      return true;
+    }
   }
 
   template <typename FP, FP fp>
@@ -2034,7 +2057,7 @@ private:
 public:
   static char const* class_name_;
 
-  static ::std::vector<char const*> inherited_classes_;
+  static ::std::vector<bool(*)(char const*)> inherits_;
 
   static struct inherited_info inherited_;
 
@@ -2050,7 +2073,7 @@ template <class C>
 decltype(class_<C>::class_name_) class_<C>::class_name_;
 
 template <class C>
-decltype(class_<C>::inherited_classes_) class_<C>::inherited_classes_;
+decltype(class_<C>::inherits_) class_<C>::inherits_;
 
 template <class C>
 decltype(class_<C>::constructors_) class_<C>::constructors_;
