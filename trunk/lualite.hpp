@@ -1860,6 +1860,7 @@ public:
     ::std::initializer_list<int>{(S<A>::copy_defs(
       class_<A>::defs_, defs_), 0)...};
 
+    assert(inherits_.empty());
     ::std::initializer_list<int>{(inherits_.push_back(
       class_<A>::inherits), 0)...};
 
@@ -2058,8 +2059,6 @@ public:
   static char const* class_name_;
 
   static ::std::vector<bool(*)(char const*)> inherits_;
-
-  static struct inherited_info inherited_;
 
   static ::std::vector<detail::func_info_type> constructors_;
 
