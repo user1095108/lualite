@@ -1861,10 +1861,9 @@ public:
       class_<A>::defs_, defs_), 0)...};
 
     assert(inherits_.empty());
+    inherits_.reserve(sizeof...(A));
     ::std::initializer_list<int>{(inherits_.push_back(
       class_<A>::inherits), 0)...};
-
-    inherits_.shrink_to_fit();
 
     return *this;
   }
