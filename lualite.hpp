@@ -2068,22 +2068,22 @@ public:
 };
 
 template <class C>
-decltype(class_<C>::class_name_) class_<C>::class_name_;
+char const* class_<C>::class_name_;
 
 template <class C>
-decltype(class_<C>::inherits_) class_<C>::inherits_;
+::std::vector<bool(*)(char const*)> class_<C>::inherits_;
 
 template <class C>
-decltype(class_<C>::constructors_) class_<C>::constructors_;
+::std::vector<detail::func_info_type> class_<C>::constructors_;
 
 template <class C>
-decltype(class_<C>::defs_) class_<C>::defs_;
+defs_type class_<C>::defs_;
 
 template <class C>
-decltype(class_<C>::getters_) class_<C>::getters_;
+accessors_type class_<C>::getters_;
 
 template <class C>
-decltype(class_<C>::setters_) class_<C>::setters_;
+accessors_type class_<C>::setters_;
 
 } // lualite
 
