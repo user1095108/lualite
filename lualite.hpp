@@ -1053,6 +1053,8 @@ get_arg(lua_State* const L)
 
   auto const end(lua_rawlen(L, I) + 1);
 
+  result.reserve(end - 1);
+
   for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
   {
     lua_rawgeti(L, I, i);
