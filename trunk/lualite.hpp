@@ -202,6 +202,29 @@ struct make_indices<0> : indices<>
 {
 };
 
+template <typename T>
+class scope_exit
+{
+public:
+  explicit scope_exit(T&& f) : f_(::std::move(f))
+  {
+    static_assert(noexcept(f_()), "throwing functors are unsupported");
+  }
+
+  scope_exit(scope_exit&& other) : f_(::std::move(other.f_)) { }
+
+  ~scope_exit() noexcept { f_(); }
+
+private:
+  T f_;
+};
+
+template <typename T>
+inline scope_exit<T> make_scope_exit(T&& f)
+{
+  return scope_exit<T>(::std::forward<T>(f));
+}
+
 enum constant_type
 {
   BOOLEAN,
@@ -260,24 +283,13 @@ int getter(lua_State* const L)
     lua_pushlightuserdata(L, p);
     lua_replace(L, uvi);
 
-    int r;
+    make_scope_exit([L, q, uvi]() noexcept
+      {
+        lua_pushlightuserdata(L, q); lua_replace(L, uvi);
+      }
+    );
 
-    try
-    {
-      r = i->second.second(L);
-    }
-    catch (...)
-    {
-      lua_pushlightuserdata(L, q);
-      lua_replace(L, uvi);
-
-      throw;
-    }
-
-    lua_pushlightuserdata(L, q);
-    lua_replace(L, uvi);
-
-    return r;
+    return i->second.second(L);
   }
 }
 
@@ -302,20 +314,13 @@ int setter(lua_State* const L)
     lua_pushlightuserdata(L, p);
     lua_replace(L, uvi);
 
-    try
-    {
-      i->second.second(L);
-    }
-    catch (...)
-    {
-      lua_pushlightuserdata(L, q);
-      lua_replace(L, uvi);
+    make_scope_exit([L, q, uvi]() noexcept
+      {
+        lua_pushlightuserdata(L, q); lua_replace(L, uvi);
+      }
+    );
 
-      throw;
-    }
-
-    lua_pushlightuserdata(L, q);
-    lua_replace(L, uvi);
+    i->second.second(L);
   }
   // else do nothing
 
