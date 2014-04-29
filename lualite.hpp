@@ -283,7 +283,7 @@ int getter(lua_State* const L)
     lua_pushlightuserdata(L, p);
     lua_replace(L, uvi);
 
-    auto const l(make_scope_exit([L, q, uvi]() noexcept {
+    auto const se(make_scope_exit([L, q, uvi]() noexcept {
       lua_pushlightuserdata(L, q); lua_replace(L, uvi);}));
 
     return i->second.second(L);
@@ -311,7 +311,7 @@ int setter(lua_State* const L)
     lua_pushlightuserdata(L, p);
     lua_replace(L, uvi);
 
-    auto const l(make_scope_exit([L, q, uvi]() noexcept {
+    auto const se(make_scope_exit([L, q, uvi]() noexcept {
       lua_pushlightuserdata(L, q); lua_replace(L, uvi);}));
 
     i->second.second(L);
