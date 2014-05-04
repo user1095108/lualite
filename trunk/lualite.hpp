@@ -650,6 +650,12 @@ template <class Key, class T, class Compare, class Alloc>
 struct is_std_map<::std::map<Key, T, Compare, Alloc> > : ::std::true_type { };
 
 template <typename>
+struct is_std_set : ::std::false_type { };
+
+template <class Key, class Compare, class Alloc>
+struct is_std_set<::std::set<Key, Compare, Alloc> > : ::std::true_type { };
+
+template <typename>
 struct is_std_unordered_map : ::std::false_type { };
 
 template <class Key, class T, class Hash, class P, class Alloc>
@@ -834,6 +840,29 @@ set_result(lua_State* const L, C&& m)
 
 template <typename C>
 inline typename ::std::enable_if<
+  is_std_set<typename ::std::decay<C>::type>{} &&
+  !is_nc_lvalue_reference<C>{},
+  int>::type
+set_result(lua_State* const L, C&& s)
+{
+  lua_createtable(L, 0, s.size());
+
+  auto j(typename ::std::decay<C>::type::size_type(1));
+
+  auto const cend(s.cend());
+
+  for (auto i(s.cbegin()); i != cend; ++i, ++j)
+  {
+    set_result(L, *i);
+
+    lua_rawseti(L, -2, j);
+  }
+
+  return 1;
+}
+
+template <typename C>
+inline typename ::std::enable_if<
   is_std_unordered_map<typename ::std::decay<C>::type>{} &&
   !is_nc_lvalue_reference<C>{},
   int>::type
@@ -871,7 +900,7 @@ set_result(lua_State* const L, C&& s)
   {
     set_result(L, *i);
 
-    lua_rawset(L, -2, j);
+    lua_rawseti(L, -2, j);
   }
 
   return 1;
@@ -1119,6 +1148,32 @@ get_arg(lua_State* const L)
 
     lua_pop(L, 1);
   }
+
+  return result;
+}
+
+template <int I, class C>
+inline typename ::std::enable_if<
+  is_std_set<typename ::std::decay<C>::type>{} &&
+  !is_nc_lvalue_reference<C>{},
+  typename ::std::decay<C>::type>::type
+get_arg(lua_State* const L)
+{
+  assert(lua_istable(L, I));
+
+  using result_type = typename ::std::decay<C>::type;
+  result_type result;
+
+  auto const end(lua_rawlen(L, I) + 1);
+
+  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  {
+    lua_rawgeti(L, I, i);
+
+    result.emplace(get_arg<-1, typename result_type::value_type>(L));
+  }
+
+  lua_pop(L, end - 1);
 
   return result;
 }
