@@ -232,10 +232,10 @@ inline scope_exit<T> make_scope_exit(T&& f)
 enum constant_type
 {
   BOOLEAN,
+  UNSIGNED,
   INTEGER,
-  STRING,
   NUMBER,
-  UNSIGNED
+  STRING
 };
 
 struct constant_info_type
@@ -1586,13 +1586,13 @@ protected:
 
             break;
 
-          case detail::INTEGER:
-            lua_pushinteger(L, i.second.u.integer);
+          case detail::UNSIGNED:
+            lua_pushunsigned(L, i.second.u.unsigned_integer);
 
             break;
 
-          case detail::STRING:
-            lua_pushstring(L, i.second.u.string);
+          case detail::INTEGER:
+            lua_pushinteger(L, i.second.u.integer);
 
             break;
 
@@ -1601,8 +1601,8 @@ protected:
 
             break;
 
-          case detail::UNSIGNED:
-            lua_pushunsigned(L, i.second.u.unsigned_integer);
+          case detail::STRING:
+            lua_pushstring(L, i.second.u.string);
         }
       }
     };
