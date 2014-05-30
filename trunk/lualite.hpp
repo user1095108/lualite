@@ -232,8 +232,10 @@ inline scope_exit<T> make_scope_exit(T&& f)
 enum constant_type
 {
   BOOLEAN,
+  INTEGER,
   STRING,
-  NUMBER
+  NUMBER,
+  UNSIGNED
 };
 
 struct constant_info_type
@@ -243,6 +245,8 @@ struct constant_info_type
   union
   {
     bool boolean;
+    lua_Integer integer;
+    lua_Unsigned unsigned_integer;
     lua_Number number;
     char const* string;
   } u;
@@ -1508,6 +1512,28 @@ public:
     return *this;
   }
 
+  scope& constant(char const* const name, lua_Unsigned const value)
+  {
+    struct detail::constant_info_type ci;
+    ci.type = detail::UNSIGNED;
+    ci.u.unsigned_integer = value;
+
+    constants_.emplace_back(name, ci);
+
+    return *this;
+  }
+
+  scope& constant(char const* const name, lua_Integer const value)
+  {
+    struct detail::constant_info_type ci;
+    ci.type = detail::INTEGER;
+    ci.u.integer = value;
+
+    constants_.emplace_back(name, ci);
+
+    return *this;
+  }
+
   scope& constant(char const* const name, char const* const value)
   {
     struct detail::constant_info_type ci;
@@ -1529,7 +1555,7 @@ public:
 
   scope& enum_(char const* const name, int const value)
   {
-    constant(name, lua_Number(value));
+    constant(name, lua_Integer(value));
 
     return *this;
   }
@@ -1545,14 +1571,11 @@ public:
 protected:
   virtual void apply(lua_State* const L)
   {
-    if (parent_scope_)
+    struct S
     {
-      scope::get_scope(L);
-      assert(lua_istable(L, -1));
-
-      for (auto& i: detail::as_const(constants_))
+      static void push_constant(lua_State* const L,
+        decltype(constants_)::const_reference const i)
       {
-        assert(lua_istable(L, -1));
         switch (i.second.type)
         {
           default:
@@ -1563,6 +1586,11 @@ protected:
 
             break;
 
+          case detail::INTEGER:
+            lua_pushinteger(L, i.second.u.integer);
+
+            break;
+
           case detail::STRING:
             lua_pushstring(L, i.second.u.string);
 
@@ -1570,7 +1598,24 @@ protected:
 
           case detail::NUMBER:
             lua_pushnumber(L, i.second.u.number);
+
+            break;
+
+          case detail::UNSIGNED:
+            lua_pushunsigned(L, i.second.u.unsigned_integer);
         }
+      }
+    };
+
+    if (parent_scope_)
+    {
+      scope::get_scope(L);
+      assert(lua_istable(L, -1));
+
+      for (auto& i: detail::as_const(constants_))
+      {
+        assert(lua_istable(L, -1));
+        S::push_constant(L, i);
 
         detail::rawsetfield(L, -2, i.first);
       }
@@ -1593,24 +1638,7 @@ protected:
       for (auto& i: detail::as_const(constants_))
       {
         assert(lua_istable(L, -1));
-        switch (i.second.type)
-        {
-          default:
-            assert(0);
-
-          case detail::BOOLEAN:
-            lua_pushboolean(L, i.second.u.boolean);
-
-            break;
-
-          case detail::STRING:
-            lua_pushstring(L, i.second.u.string);
-
-            break;
-
-          case detail::NUMBER:
-            lua_pushnumber(L, i.second.u.number);
-        }
+        S::push_constant(L, i);
 
         lua_setglobal(L, i.first);
       }
@@ -1926,25 +1954,7 @@ public:
   }
 
   template <typename T>
-  typename ::std::enable_if<
-    ::std::is_arithmetic<T>{} &&
-    !::std::is_same<typename ::std::decay<T>::type, bool>{},
-    class_&
-  >::type
-  constant(char const* const name, T&& value)
-  {
-    scope::constant(name, lua_Number(value));
-
-    return *this;
-  }
-
-  template <typename T>
-  typename ::std::enable_if<
-    !::std::is_arithmetic<T>{} ||
-    ::std::is_same<typename ::std::decay<T>::type, bool>{},
-    class_&
-  >::type
-  constant(char const* const name, T&& value)
+  class_& constant(char const* const name, T&& value)
   {
     scope::constant(name, ::std::forward<T>(value));
 
@@ -2045,9 +2055,9 @@ public:
     return *this;
   }
 
-  class_& enum_(char const* const name, int const value)
+  class_& enum_(char const* const name, lua_Integer const value)
   {
-    scope::constant(name, lua_Number(value));
+    scope::constant(name, value);
 
     return *this;
   }
