@@ -1996,7 +1996,7 @@ public:
 
   static bool inherits(char const* const name)
   {
-    assert(class_name_);
+    assert(class_name_ && name);
 
     if (::std::strcmp(name, class_name_))
     {
