@@ -220,7 +220,7 @@ public:
   ~scope_exit() noexcept { f_(); }
 
 private:
-  T f_;
+  T const f_;
 };
 
 template <typename T>
