@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2013, Janez Žemva
+** Copyright (c) 2013-2014, Janez Žemva
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -25,9 +25,9 @@
 ** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#pragma once
 #ifndef LUALITE_HPP
 # define LUALITE_HPP
+# pragma once
 
 #if __cplusplus < 201103L
 # error "You need a C++11 compiler to use lualite"
@@ -1994,7 +1994,7 @@ public:
     return *this;
   }
 
-  static bool inherits(char const* const name)
+  static bool inherits(char const* const name) noexcept
   {
     assert(class_name_ && name);
 
