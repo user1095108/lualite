@@ -181,12 +181,6 @@ struct catenate_indices<indices<Is...>, indices<Js...> >
 template <::std::size_t, ::std::size_t, typename = void> struct expand_indices;
 
 template <::std::size_t A, ::std::size_t B>
-struct expand_indices<A, B, typename ::std::enable_if<A == B>::type>
-{
-  using indices_type = indices<A>;
-};
-
-template <::std::size_t A, ::std::size_t B>
 struct expand_indices<A, B, typename ::std::enable_if<A != B>::type>
 {
   static_assert(A < B, "A > B");
@@ -194,6 +188,12 @@ struct expand_indices<A, B, typename ::std::enable_if<A != B>::type>
     typename expand_indices<A, (A + B) / 2>::indices_type,
     typename expand_indices<(A + B) / 2 + 1, B>::indices_type
   >::indices_type;
+};
+
+template <::std::size_t A, ::std::size_t B>
+struct expand_indices<A, B, typename ::std::enable_if<A == B>::type>
+{
+  using indices_type = indices<A>;
 };
 
 template <::std::size_t A>
@@ -1404,20 +1404,6 @@ forward(lua_State* const L, C* const c,
 }
 
 template <typename FP, FP fp, ::std::size_t O, class C, class R, class ...A>
-typename ::std::enable_if<::std::is_void<R>{}, int>::type
-member_stub(lua_State* const L)
-{
-  assert(sizeof...(A) + O - 1 == lua_gettop(L));
-
-  forward<O, C, R, A...>(L,
-    static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
-    fp,
-    make_indices<sizeof...(A)>());
-
-  return {};
-}
-
-template <typename FP, FP fp, ::std::size_t O, class C, class R, class ...A>
 typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 member_stub(lua_State* const L)
 {
@@ -1431,12 +1417,16 @@ member_stub(lua_State* const L)
       make_indices<sizeof...(A)>()));
 }
 
-template <typename FP, FP fp, class C, class R>
+template <typename FP, FP fp, ::std::size_t O, class C, class R, class ...A>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
-vararg_member_stub(lua_State* const L)
+member_stub(lua_State* const L)
 {
-//::std::cout << lua_gettop(L) << ::std::endl;
-  (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L);
+  assert(sizeof...(A) + O - 1 == lua_gettop(L));
+
+  forward<O, C, R, A...>(L,
+    static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
+    fp,
+    make_indices<sizeof...(A)>());
 
   return {};
 }
@@ -1448,6 +1438,16 @@ vararg_member_stub(lua_State* const L)
 //::std::cout << lua_gettop(L) << ::std::endl;
   return set_result(L, (static_cast<C*>(
     lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L));
+}
+
+template <typename FP, FP fp, class C, class R>
+typename ::std::enable_if<::std::is_void<R>{}, int>::type
+vararg_member_stub(lua_State* const L)
+{
+//::std::cout << lua_gettop(L) << ::std::endl;
+  (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L);
+
+  return {};
 }
 
 template <typename ...A>
