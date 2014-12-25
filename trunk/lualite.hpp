@@ -2057,6 +2057,19 @@ public:
     return *this;
   }
 
+  template <typename FP, FP fp>
+  typename ::std::enable_if<
+    detail::is_function_pointer<FP>{},
+    class_&
+  >::type
+  def_func(char const* const name)
+  {
+    defs_.push_back({{},
+      detail::member_info_type{name, func_stub<FP, fp, 1>(fp)}});
+
+    return *this;
+  }
+
   class_& enum_(char const* const name, lua_Integer const value)
   {
     scope::constant(name, value);
@@ -2156,6 +2169,12 @@ private:
   static void* convert(void* const a)
   {
     return static_cast<A*>(static_cast<C*>(a));
+  }
+
+  template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
+  lua_CFunction func_stub(R (*)(A...))
+  {
+    return &detail::func_stub<FP, fp, O, R, A...>;
   }
 
   template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
