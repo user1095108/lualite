@@ -281,7 +281,7 @@ int getter(lua_State* const L)
     auto const uvi(lua_upvalueindex(2));
 
     void* p(lua_touserdata(L, uvi));
-    void* const q(p);
+    auto const q(p);
 
     for (auto const f: i->second.first)
     {
@@ -292,7 +292,8 @@ int getter(lua_State* const L)
     lua_replace(L, uvi);
 
     auto const se(make_scope_exit([&]() noexcept {
-      lua_pushlightuserdata(L, q); lua_replace(L, uvi);}));
+      lua_pushlightuserdata(L, q); lua_replace(L, uvi);})
+    );
 
     return i->second.second(L);
   }
@@ -309,7 +310,7 @@ int setter(lua_State* const L)
     auto const uvi(lua_upvalueindex(2));
 
     void* p(lua_touserdata(L, uvi));
-    void* const q(p);
+    auto const q(p);
 
     for (auto const f: i->second.first)
     {
@@ -320,7 +321,8 @@ int setter(lua_State* const L)
     lua_replace(L, uvi);
 
     auto const se(make_scope_exit([&]() noexcept {
-      lua_pushlightuserdata(L, q); lua_replace(L, uvi);}));
+      lua_pushlightuserdata(L, q); lua_replace(L, uvi);})
+    );
 
     i->second.second(L);
   }
