@@ -112,7 +112,7 @@ using is_nc_lvalue_reference =
 
 // key is at the top of the stack
 inline void rawgetfield(lua_State* const L, int const index,
-  char const* const key)
+  char const* const key) noexcept
 {
   auto const i(lua_absindex(L, index));
   lua_pushstring(L, key);
@@ -121,7 +121,7 @@ inline void rawgetfield(lua_State* const L, int const index,
 
 // value is at the top of the stack, key is shifted below the top
 inline void rawsetfield(lua_State* const L, int const index,
-  char const* const key)
+  char const* const key) noexcept
 {
   auto const i(lua_absindex(L, index));
   lua_pushstring(L, key);
@@ -400,7 +400,7 @@ inline typename ::std::enable_if<
   ::std::is_floating_point<typename ::std::decay<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
   int>::type
-set_result(lua_State* const L, T&& v)
+set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushnumber(L, v);
 
@@ -413,7 +413,7 @@ inline typename ::std::enable_if<
   ::std::is_signed<typename ::std::decay<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
   int>::type
-set_result(lua_State* const L, T&& v)
+set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushinteger(L, v);
 
@@ -427,7 +427,7 @@ inline typename ::std::enable_if<
   !::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   !is_nc_lvalue_reference<T>{},
   int>::type
-set_result(lua_State* const L, T&& v)
+set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushunsigned(L, v);
 
@@ -439,7 +439,7 @@ inline typename ::std::enable_if<
   ::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   !is_nc_lvalue_reference<T>{},
   int>::type
-set_result(lua_State* const L, T&& v)
+set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushboolean(L, v);
 
@@ -451,7 +451,7 @@ inline typename ::std::enable_if<
   ::std::is_same<typename ::std::decay<T>::type, char const*>{} &&
   !is_nc_lvalue_reference<T>{},
   int>::type
-set_result(lua_State* const L, T&& v)
+set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushstring(L, v);
 
@@ -463,7 +463,7 @@ inline typename ::std::enable_if<
   ::std::is_same<typename ::std::decay<T>::type, void const*>{} &&
   !is_nc_lvalue_reference<T>{},
   int>::type
-set_result(lua_State* const L, T&& v)
+set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushlightuserdata(L, const_cast<void*>(v));
 
@@ -476,7 +476,7 @@ inline typename ::std::enable_if<
   !::std::is_const<typename ::std::remove_pointer<T>::type>{} &&
   !::std::is_class<typename ::std::remove_pointer<T>::type>{},
   int>::type
-set_result(lua_State* const L, T&& v)
+set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushlightuserdata(L, v);
 
@@ -488,7 +488,7 @@ inline typename ::std::enable_if<
   is_nc_lvalue_reference<T>{} &&
   !::std::is_class<typename ::std::decay<T>::type>{},
   int>::type
-set_result(lua_State* const L, T&& v)
+set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushlightuserdata(L, &v);
 
@@ -503,7 +503,7 @@ inline typename ::std::enable_if<
     typename ::std::decay<T>::type>::type
   >{},
   int>::type
-set_result(lua_State* const L, T&& v)
+set_result(lua_State* const L, T&& v) noexcept
 {
   create_wrapper_table(L, v);
 
@@ -515,7 +515,7 @@ inline typename ::std::enable_if<
   is_nc_lvalue_reference<T>{} &&
   ::std::is_class<typename ::std::decay<T>::type>{},
   int>::type
-set_result(lua_State* const L, T&& v)
+set_result(lua_State* const L, T&& v) noexcept
 {
   create_wrapper_table(L, &v);
 
@@ -527,7 +527,7 @@ inline typename ::std::enable_if<
   ::std::is_same<typename ::std::decay<T>::type, any>{} &&
   !is_nc_lvalue_reference<T>{},
   int>::type
-set_result(lua_State* const, T&&)
+set_result(lua_State* const, T&&) noexcept
 {
   return 1;
 }
@@ -537,7 +537,7 @@ inline typename ::std::enable_if<
   ::std::is_floating_point<typename ::std::decay<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
   typename ::std::decay<T>::type>::type
-get_arg(lua_State* const L)
+get_arg(lua_State* const L) noexcept
 {
   assert(lua_isnumber(L, I));
   return lua_tonumber(L, I);
@@ -549,7 +549,7 @@ inline typename ::std::enable_if<
   ::std::is_signed<typename ::std::decay<T>::type>{} &&
   !is_nc_lvalue_reference<T>{},
   typename ::std::decay<T>::type>::type
-get_arg(lua_State* const L)
+get_arg(lua_State* const L) noexcept
 {
   assert(lua_isnumber(L, I));
   return lua_tointeger(L, I);
@@ -562,7 +562,7 @@ inline typename ::std::enable_if<
   !::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   !is_nc_lvalue_reference<T>{},
   typename ::std::decay<T>::type>::type
-get_arg(lua_State* const L)
+get_arg(lua_State* const L) noexcept
 {
   assert(lua_isnumber(L, I));
   return lua_tounsigned(L, I);
@@ -573,7 +573,7 @@ inline typename ::std::enable_if<
   ::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   !is_nc_lvalue_reference<T>{},
   typename ::std::decay<T>::type>::type
-get_arg(lua_State* const L)
+get_arg(lua_State* const L) noexcept
 {
   assert(lua_isboolean(L, I));
   return lua_toboolean(L, I);
@@ -584,7 +584,7 @@ inline typename ::std::enable_if<::std::is_same<
   typename ::std::decay<T>::type, char const*>{} &&
   !is_nc_lvalue_reference<T>{},
   typename ::std::decay<T>::type>::type
-get_arg(lua_State* const L)
+get_arg(lua_State* const L) noexcept
 {
   assert(lua_isstring(L, I));
   return lua_tostring(L, I);
@@ -595,7 +595,7 @@ inline typename ::std::enable_if<
   ::std::is_pointer<T>{} &&
   !::std::is_same<typename ::std::decay<T>::type, char const*>{},
   typename ::std::decay<T>::type>::type
-get_arg(lua_State* const L)
+get_arg(lua_State* const L) noexcept
 {
   assert(lua_islightuserdata(L, I));
   return static_cast<T>(lua_touserdata(L, I));
@@ -603,7 +603,7 @@ get_arg(lua_State* const L)
 
 template <int I, typename T>
 inline typename ::std::enable_if<is_nc_lvalue_reference<T>{}, T>::type
-get_arg(lua_State* const L)
+get_arg(lua_State* const L) noexcept
 {
   assert(lua_islightuserdata(L, I));
   return *static_cast<typename ::std::decay<T>::type*>(
@@ -614,7 +614,7 @@ template <int I, typename T>
 inline typename ::std::enable_if<
   ::std::is_same<typename ::std::remove_const<T>::type, any>{},
   T>::type
-get_arg(lua_State* const)
+get_arg(lua_State* const) noexcept
 {
   return any();
 }
@@ -694,7 +694,7 @@ inline typename ::std::enable_if<
   ::std::is_same<typename ::std::decay<T>::type, ::std::string>{} &&
   !is_nc_lvalue_reference<T>{},
   int>::type
-set_result(lua_State* const L, T&& s)
+set_result(lua_State* const L, T&& s) noexcept
 {
   lua_pushlstring(L, s.c_str(), s.size());
 
@@ -707,6 +707,7 @@ inline typename ::std::enable_if<
   !is_nc_lvalue_reference<C>{},
   int>::type
 set_result(lua_State* const L, C&& p)
+  noexcept(noexcept(set_result(L, p.first), set_result(L, p.second)))
 {
   set_result(L, p.first);
   set_result(L, p.second);
@@ -717,6 +718,9 @@ set_result(lua_State* const L, C&& p)
 template <typename ...Types, ::std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
   ::std::tuple<Types...> const& t, indices<I...> const)
+    noexcept(noexcept(::std::initializer_list<int>{
+      (set_result(L, ::std::get<I>(t)), 0)...
+    }))
 {
   ::std::initializer_list<int>{(set_result(L, ::std::get<I>(t)), 0)...};
 }
@@ -727,6 +731,8 @@ inline typename ::std::enable_if<
   !is_nc_lvalue_reference<C>{},
   int>::type
 set_result(lua_State* const L, C&& t)
+  noexcept(noexcept(set_tuple_result(L, t,
+    make_indices<::std::tuple_size<C>{}>())))
 {
   using result_type = typename ::std::decay<C>::type;
 
@@ -977,6 +983,8 @@ get_arg(lua_State* const L)
 
 template <::std::size_t O, class C, ::std::size_t ...I>
 inline C get_tuple_arg(lua_State* const L, indices<I...> const)
+  noexcept(noexcept(::std::make_tuple(get_arg<int(I - sizeof...(I)),
+    typename ::std::tuple_element<I, C>::type>(L)...)))
 {
   ::std::initializer_list<int>{(lua_rawgeti(L, O, I + 1), 0)...};
 
@@ -994,6 +1002,8 @@ inline typename ::std::enable_if<
   !is_nc_lvalue_reference<C>{},
   typename ::std::decay<C>::type>::type
 get_arg(lua_State* const L)
+  noexcept(noexcept(get_tuple_arg<I, typename ::std::decay<C>::type>(L,
+    make_indices<::std::tuple_size<typename ::std::decay<C>::type>{}>())))
 {
   assert(lua_istable(L, I));
 
