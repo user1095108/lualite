@@ -1241,6 +1241,7 @@ get_arg(lua_State* const L)
 
 template <class C>
 int default_finalizer(lua_State* const L)
+  noexcept(noexcept(::std::declval<C>().~C()))
 {
   delete static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1)));
 
@@ -1249,12 +1250,14 @@ int default_finalizer(lua_State* const L)
 
 template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
 inline C* forward(lua_State* const L, indices<I...> const)
+  noexcept(noexcept(C(get_arg<I + O, A>(L)...)))
 {
   return new C(get_arg<I + O, A>(L)...);
 }
 
 template <::std::size_t O, class C, class ...A>
 int constructor_stub(lua_State* const L)
+  noexcept(noexcept(forward<O, C, A...>(L, make_indices<sizeof...(A)>())))
 {
   assert(sizeof...(A) == lua_gettop(L));
 
@@ -1323,6 +1326,7 @@ int constructor_stub(lua_State* const L)
 template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
 inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
 forward(lua_State* const, R (* const f)(A...), indices<I...> const)
+  noexcept(noexcept((*f)()))
 {
   return (*f)();
 }
@@ -1330,6 +1334,7 @@ forward(lua_State* const, R (* const f)(A...), indices<I...> const)
 template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
 inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
 forward(lua_State* const L, R (* const f)(A...), indices<I...> const)
+  noexcept(noexcept((*f)(get_arg<I + O, A>(L)...)))
 {
   return (*f)(get_arg<I + O, A>(L)...);
 }
@@ -1337,6 +1342,7 @@ forward(lua_State* const L, R (* const f)(A...), indices<I...> const)
 template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
 func_stub(lua_State* const L)
+  noexcept(noexcept(forward<O, R, A...>(L, fp, make_indices<sizeof...(A)>())))
 {
   assert(sizeof...(A) == lua_gettop(L));
 
@@ -1348,6 +1354,8 @@ func_stub(lua_State* const L)
 template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
 typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 func_stub(lua_State* const L)
+  noexcept(noexcept(set_result(L, forward<O, R, A...>(L, fp,
+    make_indices<sizeof...(A)>()))))
 {
   return set_result(L, forward<O, R, A...>(L, fp,
     make_indices<sizeof...(A)>()));
@@ -1356,6 +1364,7 @@ func_stub(lua_State* const L)
 template <typename FP, FP fp, class R>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
 vararg_func_stub(lua_State* const L)
+  noexcept(noexcept(fp(L)))
 {
   fp(L);
 
@@ -1365,6 +1374,7 @@ vararg_func_stub(lua_State* const L)
 template <typename FP, FP fp, class R>
 typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 vararg_func_stub(lua_State* const L)
+  noexcept(noexcept(set_result(fp(L))))
 {
   return set_result(fp(L));
 }
@@ -1374,6 +1384,7 @@ template <::std::size_t O, typename C, typename R, typename ...A,
 inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
 forward(lua_State* const, C* const c,
   R (C::* const ptr_to_member)(A...) const, indices<I...> const)
+  noexcept(noexcept((c->*ptr_to_member)()))
 {
   return (c->*ptr_to_member)();
 }
@@ -1383,6 +1394,7 @@ template <::std::size_t O, typename C, typename R, typename ...A,
 inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
 forward(lua_State* const L, C* const c,
   R (C::* const ptr_to_member)(A...) const, indices<I...> const)
+  noexcept(noexcept((c->*ptr_to_member)(get_arg<I + O, A>(L)...)))
 {
   return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
 }
@@ -1392,6 +1404,7 @@ template <::std::size_t O, typename C, typename R, typename ...A,
 inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
 forward(lua_State* const, C* const c,
   R (C::* const ptr_to_member)(A...), indices<I...> const)
+  noexcept(noexcept((c->*ptr_to_member)()))
 {
   return (c->*ptr_to_member)();
 }
@@ -1401,6 +1414,7 @@ template <::std::size_t O, typename C, typename R,
 inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
 forward(lua_State* const L, C* const c,
   R (C::* const ptr_to_member)(A...), indices<I...> const)
+  noexcept(noexcept((c->*ptr_to_member)(get_arg<I + O, A>(L)...)))
 {
   return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
 }
@@ -1408,6 +1422,11 @@ forward(lua_State* const L, C* const c,
 template <typename FP, FP fp, ::std::size_t O, class C, class R, class ...A>
 typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 member_stub(lua_State* const L)
+  noexcept(noexcept(set_result(L,
+    forward<O, C, R, A...>(L,
+      static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
+      fp,
+      make_indices<sizeof...(A)>()))))
 {
 //::std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << ::std::endl;
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
@@ -1422,6 +1441,10 @@ member_stub(lua_State* const L)
 template <typename FP, FP fp, ::std::size_t O, class C, class R, class ...A>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
 member_stub(lua_State* const L)
+  noexcept(noexcept(forward<O, C, R, A...>(L,
+    static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
+    fp,
+    make_indices<sizeof...(A)>())))
 {
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
 
@@ -1436,6 +1459,8 @@ member_stub(lua_State* const L)
 template <typename FP, FP fp, class C, class R>
 typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 vararg_member_stub(lua_State* const L)
+  noexcept(noexcept(set_result(L, (static_cast<C*>(
+    lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L))))
 {
 //::std::cout << lua_gettop(L) << ::std::endl;
   return set_result(L, (static_cast<C*>(
@@ -1445,6 +1470,8 @@ vararg_member_stub(lua_State* const L)
 template <typename FP, FP fp, class C, class R>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
 vararg_member_stub(lua_State* const L)
+  noexcept(noexcept(
+    (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L)))
 {
 //::std::cout << lua_gettop(L) << ::std::endl;
   (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L);
@@ -1454,6 +1481,8 @@ vararg_member_stub(lua_State* const L)
 
 template <typename ...A>
 inline void call(lua_State* const L, int const nresults, A&& ...args)
+  noexcept(noexcept(::std::initializer_list<int>{(
+    set_result(L, ::std::forward<A>(args)))...}))
 {
   int ac{};
 
@@ -1468,6 +1497,7 @@ inline void call(lua_State* const L, int const nresults, A&& ...args)
 
 template <typename ...A>
 inline void call(lua_State* const L, int const nresults, A&& ...args)
+  noexcept(noexcept(detail::call(L, nresults, ::std::forward<A>(args)...)))
 {
   detail::call(L, nresults, ::std::forward<A>(args)...);
 }
