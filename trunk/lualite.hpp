@@ -2197,6 +2197,7 @@ private:
     // lua_pushstring(L, name_);
     // detail::rawsetfield(L, -2, "__classname");
 
+    assert(inherits_.capacity() == inherits_.size());
     constructors_.shrink_to_fit();
     defs_.shrink_to_fit();
 
