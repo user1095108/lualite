@@ -1616,7 +1616,7 @@ protected:
     struct S
     {
       static void push_constant(lua_State* const L,
-        decltype(constants_)::const_reference const i)
+        decltype(constants_)::const_reference i)
       {
         switch (i.second.type)
         {
