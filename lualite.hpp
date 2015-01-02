@@ -110,6 +110,8 @@ using is_nc_lvalue_reference =
     !::std::is_const<typename ::std::remove_reference<T>::type>{}
   >;
 
+struct swallow { template <typename ...T> swallow(T&& ...) noexcept { } };
+
 // key is at the top of the stack
 inline void rawgetfield(lua_State* const L, int const index,
   char const* const key) noexcept
@@ -718,11 +720,11 @@ set_result(lua_State* const L, C&& p)
 template <typename ...Types, ::std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
   ::std::tuple<Types...> const& t, indices<I...> const)
-    noexcept(noexcept(::std::initializer_list<int>{
+    noexcept(noexcept(swallow{
       (set_result(L, ::std::get<I>(t)), 0)...
     }))
 {
-  ::std::initializer_list<int>{(set_result(L, ::std::get<I>(t)), 0)...};
+  swallow{(set_result(L, ::std::get<I>(t)), 0)...};
 }
 
 template <typename C>
@@ -986,7 +988,7 @@ inline C get_tuple_arg(lua_State* const L, indices<I...> const)
   noexcept(noexcept(::std::make_tuple(get_arg<int(I - sizeof...(I)),
     typename ::std::tuple_element<I, C>::type>(L)...)))
 {
-  ::std::initializer_list<int>{(lua_rawgeti(L, O, I + 1), 0)...};
+  swallow{(lua_rawgeti(L, O, I + 1), 0)...};
 
   C result(::std::make_tuple(get_arg<int(I - sizeof...(I)),
     typename ::std::tuple_element<I, C>::type>(L)...));
@@ -1491,13 +1493,13 @@ vararg_member_stub(lua_State* const L)
 
 template <typename ...A>
 inline void call(lua_State* const L, int const nresults, A&& ...args)
-  noexcept(noexcept(::std::initializer_list<int>{(
-    set_result(L, ::std::forward<A>(args)))...}))
+  noexcept(noexcept(swallow{(set_result(L, ::std::forward<A>(args)))...}))
 {
   int ac{};
 
-  ::std::initializer_list<int>{(
-    ac += set_result(L, ::std::forward<A>(args)))...};
+  swallow{
+    (ac += set_result(L, ::std::forward<A>(args)))...
+  };
   assert(decltype(sizeof...(A))(ac) <= sizeof...(A));
 
   lua_call(L, ac, nresults);
@@ -2019,19 +2021,23 @@ public:
   template <class ...A>
   class_& inherits()
   {
-    ::std::initializer_list<int>{(S<A>::copy_accessors(
-      class_<A>::getters_, getters_), 0)...};
+    detail::swallow{
+      (S<A>::copy_accessors(class_<A>::getters_, getters_), 0)...
+    };
 
-    ::std::initializer_list<int>{(S<A>::copy_accessors(
-      class_<A>::setters_, setters_), 0)...};
+    detail::swallow{
+      (S<A>::copy_accessors(class_<A>::setters_, setters_), 0)...
+    };
 
-    ::std::initializer_list<int>{(S<A>::copy_defs(
-      class_<A>::defs_, defs_), 0)...};
+    detail::swallow{
+      (S<A>::copy_defs(class_<A>::defs_, defs_), 0)...
+    };
 
     assert(inherits_.empty());
     inherits_.reserve(sizeof...(A));
-    ::std::initializer_list<int>{(inherits_.push_back(
-      class_<A>::inherits), 0)...};
+    detail::swallow{
+      (inherits_.push_back(class_<A>::inherits), 0)...
+    };
 
     return *this;
   }
