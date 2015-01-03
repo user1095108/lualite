@@ -1526,7 +1526,7 @@ public:
   scope(char const* const name, A&&... args) :
     name_(name)
   {
-    [](...){}((args.set_parent_scope(this), 0)...);
+    detail::swallow((args.set_parent_scope(this), 0)...);
   }
 
   scope(scope const&) = delete;
@@ -1828,7 +1828,7 @@ public:
     scope(nullptr),
     L_(L)
   {
-    [](...){}((args.set_parent_scope(this), 0)...);
+    detail::swallow((args.set_parent_scope(this), 0)...);
 
     scope::apply(L);
   }
