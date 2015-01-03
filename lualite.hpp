@@ -1261,7 +1261,15 @@ int default_finalizer(lua_State* const L)
 }
 
 template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
-inline C* forward(lua_State* const L, indices<I...> const)
+inline typename ::std::enable_if<bool(!sizeof...(A)), C*>::type
+forward(lua_State* const, indices<I...> const) noexcept(noexcept(C()))
+{
+  return new C();
+}
+
+template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
+inline typename ::std::enable_if<bool(sizeof...(A)), C*>::type
+forward(lua_State* const L, indices<I...> const)
   noexcept(noexcept(C(get_arg<I + O, A>(L)...)))
 {
   return new C(get_arg<I + O, A>(L)...);
