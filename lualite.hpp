@@ -1059,7 +1059,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.push_back(get_arg<-1, typename result_type::value_type>(L));
+    result.emplace_back(get_arg<-1, typename result_type::value_type>(L));
   }
 
   lua_pop(L, end - 1);
@@ -1111,7 +1111,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.push_back(get_arg<-1, typename result_type::value_type>(L));
+    result.emplace_back(get_arg<-1, typename result_type::value_type>(L));
   }
 
   lua_pop(L, end - 1);
@@ -1139,7 +1139,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.push_back(get_arg<-1, typename result_type::value_type>(L));
+    result.emplace_back(get_arg<-1, typename result_type::value_type>(L));
   }
 
   lua_pop(L, end - 1);
@@ -2174,7 +2174,7 @@ private:
       {
         dst.push_back(a);
 
-        dst.back().first.push_back(convert<A>);
+        dst.back().first.emplace_back(convert<A>);
         dst.back().first.shrink_to_fit();
       }
     }
@@ -2186,7 +2186,7 @@ private:
       {
         auto& n(dst[a.first] = {a.second.first, a.second.second});
 
-        n.first.push_back(convert<A>);
+        n.first.emplace_back(convert<A>);
         n.first.shrink_to_fit();
       }
     }
