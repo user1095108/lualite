@@ -234,7 +234,6 @@ inline scope_exit<T> make_scope_exit(T&& f)
 enum constant_type
 {
   BOOLEAN,
-  UNSIGNED,
   INTEGER,
   NUMBER,
   STRING
@@ -248,7 +247,6 @@ struct constant_info_type
   {
     bool boolean;
     lua_Integer integer;
-    lua_Unsigned unsigned_integer;
     lua_Number number;
     char const* string;
   } u;
@@ -412,26 +410,12 @@ set_result(lua_State* const L, T&& v) noexcept
 template <typename T>
 inline typename ::std::enable_if<
   ::std::is_integral<typename ::std::decay<T>::type>{} &&
-  ::std::is_signed<typename ::std::decay<T>::type>{} &&
-  !is_nc_reference<T>{},
-  int>::type
-set_result(lua_State* const L, T&& v) noexcept
-{
-  lua_pushinteger(L, v);
-
-  return 1;
-}
-
-template <typename T>
-inline typename ::std::enable_if<
-  ::std::is_integral<typename ::std::decay<T>::type>{} &&
-  ::std::is_unsigned<typename ::std::decay<T>::type>{} &&
   !::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   !is_nc_reference<T>{},
   int>::type
 set_result(lua_State* const L, T&& v) noexcept
 {
-  lua_pushunsigned(L, v);
+  lua_pushinteger(L, v);
 
   return 1;
 }
@@ -548,26 +532,13 @@ get_arg(lua_State* const L) noexcept
 template <int I, typename T>
 inline typename ::std::enable_if<
   ::std::is_integral<typename ::std::decay<T>::type>{} &&
-  ::std::is_signed<typename ::std::decay<T>::type>{} &&
-  !is_nc_reference<T>{},
-  typename ::std::decay<T>::type>::type
-get_arg(lua_State* const L) noexcept
-{
-  assert(lua_isnumber(L, I));
-  return lua_tointeger(L, I);
-}
-
-template <int I, typename T>
-inline typename ::std::enable_if<
-  ::std::is_integral<typename ::std::decay<T>::type>{} &&
-  ::std::is_unsigned<typename ::std::decay<T>::type>{} &&
   !::std::is_same<typename ::std::decay<T>::type, bool>{} &&
   !is_nc_reference<T>{},
   typename ::std::decay<T>::type>::type
 get_arg(lua_State* const L) noexcept
 {
   assert(lua_isnumber(L, I));
-  return lua_tounsigned(L, I);
+  return lua_tointeger(L, I);
 }
 
 template <int I, typename T>
@@ -1564,17 +1535,6 @@ public:
     return *this;
   }
 
-  scope& constant(char const* const name, lua_Unsigned const value)
-  {
-    struct detail::constant_info_type ci;
-    ci.type = detail::UNSIGNED;
-    ci.u.unsigned_integer = value;
-
-    constants_.emplace_back(name, ci);
-
-    return *this;
-  }
-
   scope& constant(char const* const name, lua_Integer const value)
   {
     struct detail::constant_info_type ci;
@@ -1635,11 +1595,6 @@ protected:
 
           case detail::BOOLEAN:
             lua_pushboolean(L, i.second.u.boolean);
-
-            break;
-
-          case detail::UNSIGNED:
-            lua_pushunsigned(L, i.second.u.unsigned_integer);
 
             break;
 
