@@ -1512,7 +1512,12 @@ public:
 
   scope& operator=(scope const&) = delete;
 
-  scope& constant(char const* const name, bool const value)
+  template <typename T>
+  typename ::std::enable_if<
+    ::std::is_same<typename ::std::decay<T>::type, bool>{},
+    scope&
+  >::type
+  constant(char const* const name, T const value)
   {
     struct detail::constant_info_type const ci {
       detail::BOOLEAN,
@@ -1524,7 +1529,12 @@ public:
     return *this;
   }
 
-  scope& constant(char const* const name, lua_Number const value)
+  template <typename T>
+  typename ::std::enable_if<
+    ::std::is_floating_point<typename ::std::decay<T>::type>{},
+    scope&
+  >::type
+  constant(char const* const name, T const value)
   {
     struct detail::constant_info_type ci;
     ci.type = detail::NUMBER;
@@ -1535,7 +1545,13 @@ public:
     return *this;
   }
 
-  scope& constant(char const* const name, lua_Integer const value)
+  template <typename T>
+  typename ::std::enable_if<
+    ::std::is_integral<typename ::std::decay<T>::type>{} &&
+    !::std::is_same<typename ::std::decay<T>::type, bool>{},
+    scope&
+  >::type
+  constant(char const* const name, T const value)
   {
     struct detail::constant_info_type ci;
     ci.type = detail::INTEGER;
