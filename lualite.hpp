@@ -1822,7 +1822,12 @@ public:
     scope::apply(L);
   }
 
-  module& constant(char const* const name, bool const value)
+  template <typename T>
+  typename ::std::enable_if<
+    ::std::is_same<typename ::std::decay<T>::type, bool>{},
+    module&
+  >::type
+  constant(char const* const name, T const value)
   {
     if (name_)
     {
@@ -1844,7 +1849,40 @@ public:
     return *this;
   }
 
-  module& constant(char const* const name, lua_Number const value)
+  template <typename T>
+  typename ::std::enable_if<
+    ::std::is_floating_point<typename ::std::decay<T>::type>{},
+    module&
+  >::type
+  constant(char const* const name, T const value)
+  {
+    if (name_)
+    {
+      scope::get_scope(L_);
+      assert(lua_istable(L_, -1));
+
+      lua_pushnumber(L_, value);
+      detail::rawsetfield(L_, -2, name);
+
+      lua_pop(L_, 1);
+    }
+    else
+    {
+      lua_pushnumber(L_, value);
+
+      lua_setglobal(L_, name);
+    }
+
+    return *this;
+  }
+
+  template <typename T>
+  typename ::std::enable_if<
+    ::std::is_integral<typename ::std::decay<T>::type>{} &&
+    !::std::is_same<typename ::std::decay<T>::type, bool>{},
+    module&
+  >::type
+  constant(char const* const name, T const value)
   {
     if (name_)
     {
