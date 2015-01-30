@@ -157,16 +157,12 @@ int main(int argc, char* argv[])
 
   luaL_openlibs(L);
 
-  lualite::module(L,
+  lualite::module{L,
     lualite::class_<testbase>("testbase")
       .constant("__classname", "testbase")
       .constant("__b", true)
       .constant("__pi", 3.1459)
-      .def<decltype(&testbase::dummy), &testbase::dummy>("dummy")
-  );
-
-  // otherwise, we don't know in what order the classes are created
-  lualite::module(L,
+      .def<decltype(&testbase::dummy), &testbase::dummy>("dummy"),
     lualite::class_<testclass>("testclass")
       .constructor("defaultNew")
       .constructor<int>()
@@ -187,7 +183,7 @@ int main(int argc, char* argv[])
         .def<std::tuple<int, std::string, char const*> (testclass::*)(int), &testclass::print>("print")
         .def<std::vector<std::string> (testclass::*)(std::string) const, &testclass::print>("print_")
     )
-  )
+  }
   .enum_("apple", 1)
   .def<LLFUNC(testfunc)>("testfunc")
   .def<LLFUNC(testpair)>("testpair")
