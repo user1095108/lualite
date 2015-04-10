@@ -1668,7 +1668,6 @@ protected:
       for (auto& i: detail::as_const(functions_))
       {
         lua_pushnil(L);
-
         lua_pushcclosure(L, i.callback, 1);
 
         lua_setglobal(L, i.name);
@@ -1749,9 +1748,9 @@ protected:
         lua_getglobal(L, name_);
       }
     }
-    else
+    else if (name_)
     {
-      if (scope_create_ && name_)
+      if (scope_create_)
       {
         scope_create_ = false;
 
@@ -1760,12 +1759,9 @@ protected:
       }
       // else do nothing
 
-      if (name_)
-      {
-        lua_getglobal(L, name_);
-      }
-      // else do nothing
+      lua_getglobal(L, name_);
     }
+    // else do nothing
   }
 
 protected:
