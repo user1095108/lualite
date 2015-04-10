@@ -1261,8 +1261,6 @@ int constructor_stub(lua_State* const L)
   {
     assert(lua_istable(L, -1));
 
-    lua_pushnil(L);
-
     void* p(instance);
 
     for (auto const f: mi.first)
@@ -1270,6 +1268,7 @@ int constructor_stub(lua_State* const L)
       p = f(p);
     }
 
+    lua_pushnil(L);
     lua_pushlightuserdata(L, p);
     lua_pushcclosure(L, mi.second.callback, 2);
 
