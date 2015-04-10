@@ -1717,7 +1717,6 @@ protected:
     if (parent_scope_)
     {
       assert(name_);
-
       parent_scope_->get_scope(L);
 
       if (scope_create_)
