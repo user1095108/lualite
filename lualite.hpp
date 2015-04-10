@@ -1580,9 +1580,9 @@ public:
     return *this;
   }
 
-  scope& enum_(char const* const name, int const value)
+  scope& enum_(char const* const name, lua_Integer const value)
   {
-    constant(name, lua_Integer(value));
+    constant(name, value);
 
     return *this;
   }
