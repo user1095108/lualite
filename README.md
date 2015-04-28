@@ -118,7 +118,7 @@ luaL_dostring(luaState,
 	"test.sayHello()");
 ```
 
-**A:** Try `test:sayHello()```. Or try:
+**A:** Try `test:sayHello()`. Or try:
 ```
 			.def_func<LLFUNC(TestClass::sayHello)>("sayHello"));
 ```
