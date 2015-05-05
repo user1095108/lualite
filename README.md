@@ -85,7 +85,7 @@ Try it [online](http://lualitedemo.square7.ch/).
 
 **Q:** Why can't I return `char*`:
 
-try returning `char const*`. Don't return references or pointers to non-const objects, if you don't provide wrappers for them (returning a non-const reference or pointer implies the ability to change the referred-to object within a Lua script, which is not possible without also writing a wrapper class for the type of the referred-to object).
+**A:** try returning `char const*`. Don't return references or pointers to non-const objects, if you don't provide wrappers for them (returning a non-const reference or pointer implies the ability to change the referred-to object within a Lua script, which is not possible without also writing a wrapper class for the type of the referred-to object).
 
 **Q:** Why am I getting:
 
