@@ -737,14 +737,15 @@ set_result(lua_State* const L, C&& d)
 {
   lua_createtable(L, d.size(), 0);
 
-  auto const cbegin(d.cbegin());
+  int j{};
+
   auto const cend(d.cend());
 
-  for (auto i(cbegin); i != cend; ++i)
+  for (auto i(d.cbegin); i != cend; ++i)
   {
     set_result(L, *i);
 
-    lua_rawset(L, -2, i - cbegin + 1);
+    lua_rawset(L, -2, ++j);
   }
 
   return 1;
@@ -759,15 +760,15 @@ set_result(lua_State* const L, C&& l)
 {
   lua_createtable(L, l.size(), 0);
 
-  auto j(typename ::std::decay<C>::type::size_type(1));
+  int j{};
 
   auto const cend(l.cend());
 
-  for (auto i(l.cbegin()); i != cend; ++i, ++j)
+  for (auto i(l.cbegin()); i != cend; ++i)
   {
     set_result(L, *i);
 
-    lua_rawseti(L, -2, j);
+    lua_rawseti(L, -2, ++j);
   }
 
   return 1;
@@ -782,15 +783,15 @@ set_result(lua_State* const L, C&& l)
 {
   lua_createtable(L, l.size(), 0);
 
-  auto j(typename ::std::decay<C>::type::size_type(1));
+  int j{};
 
   auto const cend(l.cend());
 
-  for (auto i(l.cbegin()); i != cend; ++i, ++j)
+  for (auto i(l.cbegin()); i != cend; ++i)
   {
     set_result(L, *i);
 
-    lua_rawseti(L, -2, j);
+    lua_rawseti(L, -2, ++j);
   }
 
   return 1;
@@ -827,15 +828,15 @@ set_result(lua_State* const L, C&& s)
 {
   lua_createtable(L, 0, s.size());
 
-  auto j(typename ::std::decay<C>::type::size_type(1));
+  int j{};
 
   auto const cend(s.cend());
 
-  for (auto i(s.cbegin()); i != cend; ++i, ++j)
+  for (auto i(s.cbegin()); i != cend; ++i)
   {
     set_result(L, *i);
 
-    lua_rawseti(L, -2, j);
+    lua_rawseti(L, -2, ++j);
   }
 
   return 1;
@@ -872,15 +873,15 @@ set_result(lua_State* const L, C&& s)
 {
   lua_createtable(L, 0, s.size());
 
-  auto j(typename ::std::decay<C>::type::size_type(1));
+  int j{};
 
   auto const cend(s.cend());
 
-  for (auto i(s.cbegin()); i != cend; ++i, ++j)
+  for (auto i(s.cbegin()); i != cend; ++i)
   {
     set_result(L, *i);
 
-    lua_rawseti(L, -2, j);
+    lua_rawseti(L, -2, ++j);
   }
 
   return 1;
@@ -895,14 +896,15 @@ set_result(lua_State* const L, C&& v)
 {
   lua_createtable(L, v.size(), 0);
 
-  auto const cbegin(v.cbegin());
+  int j{};
+
   auto const cend(v.cend());
 
-  for (auto i(cbegin); i != cend; ++i)
+  for (auto i(v.cbegin()); i != cend; ++i)
   {
     set_result(L, *i);
 
-    lua_rawseti(L, -2, i - cbegin + 1);
+    lua_rawseti(L, -2, ++j);
   }
 
   return 1;
