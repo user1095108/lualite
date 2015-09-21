@@ -136,10 +136,8 @@ inline constexpr ::std::size_t chash(char const* const s,
     h;
 }
 
-inline ::std::size_t hash(char const* s) noexcept
+inline ::std::size_t hash(char const* s, ::std::size_t h = {}) noexcept
 {
-  ::std::size_t h{};
-
   while (*s)
   {
     h ^= (h << 5) + (h >> 2) + static_cast<unsigned char>(*s++);
@@ -209,7 +207,7 @@ template <typename T>
 class scope_exit
 {
 public:
-  explicit scope_exit(T&& f) noexcept : f_(::std::move(f))
+  explicit scope_exit(T&& f) noexcept : f_(::std::forward<T>(f))
   {
     static_assert(noexcept(f_()), "throwing functors are unsupported");
   }
