@@ -716,13 +716,15 @@ set_result(lua_State* const L, C&& a)
 {
   lua_createtable(L, a.size(), 0);
 
+  int j{};
+
   auto const cend(a.cend());
 
   for (auto i(a.cbegin()); i != cend; ++i)
   {
     set_result(L, *i);
 
-    lua_rawseti(L, -2, i - a.cbegin() + 1);
+    lua_rawseti(L, -2, ++j);
   }
 
   return 1;
@@ -745,7 +747,7 @@ set_result(lua_State* const L, C&& d)
   {
     set_result(L, *i);
 
-    lua_rawset(L, -2, ++j);
+    lua_rawseti(L, -2, ++j);
   }
 
   return 1;
