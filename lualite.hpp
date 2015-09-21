@@ -828,7 +828,7 @@ inline typename ::std::enable_if<
   int>::type
 set_result(lua_State* const L, C&& s)
 {
-  lua_createtable(L, 0, s.size());
+  lua_createtable(L, s.size(), 0);
 
   int j{};
 
@@ -873,7 +873,7 @@ inline typename ::std::enable_if<
   int>::type
 set_result(lua_State* const L, C&& s)
 {
-  lua_createtable(L, 0, s.size());
+  lua_createtable(L, s.size(), 0);
 
   int j{};
 
