@@ -740,7 +740,7 @@ set_result(lua_State* const L, C&& d)
   auto const cbegin(d.cbegin());
   auto const cend(d.cend());
 
-  for (auto i(d.cbegin()); i != cend; ++i)
+  for (auto i(cbegin); i != cend; ++i)
   {
     set_result(L, *i);
 
@@ -898,7 +898,7 @@ set_result(lua_State* const L, C&& v)
   auto const cbegin(v.cbegin());
   auto const cend(v.cend());
 
-  for (auto i(v.cbegin()); i != cend; ++i)
+  for (auto i(cbegin); i != cend; ++i)
   {
     set_result(L, *i);
 
@@ -1345,6 +1345,14 @@ func_stub(lua_State* const L)
 }
 
 template <typename FP, FP fp, class R>
+typename ::std::enable_if<!::std::is_void<R>{}, int>::type
+vararg_func_stub(lua_State* const L)
+  noexcept(noexcept(set_result(fp(L))))
+{
+  return set_result(fp(L));
+}
+
+template <typename FP, FP fp, class R>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
 vararg_func_stub(lua_State* const L)
   noexcept(noexcept(fp(L)))
@@ -1352,14 +1360,6 @@ vararg_func_stub(lua_State* const L)
   fp(L);
 
   return {};
-}
-
-template <typename FP, FP fp, class R>
-typename ::std::enable_if<!::std::is_void<R>{}, int>::type
-vararg_func_stub(lua_State* const L)
-  noexcept(noexcept(set_result(fp(L))))
-{
-  return set_result(fp(L));
 }
 
 template <::std::size_t O, typename C, typename R, typename ...A,
@@ -1488,14 +1488,10 @@ inline void call(lua_State* const L, int const nresults, A&& ...args)
 class scope
 {
 public:
-  scope(char const* const name) :
-    name_(name)
-  {
-  }
+  scope(char const* const name) : name_(name) { }
 
   template <typename ...A>
-  scope(char const* const name, A&&... args) :
-    name_(name)
+  scope(char const* const name, A&&... args) : name_(name)
   {
     detail::swallow((args.set_parent_scope(this), 0)...);
   }
