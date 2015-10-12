@@ -26,8 +26,8 @@
 # define LUALITE_HPP
 # pragma once
 
-#if __cplusplus < 201103L
-# error "You need a C++11 compiler to use lualite"
+#if __cplusplus < 201402L
+# error "You need a C++14 compiler to use lualite"
 #endif // __cplusplus
 
 #include <cassert>
@@ -128,15 +128,8 @@ inline void rawsetfield(lua_State* const L, int const index,
   lua_rawset(L, i);
 }
 
-inline constexpr ::std::size_t chash(char const* const s,
-  ::std::size_t const h = {}) noexcept
-{
-  return *s ?
-    chash(s + 1, h ^ ((h << 5) + (h >> 2) + static_cast<unsigned char>(*s))) :
-    h;
-}
-
-inline ::std::size_t hash(char const* s, ::std::size_t h = {}) noexcept
+constexpr inline ::std::size_t hash(char const* s,
+  ::std::size_t h = {}) noexcept
 {
   while (*s)
   {
@@ -144,12 +137,12 @@ inline ::std::size_t hash(char const* s, ::std::size_t h = {}) noexcept
   }
 
   return h;
-//return ::std::hash<::std::string>()(s);
 }
 
 struct str_eq
 {
-  bool operator()(char const* const s1, char const* const s2) const noexcept
+  constexpr bool operator()(char const* const s1,
+    char const* const s2) const noexcept
   {
     return !::std::strcmp(s1, s2);
   }
@@ -157,50 +150,10 @@ struct str_eq
 
 struct str_hash
 {
-  ::std::size_t operator()(char const* s) const noexcept
+  constexpr ::std::size_t operator()(char const* s) const noexcept
   {
     return hash(s);
   }
-};
-
-template <::std::size_t...> struct indices
-{
-};
-
-template<class, class> struct catenate_indices;
-
-template <::std::size_t ...Is, ::std::size_t ...Js>
-struct catenate_indices<indices<Is...>, indices<Js...> >
-{
-  using indices_type = indices<Is..., Js...>;
-};
-
-template <::std::size_t, ::std::size_t, typename = void> struct expand_indices;
-
-template <::std::size_t A, ::std::size_t B>
-struct expand_indices<A, B, typename ::std::enable_if<A != B>::type>
-{
-  static_assert(A < B, "A > B");
-  using indices_type = typename catenate_indices<
-    typename expand_indices<A, (A + B) / 2>::indices_type,
-    typename expand_indices<(A + B) / 2 + 1, B>::indices_type
-  >::indices_type;
-};
-
-template <::std::size_t A, ::std::size_t B>
-struct expand_indices<A, B, typename ::std::enable_if<A == B>::type>
-{
-  using indices_type = indices<A>;
-};
-
-template <::std::size_t A>
-struct make_indices : expand_indices<0, A - 1>::indices_type
-{
-};
-
-template <>
-struct make_indices<0> : indices<>
-{
 };
 
 template <typename T>
@@ -683,7 +636,7 @@ set_result(lua_State* const L, C&& p)
 
 template <typename ...Types, ::std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
-  ::std::tuple<Types...> const& t, indices<I...> const)
+  ::std::tuple<Types...> const& t, ::std::index_sequence<I...> const)
     noexcept(noexcept(swallow{
       (set_result(L, ::std::get<I>(t)), 0)...
     }))
@@ -698,11 +651,14 @@ inline typename ::std::enable_if<
   int>::type
 set_result(lua_State* const L, C&& t)
   noexcept(noexcept(set_tuple_result(L, t,
-    make_indices<::std::tuple_size<C>{}>())))
+    ::std::make_index_sequence<::std::tuple_size<C>{}>())))
 {
   using result_type = typename ::std::decay<C>::type;
 
-  set_tuple_result(L, t, make_indices<::std::tuple_size<C>{}>());
+  set_tuple_result(L,
+    t,
+    ::std::make_index_sequence<::std::tuple_size<C>{}>()
+  );
 
   return ::std::tuple_size<result_type>{};
 }
@@ -952,7 +908,7 @@ get_arg(lua_State* const L)
 }
 
 template <::std::size_t O, class C, ::std::size_t ...I>
-inline C get_tuple_arg(lua_State* const L, indices<I...> const)
+inline C get_tuple_arg(lua_State* const L, ::std::index_sequence<I...> const)
   noexcept(noexcept(::std::make_tuple(get_arg<int(I - sizeof...(I)),
     typename ::std::tuple_element<I, C>::type>(L)...)))
 {
@@ -973,14 +929,18 @@ inline typename ::std::enable_if<
   typename ::std::decay<C>::type>::type
 get_arg(lua_State* const L)
   noexcept(noexcept(get_tuple_arg<I, typename ::std::decay<C>::type>(L,
-    make_indices<::std::tuple_size<typename ::std::decay<C>::type>{}>())))
+    ::std::make_index_sequence<
+      ::std::tuple_size<typename ::std::decay<C>::type>{}
+    >()))
+  )
 {
   assert(lua_istable(L, I));
 
   using result_type = typename ::std::decay<C>::type;
 
   return get_tuple_arg<I, result_type>(L,
-    make_indices<::std::tuple_size<result_type>{}>());
+    ::std::make_index_sequence<::std::tuple_size<result_type>{}>()
+  );
 }
 
 template<int I, class C>
@@ -1230,14 +1190,16 @@ int default_finalizer(lua_State* const L)
 
 template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
 inline typename ::std::enable_if<bool(!sizeof...(A)), C*>::type
-forward(lua_State* const, indices<I...> const) noexcept(noexcept(C()))
+forward(lua_State* const, ::std::index_sequence<I...> const) noexcept(
+  noexcept(C())
+)
 {
   return new C();
 }
 
 template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
 inline typename ::std::enable_if<bool(sizeof...(A)), C*>::type
-forward(lua_State* const L, indices<I...> const)
+forward(lua_State* const L, ::std::index_sequence<I...> const)
   noexcept(noexcept(C(get_arg<I + O, A>(L)...)))
 {
   return new C(get_arg<I + O, A>(L)...);
@@ -1245,11 +1207,15 @@ forward(lua_State* const L, indices<I...> const)
 
 template <::std::size_t O, class C, class ...A>
 int constructor_stub(lua_State* const L)
-  noexcept(noexcept(forward<O, C, A...>(L, make_indices<sizeof...(A)>())))
+  noexcept(noexcept(
+    forward<O, C, A...>(L, ::std::make_index_sequence<sizeof...(A)>()))
+  )
 {
   assert(sizeof...(A) == lua_gettop(L));
 
-  auto const instance(forward<O, C, A...>(L, make_indices<sizeof...(A)>()));
+  auto const instance(forward<O, C, A...>(L,
+    ::std::make_index_sequence<sizeof...(A)>())
+  );
 
   // table
   lua_createtable(L, 0, default_nrec);
@@ -1312,16 +1278,17 @@ int constructor_stub(lua_State* const L)
 
 template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
 inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
-forward(lua_State* const, R (* const f)(A...), indices<I...> const)
-  noexcept(noexcept((*f)()))
+forward(lua_State* const, R (* const f)(A...),
+  ::std::index_sequence<I...> const) noexcept(noexcept((*f)()))
 {
   return (*f)();
 }
 
 template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
 inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
-forward(lua_State* const L, R (* const f)(A...), indices<I...> const)
-  noexcept(noexcept((*f)(get_arg<I + O, A>(L)...)))
+forward(lua_State* const L, R (* const f)(A...),
+  ::std::index_sequence<I...> const) noexcept(
+  noexcept((*f)(get_arg<I + O, A>(L)...)))
 {
   return (*f)(get_arg<I + O, A>(L)...);
 }
@@ -1329,11 +1296,13 @@ forward(lua_State* const L, R (* const f)(A...), indices<I...> const)
 template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
 typename ::std::enable_if<::std::is_void<R>{}, int>::type
 func_stub(lua_State* const L)
-  noexcept(noexcept(forward<O, R, A...>(L, fp, make_indices<sizeof...(A)>())))
+  noexcept(noexcept(
+    forward<O, R, A...>(L, fp, ::std::make_index_sequence<sizeof...(A)>()))
+  )
 {
   assert(sizeof...(A) == lua_gettop(L));
 
-  forward<O, R, A...>(L, fp, make_indices<sizeof...(A)>());
+  forward<O, R, A...>(L, fp, ::std::make_index_sequence<sizeof...(A)>());
 
   return {};
 }
@@ -1342,10 +1311,10 @@ template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
 typename ::std::enable_if<!::std::is_void<R>{}, int>::type
 func_stub(lua_State* const L)
   noexcept(noexcept(set_result(L, forward<O, R, A...>(L, fp,
-    make_indices<sizeof...(A)>()))))
+    ::std::make_index_sequence<sizeof...(A)>()))))
 {
   return set_result(L, forward<O, R, A...>(L, fp,
-    make_indices<sizeof...(A)>()));
+    ::std::make_index_sequence<sizeof...(A)>()));
 }
 
 template <typename FP, FP fp, class R>
@@ -1370,7 +1339,7 @@ template <::std::size_t O, typename C, typename R, typename ...A,
   ::std::size_t ...I>
 inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
 forward(lua_State* const, C* const c,
-  R (C::* const ptr_to_member)(A...) const, indices<I...> const)
+  R (C::* const ptr_to_member)(A...) const, ::std::index_sequence<I...> const)
   noexcept(noexcept((c->*ptr_to_member)()))
 {
   return (c->*ptr_to_member)();
@@ -1380,7 +1349,7 @@ template <::std::size_t O, typename C, typename R, typename ...A,
   ::std::size_t ...I>
 inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
 forward(lua_State* const L, C* const c,
-  R (C::* const ptr_to_member)(A...) const, indices<I...> const)
+  R (C::* const ptr_to_member)(A...) const, ::std::index_sequence<I...> const)
   noexcept(noexcept((c->*ptr_to_member)(get_arg<I + O, A>(L)...)))
 {
   return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
@@ -1390,7 +1359,7 @@ template <::std::size_t O, typename C, typename R, typename ...A,
   ::std::size_t ...I>
 inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
 forward(lua_State* const, C* const c,
-  R (C::* const ptr_to_member)(A...), indices<I...> const)
+  R (C::* const ptr_to_member)(A...), ::std::index_sequence<I...> const)
   noexcept(noexcept((c->*ptr_to_member)()))
 {
   return (c->*ptr_to_member)();
@@ -1400,7 +1369,7 @@ template <::std::size_t O, typename C, typename R,
   typename ...A, ::std::size_t ...I>
 inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
 forward(lua_State* const L, C* const c,
-  R (C::* const ptr_to_member)(A...), indices<I...> const)
+  R (C::* const ptr_to_member)(A...), ::std::index_sequence<I...> const)
   noexcept(noexcept((c->*ptr_to_member)(get_arg<I + O, A>(L)...)))
 {
   return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
@@ -1413,7 +1382,7 @@ member_stub(lua_State* const L)
     forward<O, C, R, A...>(L,
       static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
       fp,
-      make_indices<sizeof...(A)>()))))
+      ::std::make_index_sequence<sizeof...(A)>()))))
 {
 //::std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << ::std::endl;
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
@@ -1422,7 +1391,7 @@ member_stub(lua_State* const L)
     forward<O, C, R, A...>(L,
       static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
       fp,
-      make_indices<sizeof...(A)>()));
+      ::std::make_index_sequence<sizeof...(A)>()));
 }
 
 template <typename FP, FP fp, ::std::size_t O, class C, class R, class ...A>
@@ -1431,14 +1400,14 @@ member_stub(lua_State* const L)
   noexcept(noexcept(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
     fp,
-    make_indices<sizeof...(A)>())))
+    ::std::make_index_sequence<sizeof...(A)>())))
 {
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
 
   forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
     fp,
-    make_indices<sizeof...(A)>());
+    ::std::make_index_sequence<sizeof...(A)>());
 
   return {};
 }

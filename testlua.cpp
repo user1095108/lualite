@@ -231,7 +231,7 @@ int main(int argc, char* argv[])
 
   ::std::cout << ::lualite::detail::hash("test") <<
     " " <<
-    ::lualite::detail::chash("test") <<
+    ::lualite::detail::hash("test") <<
     ::std::endl;
 
   lua_close(L);
