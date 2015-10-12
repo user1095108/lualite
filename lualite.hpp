@@ -90,15 +90,12 @@ inline constexpr T const& as_const(T& t) noexcept
   return t;
 }
 
-template <typename>
-struct is_function_pointer : ::std::false_type
-{
-};
-
-template <typename R, typename ...A>
-struct is_function_pointer<R (*)(A...)> : ::std::true_type
-{
-};
+template <typename T>
+using is_function_pointer =
+  ::std::integral_constant<bool,
+    ::std::is_pointer<T>{} &&
+    ::std::is_function<typename ::std::remove_pointer<T>::type>{}
+  >;
 
 template <typename T>
 using is_nc_reference =
