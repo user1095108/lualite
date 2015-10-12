@@ -2129,17 +2129,6 @@ private:
   template <class A>
   struct S
   {
-    static void copy_defs(defs_type const& src, defs_type& dst)
-    {
-      for (auto& a: src)
-      {
-        dst.push_back(a);
-
-        dst.back().first.emplace_back(convert<A>);
-        dst.back().first.shrink_to_fit();
-      }
-    }
-
     static void copy_accessors(accessors_type const& src,
       accessors_type& dst)
     {
@@ -2149,6 +2138,17 @@ private:
 
         n.first.emplace_back(convert<A>);
         n.first.shrink_to_fit();
+      }
+    }
+
+    static void copy_defs(defs_type const& src, defs_type& dst)
+    {
+      for (auto& a: src)
+      {
+        dst.push_back(a);
+
+        dst.back().first.emplace_back(convert<A>);
+        dst.back().first.shrink_to_fit();
       }
     }
   };
@@ -2194,25 +2194,25 @@ private:
   }
 
   template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-  lua_CFunction member_stub(R (C::* const)(A...) const)
-  {
-    return &detail::member_stub<FP, fp, O, C, R, A...>;
-  }
-
-  template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
   lua_CFunction member_stub(R (C::* const)(A...))
   {
     return &detail::member_stub<FP, fp, O, C, R, A...>;
   }
 
+  template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
+  lua_CFunction member_stub(R (C::* const)(A...) const)
+  {
+    return &detail::member_stub<FP, fp, O, C, R, A...>;
+  }
+
   template <typename FP, FP fp, class R>
-  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*) const)
+  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*))
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
 
   template <typename FP, FP fp, class R>
-  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*))
+  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*) const)
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
