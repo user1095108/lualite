@@ -85,7 +85,7 @@ namespace detail
 static constexpr auto const default_nrec = 10;
 
 template<typename T>
-inline constexpr T const& as_const(T& t) noexcept
+constexpr inline T const& as_const(T& t) noexcept
 {
   return t;
 }
