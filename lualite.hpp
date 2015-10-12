@@ -1951,11 +1951,20 @@ private:
 };
 
 using accessors_type = ::std::unordered_map<char const*,
-  ::std::pair<::std::vector<void* (*)(void*)>, detail::map_member_info_type>,
-  detail::str_hash, detail::str_eq>;
+  ::std::pair<
+    ::std::vector<void* (*)(void*) noexcept>,
+    detail::map_member_info_type
+  >,
+  detail::str_hash,
+  detail::str_eq
+>;
 
-using defs_type = ::std::vector<::std::pair<::std::vector<void* (*)(void*)>,
-  detail::member_info_type> >;
+using defs_type = ::std::vector<
+  ::std::pair<
+    ::std::vector<void* (*)(void*) noexcept>,
+    detail::member_info_type
+  >
+>;
 
 template <class C>
 class class_ : public scope
@@ -2182,37 +2191,37 @@ private:
   }
 
   template <class A>
-  static void* convert(void* const a)
+  static void* convert(void* const a) noexcept
   {
     return static_cast<A*>(static_cast<C*>(a));
   }
 
   template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-  lua_CFunction func_stub(R (*)(A...))
+  lua_CFunction func_stub(R (*)(A...)) noexcept
   {
     return &detail::func_stub<FP, fp, O, R, A...>;
   }
 
   template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-  lua_CFunction member_stub(R (C::* const)(A...))
+  lua_CFunction member_stub(R (C::* const)(A...)) noexcept
   {
     return &detail::member_stub<FP, fp, O, C, R, A...>;
   }
 
   template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-  lua_CFunction member_stub(R (C::* const)(A...) const)
+  lua_CFunction member_stub(R (C::* const)(A...) const) noexcept
   {
     return &detail::member_stub<FP, fp, O, C, R, A...>;
   }
 
   template <typename FP, FP fp, class R>
-  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*))
+  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*)) noexcept
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
 
   template <typename FP, FP fp, class R>
-  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*) const)
+  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*) const) noexcept
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
@@ -2220,7 +2229,7 @@ private:
 public:
   static char const* class_name_;
 
-  static ::std::vector<bool(*)(char const*)> inherits_;
+  static ::std::vector<bool(*)(char const*) noexcept> inherits_;
 
   static ::std::vector<detail::func_info_type> constructors_;
 
@@ -2234,7 +2243,7 @@ template <class C>
 char const* class_<C>::class_name_;
 
 template <class C>
-::std::vector<bool(*)(char const*)> class_<C>::inherits_;
+::std::vector<bool(*)(char const*) noexcept> class_<C>::inherits_;
 
 template <class C>
 ::std::vector<detail::func_info_type> class_<C>::constructors_;
