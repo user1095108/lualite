@@ -1435,6 +1435,79 @@ vararg_member_stub(lua_State* const L)
   return {};
 }
 
+template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
+static lua_CFunction func_stub(
+  R (*)(A...)) noexcept
+{
+  return &detail::func_stub<FP, fp, O, R, A...>;
+}
+
+template <typename FP, FP fp, ::std::size_t O, class R, class C, class ...A>
+static lua_CFunction member_stub(
+  R (C::* const)(A...)) noexcept
+{
+  return &detail::member_stub<FP, fp, O, C, R, A...>;
+}
+
+template <typename FP, FP fp, ::std::size_t O, class R, class C, class ...A>
+static lua_CFunction member_stub(
+  R (C::* const)(A...) const) noexcept
+{
+  return &detail::member_stub<FP, fp, O, C, R, A...>;
+}
+
+template <typename FP, FP fp, class R, class C>
+static lua_CFunction vararg_member_stub(
+  R (C::* const)(lua_State*)) noexcept
+{
+  return &detail::vararg_member_stub<FP, fp, C, R>;
+}
+
+template <typename FP, FP fp, class R, class C>
+static lua_CFunction vararg_member_stub(
+  R (C::* const)(lua_State*) const) noexcept
+{
+  return &detail::vararg_member_stub<FP, fp, C, R>;
+}
+
+template <typename R>
+static enum property_type get_property_type() noexcept
+{
+  if (::std::is_same<typename ::std::decay<R>::type, bool>{})
+  {
+    return detail::BOOLEAN;
+  }
+  else if (::std::is_integral<R>{})
+  {
+    return detail::INTEGER;
+  }
+  else if (::std::is_floating_point<R>{})
+  {
+    return detail::NUMBER;
+  }
+  else if (::std::is_same<R, ::std::string const&>{} ||
+    ::std::is_same<typename ::std::decay<R>::type, char const*>{})
+  {
+    return detail::STRING;
+  }
+  else
+  {
+    return detail::OTHER;
+  }
+}
+
+template <typename FP, FP fp, class R, class C, class ...A>
+static auto get_property_type( R (C::* const)(A...)) noexcept
+{
+  return get_property_type<R>();
+}
+
+template <typename FP, FP fp, class R, class C, class ...A>
+static auto get_property_type(R (C::* const)(A...) const) noexcept
+{
+  return get_property_type<R>();
+}
+
 template <typename ...A>
 inline void call(lua_State* const L, int const nresults, A&& ...args)
   noexcept(noexcept(swallow{(set_result(L, ::std::forward<A>(args)))...}))
@@ -2087,8 +2160,15 @@ public:
   >::type
   def(char const* const name)
   {
-    defs_.push_back({{},
-      detail::member_info_type{name, member_stub<FP, fp, 2>(fp)}});
+    defs_.push_back(
+      {
+        {},
+        detail::member_info_type{
+          name,
+          detail::member_stub<FP, fp, 2>(fp)
+        }
+      }
+    );
 
     return *this;
   }
@@ -2100,8 +2180,15 @@ public:
   >::type
   def_func(char const* const name)
   {
-    defs_.push_back({{},
-      detail::member_info_type{name, member_stub<FP, fp, 1>(fp)}});
+    defs_.push_back(
+      {
+        {},
+        detail::member_info_type {
+          name,
+          detail::member_stub<FP, fp, 1>(fp)
+        }
+      }
+    );
 
     return *this;
   }
@@ -2113,8 +2200,15 @@ public:
   >::type
   def_func(char const* const name)
   {
-    defs_.push_back({{},
-      detail::member_info_type{name, func_stub<FP, fp, 1>(fp)}});
+    defs_.push_back(
+      {
+        {},
+        detail::member_info_type{
+          name,
+          detail::func_stub<FP, fp, 1>(fp)
+        }
+      }
+    );
 
     return *this;
   }
@@ -2132,8 +2226,8 @@ public:
     getters_.emplace(name,
       accessors_type::mapped_type {
         {},
-        member_stub<FP, fp, 3>(fp),
-        property_type<FP, fp>(fp)
+        detail::member_stub<FP, fp, 3>(fp),
+        detail::get_property_type<FP, fp>(fp)
       }
     );
 
@@ -2148,8 +2242,8 @@ public:
     getters_.emplace(name,
       accessors_type::mapped_type {
         {},
-        member_stub<FPA, fpa, 3>(fpa),
-        property_type<FPA, fpa>(fpa)
+        detail::member_stub<FPA, fpa, 3>(fpa),
+        detail::get_property_type<FPA, fpa>(fpa)
       }
     );
 
@@ -2158,8 +2252,8 @@ public:
     setters_.emplace(name,
       accessors_type::mapped_type {
         {},
-        member_stub<FPB, fpb, 3>(fpb),
-        property_type<FPB, fpb>(fpb)
+        detail::member_stub<FPB, fpb, 3>(fpb),
+        detail::get_property_type<FPB, fpb>(fpb)
       }
     );
 
@@ -2180,7 +2274,7 @@ public:
         {},
         detail::member_info_type {
           name,
-          vararg_member_stub<FP, fp>(fp)
+          detail::vararg_member_stub<FP, fp>(fp)
         }
       }
     );
@@ -2246,79 +2340,6 @@ private:
   static void* convert(void* const a) noexcept
   {
     return static_cast<A*>(static_cast<C*>(a));
-  }
-
-  template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-  static lua_CFunction func_stub(
-    R (*)(A...)) noexcept
-  {
-    return &detail::func_stub<FP, fp, O, R, A...>;
-  }
-
-  template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-  static lua_CFunction member_stub(
-    R (C::* const)(A...)) noexcept
-  {
-    return &detail::member_stub<FP, fp, O, C, R, A...>;
-  }
-
-  template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-  static lua_CFunction member_stub(
-    R (C::* const)(A...) const) noexcept
-  {
-    return &detail::member_stub<FP, fp, O, C, R, A...>;
-  }
-
-  template <typename FP, FP fp, class R>
-  static lua_CFunction vararg_member_stub(
-    R (C::* const)(lua_State*)) noexcept
-  {
-    return &detail::vararg_member_stub<FP, fp, C, R>;
-  }
-
-  template <typename FP, FP fp, class R>
-  static lua_CFunction vararg_member_stub(
-    R (C::* const)(lua_State*) const) noexcept
-  {
-    return &detail::vararg_member_stub<FP, fp, C, R>;
-  }
-
-  template <typename R>
-  static enum detail::property_type property_type() noexcept
-  {
-    if (::std::is_same<typename ::std::decay<R>::type, bool>{})
-    {
-      return detail::BOOLEAN;
-    }
-    else if (::std::is_integral<R>{})
-    {
-      return detail::INTEGER;
-    }
-    else if (::std::is_floating_point<R>{})
-    {
-      return detail::NUMBER;
-    }
-    else if (::std::is_same<R, ::std::string const&>{} ||
-      ::std::is_same<typename ::std::decay<R>::type, char const*>{})
-    {
-      return detail::STRING;
-    }
-    else
-    {
-      return detail::OTHER;
-    }
-  }
-
-  template <typename FP, FP fp, class R, class ...A>
-  static auto property_type( R (C::* const)(A...)) noexcept
-  {
-    return property_type<R>();
-  }
-
-  template <typename FP, FP fp, class R, class ...A>
-  static auto property_type(R (C::* const)(A...) const) noexcept
-  {
-    return property_type<R>();
   }
 };
 
