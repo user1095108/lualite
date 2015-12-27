@@ -172,17 +172,18 @@ inline scope_exit<T> make_scope_exit(T&& f)
   return scope_exit<T>(::std::forward<T>(f));
 }
 
-enum constant_type
+enum property_type
 {
   BOOLEAN,
   INTEGER,
   NUMBER,
-  STRING
+  STRING,
+  OTHER
 };
 
 struct constant_info_type
 {
-  enum constant_type type;
+  enum property_type type;
 
   union
   {
@@ -224,7 +225,7 @@ int getter(lua_State* const L)
     void* p(lua_touserdata(L, uvi));
     auto const q(p);
 
-    for (auto const f: i->second.first)
+    for (auto const f: ::std::get<0>(i->second))
     {
       p = f(p);
     }
@@ -232,11 +233,15 @@ int getter(lua_State* const L)
     lua_pushlightuserdata(L, p);
     lua_replace(L, uvi);
 
-    auto const se(make_scope_exit([&]() noexcept {
-      lua_pushlightuserdata(L, q); lua_replace(L, uvi);})
+    auto const se(
+      make_scope_exit(
+        [&]() noexcept {
+          lua_pushlightuserdata(L, q); lua_replace(L, uvi);
+        }
+      )
     );
 
-    return i->second.second(L);
+    return ::std::get<1>(i->second)(L);
   }
 }
 
@@ -253,7 +258,7 @@ int setter(lua_State* const L)
     void* p(lua_touserdata(L, uvi));
     auto const q(p);
 
-    for (auto const f: i->second.first)
+    for (auto const f: ::std::get<0>(i->second))
     {
       p = f(p);
     }
@@ -265,7 +270,7 @@ int setter(lua_State* const L)
       lua_pushlightuserdata(L, q); lua_replace(L, uvi);})
     );
 
-    i->second.second(L);
+    ::std::get<1>(i->second)(L);
   }
   // else do nothing
 
@@ -1948,11 +1953,14 @@ private:
   }
 };
 
+using accessor_info_type = ::std::tuple<
+  ::std::vector<void* (*)(void*) noexcept>,
+  detail::map_member_info_type,
+  enum detail::property_type
+>;
+
 using accessors_type = ::std::unordered_map<char const*,
-  ::std::pair<
-    ::std::vector<void* (*)(void*) noexcept>,
-    detail::map_member_info_type
-  >,
+  accessor_info_type,
   detail::str_hash,
   detail::str_eq
 >;
@@ -2121,8 +2129,15 @@ public:
   template <class FP, FP fp>
   class_& property(char const* const name)
   {
-    getters_.emplace(name, accessors_type::mapped_type{
-      {}, member_stub<FP, fp, 3>(fp)});
+    getters_.emplace(name,
+      accessors_type::mapped_type {
+        {},
+        member_stub<FP, fp, 3>(fp),
+        property_type<FP, fp>(fp)
+      }
+    );
+
+    assert(::std::get<1>(getters_[name]));
 
     return *this;
   }
@@ -2130,10 +2145,25 @@ public:
   template <typename FPA, FPA fpa, typename FPB, FPB fpb>
   class_& property(char const* const name)
   {
-    getters_.emplace(name, accessors_type::mapped_type{
-      {}, member_stub<FPA, fpa, 3>(fpa)});
-    setters_.emplace(name, accessors_type::mapped_type{
-      {}, member_stub<FPB, fpb, 3>(fpb)});
+    getters_.emplace(name,
+      accessors_type::mapped_type {
+        {},
+        member_stub<FPA, fpa, 3>(fpa),
+        property_type<FPA, fpa>(fpa)
+      }
+    );
+
+    assert(::std::get<1>(getters_[name]));
+
+    setters_.emplace(name,
+      accessors_type::mapped_type {
+        {},
+        member_stub<FPB, fpb, 3>(fpb),
+        property_type<FPB, fpb>(fpb)
+      }
+    );
+
+    assert(::std::get<1>(setters_[name]));
 
     return *this;
   }
@@ -2145,8 +2175,15 @@ public:
   >::type
   vararg_def(char const* const name)
   {
-    defs_.push_back({{},
-      detail::member_info_type{name, vararg_member_stub<FP, fp>(fp)}});
+    defs_.push_back(
+      {
+        {},
+        detail::member_info_type {
+          name,
+          vararg_member_stub<FP, fp>(fp)
+        }
+      }
+    );
 
     return *this;
   }
@@ -2160,10 +2197,11 @@ private:
     {
       for (auto& a: src)
       {
-        auto& n(dst[a.first] = {a.second.first, a.second.second});
+        auto& n(dst[a.first] = a.second);
 
-        n.first.emplace_back(convert<A>);
-        n.first.shrink_to_fit();
+        ::std::get<0>(n).emplace_back(convert<A>);
+        ::std::get<0>(n).shrink_to_fit();
+        assert(::std::get<1>(n));
       }
     }
 
@@ -2238,6 +2276,32 @@ private:
   lua_CFunction vararg_member_stub(R (C::* const)(lua_State*) const) noexcept
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
+  }
+
+  template <typename FP, FP fp, class R, class ...A>
+  enum detail::property_type property_type(R (C::* const)(A...)) noexcept
+  {
+    if (::std::is_same<typename ::std::decay<R>::type, bool>{})
+    {
+      return detail::BOOLEAN;
+    }
+    else if (::std::is_integral<R>{})
+    {
+      return detail::INTEGER;
+    }
+    else if (::std::is_floating_point<R>{})
+    {
+      return detail::NUMBER;
+    }
+    else if (::std::is_same<R, ::std::string const&>{} ||
+      ::std::is_same<typename ::std::decay<R>::type, char const*>{})
+    {
+      return detail::STRING;
+    }
+    else
+    {
+      return detail::OTHER;
+    }
   }
 };
 
