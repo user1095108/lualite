@@ -2249,37 +2249,42 @@ private:
   }
 
   template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-  lua_CFunction func_stub(R (*)(A...)) noexcept
+  static lua_CFunction func_stub(
+    R (*)(A...)) noexcept
   {
     return &detail::func_stub<FP, fp, O, R, A...>;
   }
 
   template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-  lua_CFunction member_stub(R (C::* const)(A...)) noexcept
+  static lua_CFunction member_stub(
+    R (C::* const)(A...)) noexcept
   {
     return &detail::member_stub<FP, fp, O, C, R, A...>;
   }
 
   template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-  lua_CFunction member_stub(R (C::* const)(A...) const) noexcept
+  static lua_CFunction member_stub(
+    R (C::* const)(A...) const) noexcept
   {
     return &detail::member_stub<FP, fp, O, C, R, A...>;
   }
 
   template <typename FP, FP fp, class R>
-  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*)) noexcept
+  static lua_CFunction vararg_member_stub(
+    R (C::* const)(lua_State*)) noexcept
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
 
   template <typename FP, FP fp, class R>
-  lua_CFunction vararg_member_stub(R (C::* const)(lua_State*) const) noexcept
+  static lua_CFunction vararg_member_stub(
+    R (C::* const)(lua_State*) const) noexcept
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
 
-  template <typename FP, FP fp, class R, class ...A>
-  enum detail::property_type property_type(R (C::* const)(A...)) noexcept
+  template <typename R>
+  static enum detail::property_type property_type() noexcept
   {
     if (::std::is_same<typename ::std::decay<R>::type, bool>{})
     {
@@ -2302,6 +2307,18 @@ private:
     {
       return detail::OTHER;
     }
+  }
+
+  template <typename FP, FP fp, class R, class ...A>
+  static auto property_type( R (C::* const)(A...)) noexcept
+  {
+    return property_type<R>();
+  }
+
+  template <typename FP, FP fp, class R, class ...A>
+  static auto property_type(R (C::* const)(A...) const) noexcept
+  {
+    return property_type<R>();
   }
 };
 
