@@ -155,6 +155,8 @@ struct str_hash
 template <typename T>
 class scope_exit
 {
+  T const f_;
+
 public:
   explicit scope_exit(T&& f) noexcept : f_(::std::forward<T>(f))
   {
@@ -162,9 +164,6 @@ public:
   }
 
   ~scope_exit() noexcept { f_(); }
-
-private:
-  T const f_;
 };
 
 template <typename T>
@@ -212,9 +211,9 @@ template <class C>
 int getter(lua_State* const L)
 {
   assert(2 == lua_gettop(L));
-  auto const i(lualite::class_<C>::getters_.find(lua_tostring(L, 2)));
+  auto const i(lualite::class_<C>::getters().find(lua_tostring(L, 2)));
 
-  if (lualite::class_<C>::getters_.end() == i)
+  if (lualite::class_<C>::getters().end() == i)
   {
     return {};
   }
@@ -245,9 +244,9 @@ template <class C>
 int setter(lua_State* const L)
 {
   assert(3 == lua_gettop(L));
-  auto const i(lualite::class_<C>::setters_.find(lua_tostring(L, 2)));
+  auto const i(lualite::class_<C>::setters().find(lua_tostring(L, 2)));
 
-  if (lualite::class_<C>::setters_.end() != i)
+  if (lualite::class_<C>::setters().end() != i)
   {
     auto const uvi(lua_upvalueindex(2));
 
@@ -284,7 +283,7 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
   {
     lua_createtable(L, 0, default_nrec);
 
-    for (auto& mi: lualite::class_<C>::defs_)
+    for (auto& mi: lualite::class_<C>::defs())
     {
       assert(lua_istable(L, -1));
 
@@ -1216,7 +1215,7 @@ int constructor_stub(lua_State* const L)
   // table
   lua_createtable(L, 0, default_nrec);
 
-  for (auto& mi: lualite::class_<C>::defs_)
+  for (auto& mi: lualite::class_<C>::defs())
   {
     assert(lua_istable(L, -1));
 
@@ -1753,6 +1752,8 @@ private:
 
 class module : public scope
 {
+  lua_State* const L_;
+
 public:
   template <typename ...A>
   module(lua_State* const L, A&&... args) :
@@ -1769,7 +1770,7 @@ public:
     scope(name),
     L_(L)
   {
-    [](...){}((args.set_parent_scope(this), 0)...);
+    detail::swallow((args.set_parent_scope(this), 0)...);
 
     scope::apply(L);
   }
@@ -1945,9 +1946,6 @@ private:
     lua_pushnil(L_);
     lua_pushcclosure(L_, detail::vararg_func_stub<FP, fp, R>, 1);
   }
-
-private:
-  lua_State* const L_;
 };
 
 using accessors_type = ::std::unordered_map<char const*,
@@ -1969,6 +1967,17 @@ using defs_type = ::std::vector<
 template <class C>
 class class_ : public scope
 {
+  static char const* class_name_;
+
+  static ::std::vector<bool(*)(char const*) noexcept> inherits_;
+
+  static ::std::vector<detail::func_info_type> constructors_;
+
+  static defs_type defs_;
+
+  static accessors_type getters_;
+  static accessors_type setters_;
+
 public:
   class_(char const* const name) : scope(name)
   {
@@ -2000,15 +2009,15 @@ public:
   class_& inherits()
   {
     detail::swallow{
-      (S<A>::copy_accessors(class_<A>::getters_, getters_), 0)...
+      (S<A>::copy_accessors(class_<A>::getters(), getters_), 0)...
     };
 
     detail::swallow{
-      (S<A>::copy_accessors(class_<A>::setters_, setters_), 0)...
+      (S<A>::copy_accessors(class_<A>::setters(), setters_), 0)...
     };
 
     detail::swallow{
-      (S<A>::copy_defs(class_<A>::defs_, defs_), 0)...
+      (S<A>::copy_defs(class_<A>::defs(), defs_), 0)...
     };
 
     assert(inherits_.empty());
@@ -2019,6 +2028,14 @@ public:
 
     return *this;
   }
+
+  static decltype(class_name_) class_name() noexcept { return class_name_; }
+
+  static decltype(defs_) const& defs() noexcept { return defs_; }
+
+  static decltype(getters_) const& getters() noexcept { return getters_; }
+
+  static decltype(setters_) const& setters() noexcept { return setters_; }
 
   static bool inherits(char const* const name) noexcept
   {
@@ -2178,9 +2195,6 @@ private:
       detail::rawsetfield(L, -2, i.name);
     }
 
-    // lua_pushstring(L, name_);
-    // detail::rawsetfield(L, -2, "__classname");
-
     assert(inherits_.capacity() == inherits_.size());
     constructors_.shrink_to_fit();
     defs_.shrink_to_fit();
@@ -2225,18 +2239,6 @@ private:
   {
     return &detail::vararg_member_stub<FP, fp, C, R>;
   }
-
-public:
-  static char const* class_name_;
-
-  static ::std::vector<bool(*)(char const*) noexcept> inherits_;
-
-  static ::std::vector<detail::func_info_type> constructors_;
-
-  static defs_type defs_;
-
-  static accessors_type getters_;
-  static accessors_type setters_;
 };
 
 template <class C>
