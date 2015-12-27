@@ -1436,42 +1436,42 @@ vararg_member_stub(lua_State* const L)
 }
 
 template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-static lua_CFunction func_stub(
+constexpr inline lua_CFunction func_stub(
   R (*)(A...)) noexcept
 {
   return &detail::func_stub<FP, fp, O, R, A...>;
 }
 
 template <typename FP, FP fp, ::std::size_t O, class R, class C, class ...A>
-static lua_CFunction member_stub(
+constexpr inline lua_CFunction member_stub(
   R (C::* const)(A...)) noexcept
 {
   return &detail::member_stub<FP, fp, O, C, R, A...>;
 }
 
 template <typename FP, FP fp, ::std::size_t O, class R, class C, class ...A>
-static lua_CFunction member_stub(
+constexpr inline lua_CFunction member_stub(
   R (C::* const)(A...) const) noexcept
 {
   return &detail::member_stub<FP, fp, O, C, R, A...>;
 }
 
 template <typename FP, FP fp, class R, class C>
-static lua_CFunction vararg_member_stub(
+constexpr inline lua_CFunction vararg_member_stub(
   R (C::* const)(lua_State*)) noexcept
 {
   return &detail::vararg_member_stub<FP, fp, C, R>;
 }
 
 template <typename FP, FP fp, class R, class C>
-static lua_CFunction vararg_member_stub(
+constexpr inline lua_CFunction vararg_member_stub(
   R (C::* const)(lua_State*) const) noexcept
 {
   return &detail::vararg_member_stub<FP, fp, C, R>;
 }
 
 template <typename R>
-static enum property_type get_property_type() noexcept
+constexpr inline enum property_type get_property_type() noexcept
 {
   if (::std::is_same<typename ::std::decay<R>::type, bool>{})
   {
@@ -1497,13 +1497,13 @@ static enum property_type get_property_type() noexcept
 }
 
 template <typename FP, FP fp, class R, class C, class ...A>
-static auto get_property_type( R (C::* const)(A...)) noexcept
+constexpr inline auto get_property_type( R (C::* const)(A...)) noexcept
 {
   return get_property_type<R>();
 }
 
 template <typename FP, FP fp, class R, class C, class ...A>
-static auto get_property_type(R (C::* const)(A...) const) noexcept
+constexpr inline auto get_property_type(R (C::* const)(A...) const) noexcept
 {
   return get_property_type<R>();
 }
@@ -1517,7 +1517,7 @@ inline void call(lua_State* const L, int const nresults, A&& ...args)
   swallow{
     (ac += set_result(L, ::std::forward<A>(args)))...
   };
-  assert(decltype(sizeof...(A))(ac) <= sizeof...(A));
+  assert(ac >= int(sizeof...(A)));
 
   lua_call(L, ac, nresults);
 }
