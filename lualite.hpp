@@ -2163,7 +2163,7 @@ public:
     defs_.push_back(
       {
         {},
-        detail::member_info_type{
+        detail::member_info_type {
           name,
           detail::member_stub<FP, fp, 2>(fp)
         }
@@ -2203,7 +2203,7 @@ public:
     defs_.push_back(
       {
         {},
-        detail::member_info_type{
+        detail::member_info_type {
           name,
           detail::func_stub<FP, fp, 1>(fp)
         }
@@ -2253,7 +2253,7 @@ public:
       accessors_type::mapped_type {
         {},
         detail::member_stub<FPB, fpb, 3>(fpb),
-        detail::get_property_type<FPB, fpb>(fpb)
+        detail::get_property_type<FPA, fpa>(fpa)
       }
     );
 
@@ -2295,12 +2295,13 @@ private:
 
         ::std::get<0>(n).emplace_back(convert<A>);
         ::std::get<0>(n).shrink_to_fit();
-        assert(::std::get<1>(n));
       }
     }
 
     static void copy_defs(defs_type const& src, defs_type& dst)
     {
+      dst.reserve(dst.size() + src.size());
+
       for (auto& a: src)
       {
         dst.push_back(a);
