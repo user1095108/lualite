@@ -83,6 +83,22 @@ Try it [online](http://lualitedemo.square7.ch/).
 
 ##FAQ##
 
+**Q:** Why is there no support for introspection in lualite:
+
+**A:** there is, but it is not exposed to lua by default. The idea is not to pollute the lua namespace and not to make users pay for something they potentially don't want. Example:
+```
+void Object::init()
+{
+  // register Object
+  ::lualite::module(L,
+    ::lualite::class_<Object>("Object")
+      .constructor<Object*>()
+      .def_func<bool(*)(char const*) noexcept,
+        &::lualite::class_<Object>::inherits>("inherits")
+   );
+}
+```
+
 **Q:** Why can't I return `char*`:
 
 **A:** try returning `char const*`. Don't return references or pointers to non-const objects, if you don't provide wrappers for them (returning a non-const reference or pointer implies the ability to change the referred-to object within a Lua script, which is not possible without also writing a wrapper class for the type of the referred-to object).
