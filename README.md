@@ -98,6 +98,7 @@ void Object::init()
    );
 }
 ```
+Adds the ability to query an object wheter it's class inherits from another class. By default, an object's class always inherits from itself. That is `obj.inherits("Object")` always returns true.
 
 **Q:** Why can't I return `char*`:
 
