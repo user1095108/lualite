@@ -89,13 +89,12 @@ Try it [online](http://lualitedemo.square7.ch/).
 ```
 void Object::init()
 {
-  // register Object
   ::lualite::module(L,
     ::lualite::class_<Object>("Object")
       .constructor<Object*>()
       .def_func<bool(*)(char const*) noexcept,
         &::lualite::class_<Object>::inherits>("inherits")
-   );
+  );
 }
 ```
 Adds the ability to query whether an object's class inherits from another class. By default, an object's class always inherits from itself. That is, `obj.inherits("Object")` always returns true. Similar mechanisms can be implemented for querying property names and the types of objects they expose.
