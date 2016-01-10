@@ -104,7 +104,13 @@ using is_nc_reference =
     !::std::is_const<typename ::std::remove_reference<T>::type>{}
   >;
 
-struct swallow { template <typename ...T> swallow(T&& ...) noexcept { } };
+struct swallow
+{
+  template <typename ...T>
+  explicit swallow(T&& ...) noexcept
+  {
+  }
+};
 
 // key is at the top of the stack
 inline void rawgetfield(lua_State* const L, int const index,
