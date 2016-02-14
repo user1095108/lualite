@@ -1,7 +1,7 @@
 /*
 ** The MIT License (MIT)
 ** 
-** Copyright (c) 2013-2015 Janez Žemva
+** Copyright (c) 2013-2016 Janez Žemva
 ** 
 ** Permission is hereby granted, free of charge, to any person obtaining a copy
 ** of this software and associated documentation files (the "Software"), to deal
@@ -2032,14 +2032,20 @@ private:
   }
 };
 
-using accessor_info_type = ::std::tuple<
+using accessor_type = ::std::tuple<
   ::std::vector<void* (*)(void*) noexcept>,
   detail::map_member_info_type,
   enum detail::property_type
 >;
 
 using accessors_type = ::std::unordered_map<char const*,
-  accessor_info_type,
+  accessor_type,
+  detail::str_hash,
+  detail::str_eq
+>;
+
+using accessors_info_type = ::std::unordered_map<char const*,
+  enum detail::property_type,
   detail::str_hash,
   detail::str_eq
 >;
@@ -2123,6 +2129,30 @@ public:
   static decltype(getters_) const& getters() noexcept { return getters_; }
 
   static decltype(setters_) const& setters() noexcept { return setters_; }
+
+  accessors_info_type getters_info() const
+  {
+    accessors_info_type r;
+
+    for (auto& g: getters_)
+    {
+      r.emplace(g.first, ::std::get<2>(g.second));
+    }
+
+    return r;
+  }
+
+  accessors_info_type setters_info() const
+  {
+    accessors_info_type r;
+
+    for (auto& s: setters_)
+    {
+      r.emplace(s.first, ::std::get<2>(s.second));
+    }
+
+    return r;
+  }
 
   static bool inherits(char const* const name) noexcept
   {
