@@ -178,7 +178,7 @@ inline scope_exit<T> make_scope_exit(T&& f)
   return scope_exit<T>(::std::forward<T>(f));
 }
 
-enum property_type
+enum property_type : unsigned
 {
   BOOLEAN,
   INTEGER,
@@ -2045,7 +2045,7 @@ using accessors_type = ::std::unordered_map<char const*,
 >;
 
 using accessors_info_type = ::std::unordered_map<char const*,
-  enum detail::property_type,
+  unsigned,
   detail::str_hash,
   detail::str_eq
 >;
