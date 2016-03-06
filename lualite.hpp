@@ -107,7 +107,7 @@ using is_nc_reference =
 struct swallow
 {
   template <typename ...T>
-  explicit swallow(T&& ...) noexcept
+  constexpr explicit swallow(T&& ...) noexcept
   {
   }
 };
@@ -618,7 +618,8 @@ template <typename T>
 inline typename ::std::enable_if<
   ::std::is_same<typename ::std::decay<T>::type, ::std::string>{} &&
   !is_nc_reference<T>{},
-  int>::type
+  int
+>::type
 set_result(lua_State* const L, T&& s) noexcept
 {
   lua_pushlstring(L, s.c_str(), s.size());
@@ -631,8 +632,9 @@ inline typename ::std::enable_if<
   is_std_pair<typename ::std::decay<C>::type>{} &&
   !is_nc_reference<C>{},
   int>::type
-set_result(lua_State* const L, C&& p)
-  noexcept(noexcept(set_result(L, p.first), set_result(L, p.second)))
+set_result(lua_State* const L, C&& p) noexcept(
+  noexcept(set_result(L, p.first), set_result(L, p.second))
+)
 {
   set_result(L, p.first);
   set_result(L, p.second);
@@ -642,10 +644,9 @@ set_result(lua_State* const L, C&& p)
 
 template <typename ...Types, ::std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
-  ::std::tuple<Types...> const& t, ::std::index_sequence<I...> const)
-    noexcept(noexcept(swallow{
-      (set_result(L, ::std::get<I>(t)), 0)...
-    }))
+  ::std::tuple<Types...> const& t, ::std::index_sequence<I...> const) noexcept(
+    noexcept(swallow{(set_result(L, ::std::get<I>(t)), 0)...})
+  )
 {
   swallow{(set_result(L, ::std::get<I>(t)), 0)...};
 }
@@ -654,10 +655,15 @@ template <typename C>
 inline typename ::std::enable_if<
   is_std_tuple<typename ::std::decay<C>::type>{} &&
   !is_nc_reference<C>{},
-  int>::type
-set_result(lua_State* const L, C&& t)
-  noexcept(noexcept(set_tuple_result(L, t,
-    ::std::make_index_sequence<::std::tuple_size<C>{}>())))
+  int
+>::type
+set_result(lua_State* const L, C&& t) noexcept(
+  noexcept(
+    set_tuple_result(L, t,
+      ::std::make_index_sequence<::std::tuple_size<C>{}>()
+    )
+  )
+)
 {
   using result_type = typename ::std::decay<C>::type;
 
@@ -673,7 +679,8 @@ template <typename C>
 inline typename ::std::enable_if<
   is_std_array<typename ::std::decay<C>::type>{} &&
   !is_nc_reference<C>{},
-  int>::type
+  int
+>::type
 set_result(lua_State* const L, C&& a)
 {
   lua_createtable(L, a.size(), 0);
@@ -696,7 +703,8 @@ template <typename C>
 inline typename ::std::enable_if<
   is_std_deque<typename ::std::decay<C>::type>{} &&
   !is_nc_reference<C>{},
-  int>::type
+  int
+>::type
 set_result(lua_State* const L, C&& d)
 {
   lua_createtable(L, d.size(), 0);
@@ -719,7 +727,8 @@ template <typename C>
 inline typename ::std::enable_if<
   is_std_forward_list<typename ::std::decay<C>::type>{} &&
   !is_nc_reference<C>{},
-  int>::type
+  int
+>::type
 set_result(lua_State* const L, C&& l)
 {
   lua_createtable(L, l.size(), 0);
@@ -742,7 +751,8 @@ template <typename C>
 inline typename ::std::enable_if<
   is_std_list<typename ::std::decay<C>::type>{} &&
   !is_nc_reference<C>{},
-  int>::type
+  int
+>::type
 set_result(lua_State* const L, C&& l)
 {
   lua_createtable(L, l.size(), 0);
