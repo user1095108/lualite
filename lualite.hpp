@@ -943,12 +943,15 @@ inline typename ::std::enable_if<
   is_std_tuple<typename ::std::decay<C>::type>{} &&
   !is_nc_reference<C>{},
   typename ::std::decay<C>::type>::type
-get_arg(lua_State* const L)
-  noexcept(noexcept(get_tuple_arg<I, typename ::std::decay<C>::type>(L,
-    ::std::make_index_sequence<
-      ::std::tuple_size<typename ::std::decay<C>::type>{}
-    >()))
+get_arg(lua_State* const L) noexcept(
+  noexcept(get_tuple_arg<I,
+    typename ::std::decay<C>::type>(L,
+      ::std::make_index_sequence<
+        ::std::tuple_size<typename ::std::decay<C>::type>{}
+      >()
+    )
   )
+)
 {
   assert(lua_istable(L, I));
 
