@@ -131,8 +131,7 @@ inline void rawsetfield(lua_State* const L, int const index,
   lua_rawset(L, i);
 }
 
-constexpr inline ::std::size_t hash(char const* s,
-  ::std::size_t h = {}) noexcept
+constexpr inline auto hash(char const* s, ::std::size_t h = {}) noexcept
 {
   while (*s)
   {
@@ -2135,13 +2134,13 @@ public:
     return *this;
   }
 
-  static decltype(class_name_) class_name() noexcept { return class_name_; }
+  static auto class_name() noexcept { return class_name_; }
 
-  static decltype(defs_) const& defs() noexcept { return defs_; }
+  static auto const& defs() noexcept { return defs_; }
 
-  static decltype(getters_) const& getters() noexcept { return getters_; }
+  static auto const& getters() noexcept { return getters_; }
 
-  static decltype(setters_) const& setters() noexcept { return setters_; }
+  static auto const& setters() noexcept { return setters_; }
 
   accessors_info_type getters_info() const
   {
