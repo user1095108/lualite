@@ -11,7 +11,7 @@ Supported features:
  * user types.
 
 ##Example##
-```
+```c++
   lualite::module{L,
     lualite::class_<testbase>("testbase")
       .constant("__classname", "testbase")
