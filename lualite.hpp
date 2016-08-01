@@ -94,14 +94,14 @@ template <typename T>
 using is_function_pointer =
   ::std::integral_constant<bool,
     ::std::is_pointer<T>{} &&
-    ::std::is_function<typename ::std::remove_pointer<T>::type>{}
+    ::std::is_function<::std::remove_pointer_t<T>>{}
   >;
 
 template <typename T>
 using is_nc_reference =
   ::std::integral_constant<bool,
     ::std::is_reference<T>{} &&
-    !::std::is_const<typename ::std::remove_reference<T>::type>{}
+    !::std::is_const<::std::remove_reference_t<T>>{}
   >;
 
 struct swallow
@@ -347,10 +347,11 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 }
 
 template <typename T>
-inline typename ::std::enable_if<
-  ::std::is_floating_point<typename ::std::decay<T>::type>{} &&
+inline ::std::enable_if_t<
+  ::std::is_floating_point<::std::decay_t<T>>{} &&
   !is_nc_reference<T>{},
-  int>::type
+  int
+>
 set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushnumber(L, v);
@@ -359,11 +360,12 @@ set_result(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline typename ::std::enable_if<
-  ::std::is_integral<typename ::std::decay<T>::type>{} &&
-  !::std::is_same<typename ::std::decay<T>::type, bool>{} &&
+inline ::std::enable_if_t<
+  ::std::is_integral<::std::decay_t<T>>{} &&
+  !::std::is_same<::std::decay_t<T>, bool>{} &&
   !is_nc_reference<T>{},
-  int>::type
+  int
+>
 set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushinteger(L, v);
@@ -372,10 +374,11 @@ set_result(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::decay<T>::type, bool>{} &&
+inline ::std::enable_if_t<
+  ::std::is_same<::std::decay_t<T>, bool>{} &&
   !is_nc_reference<T>{},
-  int>::type
+  int
+>
 set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushboolean(L, v);
@@ -384,10 +387,11 @@ set_result(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::decay<T>::type, char const*>{} &&
+inline ::std::enable_if_t<
+  ::std::is_same<::std::decay_t<T>, char const*>{} &&
   !is_nc_reference<T>{},
-  int>::type
+  int
+>
 set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushstring(L, v);
@@ -396,10 +400,11 @@ set_result(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::decay<T>::type, void const*>{} &&
+inline ::std::enable_if_t<
+  ::std::is_same<::std::decay_t<T>, void const*>{} &&
   !is_nc_reference<T>{},
-  int>::type
+  int
+>
 set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushlightuserdata(L, const_cast<void*>(v));
@@ -408,11 +413,12 @@ set_result(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline typename ::std::enable_if<
+inline ::std::enable_if_t<
   ::std::is_pointer<T>{} &&
-  !::std::is_const<typename ::std::remove_pointer<T>::type>{} &&
-  !::std::is_class<typename ::std::remove_pointer<T>::type>{},
-  int>::type
+  !::std::is_const<::std::remove_pointer_t<T>>{} &&
+  !::std::is_class<::std::remove_pointer_t<T>>{},
+  int
+>
 set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushlightuserdata(L, v);
@@ -421,10 +427,11 @@ set_result(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline typename ::std::enable_if<
+inline ::std::enable_if_t<
   is_nc_reference<T>{} &&
-  !::std::is_class<typename ::std::decay<T>::type>{},
-  int>::type
+  !::std::is_class<::std::decay_t<T>>{},
+  int
+>
 set_result(lua_State* const L, T&& v) noexcept
 {
   lua_pushlightuserdata(L, &v);
@@ -433,13 +440,12 @@ set_result(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline typename ::std::enable_if<
-  ::std::is_pointer<typename ::std::decay<T>::type>{} &&
-  !::std::is_const<typename ::std::remove_pointer<T>::type>{} &&
-  ::std::is_class<typename ::std::remove_pointer<
-    typename ::std::decay<T>::type>::type
-  >{},
-  int>::type
+inline ::std::enable_if_t<
+  ::std::is_pointer<::std::decay_t<T>>{} &&
+  !::std::is_const<::std::remove_pointer_t<T>>{} &&
+  ::std::is_class<::std::remove_pointer_t<::std::decay_t<T>>>{},
+  int
+>
 set_result(lua_State* const L, T&& v) noexcept
 {
   create_wrapper_table(L, v);
@@ -448,10 +454,11 @@ set_result(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline typename ::std::enable_if<
+inline ::std::enable_if_t<
   is_nc_reference<T>{} &&
-  ::std::is_class<typename ::std::decay<T>::type>{},
-  int>::type
+  ::std::is_class<::std::decay_t<T>>{},
+  int
+>
 set_result(lua_State* const L, T&& v) noexcept
 {
   create_wrapper_table(L, &v);
@@ -460,20 +467,22 @@ set_result(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::decay<T>::type, any>{} &&
+inline ::std::enable_if_t<
+  ::std::is_same<::std::decay_t<T>, any>{} &&
   !is_nc_reference<T>{},
-  int>::type
+  int
+>
 set_result(lua_State* const, T&&) noexcept
 {
   return 1;
 }
 
 template <int I, typename T>
-inline typename ::std::enable_if<
-  ::std::is_floating_point<typename ::std::decay<T>::type>{} &&
+inline ::std::enable_if_t<
+  ::std::is_floating_point<::std::decay_t<T>>{} &&
   !is_nc_reference<T>{},
-  typename ::std::decay<T>::type>::type
+  ::std::decay_t<T>
+>
 get_arg(lua_State* const L) noexcept
 {
   assert(lua_isnumber(L, I));
@@ -481,11 +490,12 @@ get_arg(lua_State* const L) noexcept
 }
 
 template <int I, typename T>
-inline typename ::std::enable_if<
-  ::std::is_integral<typename ::std::decay<T>::type>{} &&
-  !::std::is_same<typename ::std::decay<T>::type, bool>{} &&
+inline ::std::enable_if_t<
+  ::std::is_integral<::std::decay_t<T>>{} &&
+  !::std::is_same<::std::decay_t<T>, bool>{} &&
   !is_nc_reference<T>{},
-  typename ::std::decay<T>::type>::type
+  ::std::decay_t<T>
+>
 get_arg(lua_State* const L) noexcept
 {
   assert(lua_isnumber(L, I));
@@ -493,10 +503,11 @@ get_arg(lua_State* const L) noexcept
 }
 
 template <int I, typename T>
-inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::decay<T>::type, bool>{} &&
+inline ::std::enable_if_t<
+  ::std::is_same<::std::decay_t<T>, bool>{} &&
   !is_nc_reference<T>{},
-  typename ::std::decay<T>::type>::type
+  ::std::decay_t<T>
+>
 get_arg(lua_State* const L) noexcept
 {
   assert(lua_isboolean(L, I));
@@ -504,10 +515,11 @@ get_arg(lua_State* const L) noexcept
 }
 
 template <int I, typename T>
-inline typename ::std::enable_if<::std::is_same<
-  typename ::std::decay<T>::type, char const*>{} &&
+inline ::std::enable_if_t<
+  ::std::is_same<::std::decay_t<T>, char const*>{} &&
   !is_nc_reference<T>{},
-  typename ::std::decay<T>::type>::type
+  ::std::decay_t<T>
+>
 get_arg(lua_State* const L) noexcept
 {
   assert(lua_isstring(L, I));
@@ -515,10 +527,11 @@ get_arg(lua_State* const L) noexcept
 }
 
 template <int I, typename T>
-inline typename ::std::enable_if<
+inline ::std::enable_if_t<
   ::std::is_pointer<T>{} &&
-  !::std::is_same<typename ::std::decay<T>::type, char const*>{},
-  typename ::std::decay<T>::type>::type
+  !::std::is_same<::std::decay_t<T>, char const*>{},
+  ::std::decay_t<T>
+>
 get_arg(lua_State* const L) noexcept
 {
   assert(lua_islightuserdata(L, I));
@@ -526,21 +539,24 @@ get_arg(lua_State* const L) noexcept
 }
 
 template <int I, typename T>
-inline typename ::std::enable_if<is_nc_reference<T>{}, T>::type
+inline ::std::enable_if_t<
+  is_nc_reference<T>{},
+  T
+>
 get_arg(lua_State* const L) noexcept
 {
   assert(lua_islightuserdata(L, I));
-  return *static_cast<typename ::std::decay<T>::type*>(
-    lua_touserdata(L, I));
+  return *static_cast<::std::decay_t<T>*>(lua_touserdata(L, I));
 }
 
 template <int I, typename T>
-inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::remove_const<T>::type, any>{},
-  T>::type
+inline ::std::enable_if_t<
+  ::std::is_same<::std::remove_const_t<T>, any>{},
+  T
+>
 get_arg(lua_State* const) noexcept
 {
-  return any();
+  return {};
 }
 
 #ifndef LUALITE_NO_STD_CONTAINERS
