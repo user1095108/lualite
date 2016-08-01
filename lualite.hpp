@@ -2158,7 +2158,7 @@ public:
 
   static auto const& setters() noexcept { return setters_; }
 
-  accessors_info_type getters_info() const
+  auto getters_info() const
   {
     accessors_info_type r;
 
@@ -2170,7 +2170,7 @@ public:
     return r;
   }
 
-  accessors_info_type setters_info() const
+  auto setters_info() const
   {
     accessors_info_type r;
 
@@ -2185,7 +2185,6 @@ public:
   static bool inherits(char const* const name) noexcept
   {
     assert(class_name_ && name);
-
     if (::std::strcmp(name, class_name_))
     {
       for (auto const f: inherits_)
@@ -2206,10 +2205,10 @@ public:
   }
 
   template <typename FP, FP fp>
-  typename ::std::enable_if<
+  ::std::enable_if_t<
     detail::is_function_pointer<FP>{},
     class_&
-  >::type
+  >
   def(char const* const name)
   {
     scope::def<FP, fp>(name);
@@ -2218,10 +2217,10 @@ public:
   }
 
   template <typename FP, FP fp>
-  typename ::std::enable_if<
+  ::std::enable_if_t<
     !detail::is_function_pointer<FP>{},
     class_&
-  >::type
+  >
   def(char const* const name)
   {
     defs_.push_back(
@@ -2238,10 +2237,10 @@ public:
   }
 
   template <typename FP, FP fp>
-  typename ::std::enable_if<
+  ::std::enable_if_t<
     !detail::is_function_pointer<FP>{},
     class_&
-  >::type
+  >
   def_func(char const* const name)
   {
     defs_.push_back(
@@ -2258,10 +2257,10 @@ public:
   }
 
   template <typename FP, FP fp>
-  typename ::std::enable_if<
+  ::std::enable_if_t<
     detail::is_function_pointer<FP>{},
     class_&
-  >::type
+  >
   def_func(char const* const name)
   {
     defs_.push_back(
@@ -2277,7 +2276,7 @@ public:
     return *this;
   }
 
-  class_& enum_(char const* const name, lua_Integer const value)
+  auto& enum_(char const* const name, lua_Integer const value)
   {
     scope::constant(name, value);
 
@@ -2285,7 +2284,7 @@ public:
   }
 
   template <class FP, FP fp>
-  class_& property(char const* const name)
+  auto& property(char const* const name)
   {
     getters_.emplace(name,
       accessors_type::mapped_type {
@@ -2301,7 +2300,7 @@ public:
   }
 
   template <typename FPA, FPA fpa, typename FPB, FPB fpb>
-  class_& property(char const* const name)
+  auto& property(char const* const name)
   {
     getters_.emplace(name,
       accessors_type::mapped_type {
@@ -2327,10 +2326,10 @@ public:
   }
 
   template <typename FP, FP fp>
-  typename ::std::enable_if<
+  ::std::enable_if_t<
     !detail::is_function_pointer<FP>{},
     class_&
-  >::type
+  >
   vararg_def(char const* const name)
   {
     defs_.push_back(
