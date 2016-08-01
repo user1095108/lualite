@@ -1223,7 +1223,7 @@ int default_finalizer(lua_State* const L)
 }
 
 template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
-inline typename ::std::enable_if<bool(!sizeof...(A)), C*>::type
+inline ::std::enable_if_t<bool(!sizeof...(A)), C*>
 forward(lua_State* const, ::std::index_sequence<I...> const) noexcept(
   noexcept(C())
 )
@@ -1232,7 +1232,7 @@ forward(lua_State* const, ::std::index_sequence<I...> const) noexcept(
 }
 
 template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
-inline typename ::std::enable_if<bool(sizeof...(A)), C*>::type
+inline ::std::enable_if_t<bool(sizeof...(A)), C*>
 forward(lua_State* const L, ::std::index_sequence<I...> const)
   noexcept(noexcept(C(get_arg<I + O, A>(L)...)))
 {
@@ -1311,7 +1311,7 @@ int constructor_stub(lua_State* const L)
 }
 
 template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
-inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
+inline ::std::enable_if_t<bool(!sizeof...(A)), R>
 forward(lua_State* const, R (* const f)(A...),
   ::std::index_sequence<I...> const) noexcept(noexcept((*f)()))
 {
@@ -1319,7 +1319,7 @@ forward(lua_State* const, R (* const f)(A...),
 }
 
 template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
-inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
+inline ::std::enable_if_t<bool(sizeof...(A)), R>
 forward(lua_State* const L, R (* const f)(A...),
   ::std::index_sequence<I...> const) noexcept(
   noexcept((*f)(get_arg<I + O, A>(L)...)))
@@ -1328,11 +1328,12 @@ forward(lua_State* const L, R (* const f)(A...),
 }
 
 template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-typename ::std::enable_if<::std::is_void<R>{}, int>::type
-func_stub(lua_State* const L)
-  noexcept(noexcept(
-    forward<O, R, A...>(L, fp, ::std::make_index_sequence<sizeof...(A)>()))
+inline ::std::enable_if_t<::std::is_void<R>{}, int>
+func_stub(lua_State* const L) noexcept(
+  noexcept(
+    forward<O, R, A...>(L, fp, ::std::make_index_sequence<sizeof...(A)>())
   )
+)
 {
   assert(sizeof...(A) == lua_gettop(L));
 
@@ -1342,27 +1343,30 @@ func_stub(lua_State* const L)
 }
 
 template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-typename ::std::enable_if<!::std::is_void<R>{}, int>::type
-func_stub(lua_State* const L)
-  noexcept(noexcept(set_result(L, forward<O, R, A...>(L, fp,
-    ::std::make_index_sequence<sizeof...(A)>()))))
+inline ::std::enable_if_t<!::std::is_void<R>{}, int>
+func_stub(lua_State* const L) noexcept(
+  noexcept(
+    set_result(L, forward<O, R, A...>(L, fp,
+    ::std::make_index_sequence<sizeof...(A)>()))
+  )
+)
 {
   return set_result(L, forward<O, R, A...>(L, fp,
     ::std::make_index_sequence<sizeof...(A)>()));
 }
 
 template <typename FP, FP fp, class R>
-typename ::std::enable_if<!::std::is_void<R>{}, int>::type
-vararg_func_stub(lua_State* const L)
-  noexcept(noexcept(set_result(fp(L))))
+inline ::std::enable_if_t<!::std::is_void<R>{}, int>
+vararg_func_stub(lua_State* const L) noexcept(
+  noexcept(set_result(fp(L)))
+)
 {
   return set_result(fp(L));
 }
 
 template <typename FP, FP fp, class R>
-typename ::std::enable_if<::std::is_void<R>{}, int>::type
-vararg_func_stub(lua_State* const L)
-  noexcept(noexcept(fp(L)))
+inline ::std::enable_if_t<::std::is_void<R>{}, int>
+vararg_func_stub(lua_State* const L) noexcept(noexcept(fp(L)))
 {
   fp(L);
 
@@ -1371,30 +1375,36 @@ vararg_func_stub(lua_State* const L)
 
 template <::std::size_t O, typename C, typename R, typename ...A,
   ::std::size_t ...I>
-inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
+inline ::std::enable_if_t<bool(!sizeof...(A)), R>
 forward(lua_State* const, C* const c,
-  R (C::* const ptr_to_member)(A...) const, ::std::index_sequence<I...> const)
-  noexcept(noexcept((c->*ptr_to_member)()))
+  R (C::* const ptr_to_member)(A...) const,
+  ::std::index_sequence<I...> const) noexcept(
+  noexcept((c->*ptr_to_member)())
+)
 {
   return (c->*ptr_to_member)();
 }
 
 template <::std::size_t O, typename C, typename R, typename ...A,
   ::std::size_t ...I>
-inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
+inline ::std::enable_if_t<bool(sizeof...(A)), R>
 forward(lua_State* const L, C* const c,
-  R (C::* const ptr_to_member)(A...) const, ::std::index_sequence<I...> const)
-  noexcept(noexcept((c->*ptr_to_member)(get_arg<I + O, A>(L)...)))
+  R (C::* const ptr_to_member)(A...) const,
+  ::std::index_sequence<I...> const) noexcept(
+  noexcept((c->*ptr_to_member)(get_arg<I + O, A>(L)...))
+)
 {
   return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
 }
 
 template <::std::size_t O, typename C, typename R, typename ...A,
   ::std::size_t ...I>
-inline typename ::std::enable_if<bool(!sizeof...(A)), R>::type
+inline typename ::std::enable_if_t<bool(!sizeof...(A)), R>
 forward(lua_State* const, C* const c,
-  R (C::* const ptr_to_member)(A...), ::std::index_sequence<I...> const)
-  noexcept(noexcept((c->*ptr_to_member)()))
+  R (C::* const ptr_to_member)(A...),
+  ::std::index_sequence<I...> const) noexcept(
+  noexcept((c->*ptr_to_member)())
+)
 {
   return (c->*ptr_to_member)();
 }
