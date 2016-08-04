@@ -630,11 +630,11 @@ template <typename T, class Alloc>
 struct is_std_vector<::std::vector<T, Alloc> > : ::std::true_type { };
 
 template <typename T>
-inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::decay<T>::type, ::std::string>{} &&
+inline ::std::enable_if_t<
+  ::std::is_same<::std::decay_t<T>, ::std::string>{} &&
   !is_nc_reference<T>{},
   int
->::type
+>
 set_result(lua_State* const L, T&& s) noexcept
 {
   lua_pushlstring(L, s.c_str(), s.size());
@@ -643,10 +643,11 @@ set_result(lua_State* const L, T&& s) noexcept
 }
 
 template <typename C>
-inline typename ::std::enable_if<
-  is_std_pair<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_pair<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  int>::type
+  int
+>
 set_result(lua_State* const L, C&& p) noexcept(
   noexcept(set_result(L, p.first), set_result(L, p.second))
 )
@@ -667,11 +668,11 @@ inline void set_tuple_result(lua_State* const L,
 }
 
 template <typename C>
-inline typename ::std::enable_if<
-  is_std_tuple<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_tuple<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
   int
->::type
+>
 set_result(lua_State* const L, C&& t) noexcept(
   noexcept(
     set_tuple_result(L, t,
@@ -680,7 +681,7 @@ set_result(lua_State* const L, C&& t) noexcept(
   )
 )
 {
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
 
   set_tuple_result(L,
     t,
@@ -691,11 +692,11 @@ set_result(lua_State* const L, C&& t) noexcept(
 }
 
 template <typename C>
-inline typename ::std::enable_if<
-  is_std_array<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_array<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
   int
->::type
+>
 set_result(lua_State* const L, C&& a)
 {
   lua_createtable(L, a.size(), 0);
@@ -715,11 +716,11 @@ set_result(lua_State* const L, C&& a)
 }
 
 template <typename C>
-inline typename ::std::enable_if<
-  is_std_deque<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_deque<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
   int
->::type
+>
 set_result(lua_State* const L, C&& d)
 {
   lua_createtable(L, d.size(), 0);
@@ -739,11 +740,11 @@ set_result(lua_State* const L, C&& d)
 }
 
 template <typename C>
-inline typename ::std::enable_if<
-  is_std_forward_list<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_forward_list<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
   int
->::type
+>
 set_result(lua_State* const L, C&& l)
 {
   lua_createtable(L, l.size(), 0);
@@ -763,11 +764,11 @@ set_result(lua_State* const L, C&& l)
 }
 
 template <typename C>
-inline typename ::std::enable_if<
-  is_std_list<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_list<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
   int
->::type
+>
 set_result(lua_State* const L, C&& l)
 {
   lua_createtable(L, l.size(), 0);
@@ -787,10 +788,11 @@ set_result(lua_State* const L, C&& l)
 }
 
 template <typename C>
-inline typename ::std::enable_if<
-  is_std_map<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_map<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  int>::type
+  int
+>
 set_result(lua_State* const L, C&& m)
 {
   lua_createtable(L, 0, m.size());
@@ -809,10 +811,11 @@ set_result(lua_State* const L, C&& m)
 }
 
 template <typename C>
-inline typename ::std::enable_if<
-  is_std_set<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_set<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  int>::type
+  int
+>
 set_result(lua_State* const L, C&& s)
 {
   lua_createtable(L, s.size(), 0);
@@ -832,10 +835,11 @@ set_result(lua_State* const L, C&& s)
 }
 
 template <typename C>
-inline typename ::std::enable_if<
-  is_std_unordered_map<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_unordered_map<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  int>::type
+  int
+>
 set_result(lua_State* const L, C&& m)
 {
   lua_createtable(L, 0, m.size());
@@ -854,10 +858,11 @@ set_result(lua_State* const L, C&& m)
 }
 
 template <typename C>
-inline typename ::std::enable_if<
-  is_std_unordered_set<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_unordered_set<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  int>::type
+  int
+>
 set_result(lua_State* const L, C&& s)
 {
   lua_createtable(L, s.size(), 0);
@@ -877,10 +882,11 @@ set_result(lua_State* const L, C&& s)
 }
 
 template <typename C>
-inline typename ::std::enable_if<
-  is_std_vector<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_vector<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  int>::type
+  int
+>
 set_result(lua_State* const L, C&& v)
 {
   lua_createtable(L, v.size(), 0);
@@ -900,10 +906,11 @@ set_result(lua_State* const L, C&& v)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if<
-  ::std::is_same<typename ::std::decay<C>::type, ::std::string>{} &&
+inline ::std::enable_if_t<
+  ::std::is_same<::std::decay_t<C>, ::std::string>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay_t<C>
+>
 get_arg(lua_State* const L)
 {
   assert(lua_isstring(L, I));
@@ -916,22 +923,24 @@ get_arg(lua_State* const L)
 }
 
 template<int I, class C>
-inline typename ::std::enable_if<
-  is_std_pair<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_pair<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay_t<C>
+>
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
  
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
 
   lua_rawgeti(L, -1, 1);
   lua_rawgeti(L, -2, 2);
 
   result_type const result(
     get_arg<-2, typename result_type::first_type>(L),
-    get_arg<-1, typename result_type::second_type>(L));
+    get_arg<-1, typename result_type::second_type>(L)
+  );
 
   lua_pop(L, 2);
 
@@ -939,14 +948,17 @@ get_arg(lua_State* const L)
 }
 
 template <::std::size_t O, class C, ::std::size_t ...I>
-inline C get_tuple_arg(lua_State* const L, ::std::index_sequence<I...> const)
-  noexcept(noexcept(::std::make_tuple(get_arg<int(I - sizeof...(I)),
-    typename ::std::tuple_element<I, C>::type>(L)...)))
+inline C get_tuple_arg(lua_State* const L,
+  ::std::index_sequence<I...> const) noexcept(
+    noexcept(::std::make_tuple(get_arg<int(I - sizeof...(I)),
+      ::std::tuple_element_t<I, C>>(L)...)
+    )
+  )
 {
   swallow{(lua_rawgeti(L, O, I + 1), 0)...};
 
   C result(::std::make_tuple(get_arg<int(I - sizeof...(I)),
-    typename ::std::tuple_element<I, C>::type>(L)...));
+    ::std::tuple_element_t<I, C>>(L)...));
 
   lua_pop(L, int(sizeof...(I)));
 
@@ -954,15 +966,16 @@ inline C get_tuple_arg(lua_State* const L, ::std::index_sequence<I...> const)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if<
-  is_std_tuple<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_tuple<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay_t<C>
+>
 get_arg(lua_State* const L) noexcept(
   noexcept(get_tuple_arg<I,
-    typename ::std::decay<C>::type>(L,
+    ::std::decay_t<C>>(L,
       ::std::make_index_sequence<
-        ::std::tuple_size<typename ::std::decay<C>::type>{}
+        ::std::tuple_size<::std::decay_t<C>>{}
       >()
     )
   )
@@ -970,7 +983,7 @@ get_arg(lua_State* const L) noexcept(
 {
   assert(lua_istable(L, I));
 
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
 
   return get_tuple_arg<I, result_type>(L,
     ::std::make_index_sequence<::std::tuple_size<result_type>{}>()
@@ -978,15 +991,16 @@ get_arg(lua_State* const L) noexcept(
 }
 
 template<int I, class C>
-inline typename ::std::enable_if<
-  is_std_array<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_array<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay_t<C>
+>
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
   result_type result;
 
   auto const end(::std::min(lua_rawlen(L, I), result.size()) + 1);
@@ -1004,15 +1018,16 @@ get_arg(lua_State* const L)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if<
-  is_std_deque<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_deque<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay_t<C>
+>
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
   result_type result;
 
   auto const end(lua_rawlen(L, I) + 1);
@@ -1030,15 +1045,16 @@ get_arg(lua_State* const L)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if<
-  is_std_forward_list<typename ::std::decay<C>::type>{} &&
+inline typename ::std::enable_if_t<
+  is_std_forward_list<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay_t<C>
+>
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
   result_type result;
 
   auto const len(lua_rawlen(L, I));
@@ -1056,15 +1072,16 @@ get_arg(lua_State* const L)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if<
-  is_std_list<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_list<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay_t<C>
+>
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
   result_type result;
 
   auto const end(lua_rawlen(L, I) + 1);
@@ -1082,15 +1099,16 @@ get_arg(lua_State* const L)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if<
-  is_std_vector<typename ::std::decay<C>::type>{} &&
+inline typename ::std::enable_if_t<
+  is_std_vector<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay_t<C>
+>
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
   result_type result;
 
   auto const end(lua_rawlen(L, I) + 1);
@@ -1110,15 +1128,16 @@ get_arg(lua_State* const L)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if<
-  is_std_map<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_map<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay_t<C>
+>
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
   result_type result;
 
   lua_pushnil(L);
@@ -1135,15 +1154,16 @@ get_arg(lua_State* const L)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if<
-  is_std_set<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_set<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay_t<C>
+>
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
   result_type result;
 
   auto const end(lua_rawlen(L, I) + 1);
@@ -1161,15 +1181,16 @@ get_arg(lua_State* const L)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if<
-  is_std_unordered_map<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_unordered_map<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay_t<C>
+>
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
   result_type result;
 
   lua_pushnil(L);
@@ -1186,15 +1207,16 @@ get_arg(lua_State* const L)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if<
-  is_std_unordered_set<typename ::std::decay<C>::type>{} &&
+inline ::std::enable_if_t<
+  is_std_unordered_set<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  typename ::std::decay<C>::type>::type
+  ::std::decay<C>
+>
 get_arg(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = typename ::std::decay<C>::type;
+  using result_type = ::std::decay_t<C>;
   result_type result;
 
   auto const end(lua_rawlen(L, I) + 1);
@@ -1411,7 +1433,7 @@ forward(lua_State* const, C* const c,
 
 template <::std::size_t O, typename C, typename R,
   typename ...A, ::std::size_t ...I>
-inline typename ::std::enable_if<bool(sizeof...(A)), R>::type
+inline ::std::enable_if_t<bool(sizeof...(A)), R>
 forward(lua_State* const L, C* const c,
   R (C::* const ptr_to_member)(A...), ::std::index_sequence<I...> const)
   noexcept(noexcept((c->*ptr_to_member)(get_arg<I + O, A>(L)...)))
@@ -1420,13 +1442,15 @@ forward(lua_State* const L, C* const c,
 }
 
 template <typename FP, FP fp, ::std::size_t O, class C, class R, class ...A>
-typename ::std::enable_if<!::std::is_void<R>{}, int>::type
-member_stub(lua_State* const L)
-  noexcept(noexcept(set_result(L,
+inline ::std::enable_if_t<!::std::is_void<R>{}, int>
+member_stub(lua_State* const L) noexcept(
+  noexcept(set_result(L,
     forward<O, C, R, A...>(L,
       static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
       fp,
-      ::std::make_index_sequence<sizeof...(A)>()))))
+      ::std::make_index_sequence<sizeof...(A)>()))
+  )
+)
 {
 //::std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << ::std::endl;
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
@@ -1439,12 +1463,14 @@ member_stub(lua_State* const L)
 }
 
 template <typename FP, FP fp, ::std::size_t O, class C, class R, class ...A>
-typename ::std::enable_if<::std::is_void<R>{}, int>::type
-member_stub(lua_State* const L)
-  noexcept(noexcept(forward<O, C, R, A...>(L,
+inline ::std::enable_if_t<::std::is_void<R>{}, int>
+member_stub(lua_State* const L) noexcept(
+  noexcept(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
     fp,
-    ::std::make_index_sequence<sizeof...(A)>())))
+    ::std::make_index_sequence<sizeof...(A)>())
+  )
+)
 {
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
 
@@ -1457,10 +1483,12 @@ member_stub(lua_State* const L)
 }
 
 template <typename FP, FP fp, class C, class R>
-typename ::std::enable_if<!::std::is_void<R>{}, int>::type
-vararg_member_stub(lua_State* const L)
-  noexcept(noexcept(set_result(L, (static_cast<C*>(
-    lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L))))
+inline ::std::enable_if_t<!::std::is_void<R>{}, int>
+vararg_member_stub(lua_State* const L) noexcept(
+  noexcept(set_result(L, (static_cast<C*>(
+    lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L))
+  )
+)
 {
 //::std::cout << lua_gettop(L) << ::std::endl;
   return set_result(L, (static_cast<C*>(
@@ -1468,10 +1496,12 @@ vararg_member_stub(lua_State* const L)
 }
 
 template <typename FP, FP fp, class C, class R>
-typename ::std::enable_if<::std::is_void<R>{}, int>::type
-vararg_member_stub(lua_State* const L)
-  noexcept(noexcept(
-    (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L)))
+inline ::std::enable_if_t<::std::is_void<R>{}, int>
+vararg_member_stub(lua_State* const L) noexcept(
+  noexcept(
+    (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L)
+  )
+)
 {
 //::std::cout << lua_gettop(L) << ::std::endl;
   (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L);
@@ -1517,7 +1547,7 @@ constexpr inline lua_CFunction vararg_member_stub(
 template <typename R>
 constexpr inline enum property_type get_property_type() noexcept
 {
-  if (::std::is_same<typename ::std::decay<R>::type, bool>{})
+  if (::std::is_same<::std::decay_t<R>, bool>{})
   {
     return detail::BOOLEAN;
   }
@@ -1530,7 +1560,7 @@ constexpr inline enum property_type get_property_type() noexcept
     return detail::NUMBER;
   }
   else if (::std::is_same<R, ::std::string const&>{} ||
-    ::std::is_same<typename ::std::decay<R>::type, char const*>{})
+    ::std::is_same<::std::decay_t<R>, char const*>{})
   {
     return detail::STRING;
   }
@@ -1591,10 +1621,10 @@ public:
   scope& operator=(scope const&) = delete;
 
   template <typename T>
-  typename ::std::enable_if<
-    ::std::is_same<typename ::std::decay<T>::type, bool>{},
+  ::std::enable_if_t<
+    ::std::is_same<::std::decay_t<T>, bool>{},
     scope&
-  >::type
+  >
   constant(char const* const name, T const value)
   {
     struct detail::constant_info_type const ci {
@@ -1608,10 +1638,10 @@ public:
   }
 
   template <typename T>
-  typename ::std::enable_if<
-    ::std::is_floating_point<typename ::std::decay<T>::type>{},
+  ::std::enable_if_t<
+    ::std::is_floating_point<::std::decay_t<T>>{},
     scope&
-  >::type
+  >
   constant(char const* const name, T const value)
   {
     struct detail::constant_info_type ci;
@@ -1624,11 +1654,11 @@ public:
   }
 
   template <typename T>
-  typename ::std::enable_if<
-    ::std::is_integral<typename ::std::decay<T>::type>{} &&
-    !::std::is_same<typename ::std::decay<T>::type, bool>{},
+  ::std::enable_if_t<
+    ::std::is_integral<::std::decay_t<T>>{} &&
+    !::std::is_same<::std::decay_t<T>, bool>{},
     scope&
-  >::type
+  >
   constant(char const* const name, T const value)
   {
     struct detail::constant_info_type ci;
@@ -1898,10 +1928,10 @@ public:
   }
 
   template <typename T>
-  typename ::std::enable_if<
-    ::std::is_same<typename ::std::decay<T>::type, bool>{},
+  ::std::enable_if_t<
+    ::std::is_same<::std::decay_t<T>, bool>{},
     module&
-  >::type
+  >
   constant(char const* const name, T const value)
   {
     if (name_)
@@ -1925,10 +1955,10 @@ public:
   }
 
   template <typename T>
-  typename ::std::enable_if<
-    ::std::is_floating_point<typename ::std::decay<T>::type>{},
+  ::std::enable_if_t<
+    ::std::is_floating_point<::std::decay_t<T>>{},
     module&
-  >::type
+  >
   constant(char const* const name, T const value)
   {
     if (name_)
@@ -1952,11 +1982,11 @@ public:
   }
 
   template <typename T>
-  typename ::std::enable_if<
-    ::std::is_integral<typename ::std::decay<T>::type>{} &&
-    !::std::is_same<typename ::std::decay<T>::type, bool>{},
+  ::std::enable_if_t<
+    ::std::is_integral<::std::decay_t<T>>{} &&
+    !::std::is_same<::std::decay_t<T>, bool>{},
     module&
-  >::type
+  >
   constant(char const* const name, T const value)
   {
     if (name_)
