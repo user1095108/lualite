@@ -693,34 +693,13 @@ set(lua_State* const L, C&& t) noexcept(
 
 template <typename C>
 inline ::std::enable_if_t<
-  is_std_array<::std::decay_t<C>>{} &&
-  !is_nc_reference<C>{},
-  int
->
-set(lua_State* const L, C&& a)
-{
-  lua_createtable(L, a.size(), 0);
-
-  int j{};
-
-  auto const cend(a.cend());
-
-  for (auto i(a.cbegin()); i != cend; ++i)
-  {
-    set(L, *i);
-
-    lua_rawseti(L, -2, ++j);
-  }
-
-  return 1;
-}
-
-template <typename C>
-inline ::std::enable_if_t<
-  (is_std_deque<::std::decay_t<C>>{} ||
+  (is_std_array<::std::decay_t<C>>{} ||
+  is_std_deque<::std::decay_t<C>>{} ||
   is_std_forward_list<::std::decay_t<C>>{} ||
   is_std_list<::std::decay_t<C>>{} ||
-  is_std_vector<::std::decay_t<C>>{}) &&
+  is_std_vector<::std::decay_t<C>>{} ||
+  is_std_set<::std::decay_t<C>>{} ||
+  is_std_unordered_set<::std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
   int
 >
@@ -761,31 +740,6 @@ set(lua_State* const L, C&& m)
     set(L, i->second);
 
     lua_rawset(L, -3);
-  }
-
-  return 1;
-}
-
-template <typename C>
-inline ::std::enable_if_t<
-  (is_std_set<::std::decay_t<C>>{} ||
-  is_std_unordered_set<::std::decay_t<C>>{}) &&
-  !is_nc_reference<C>{},
-  int
->
-set(lua_State* const L, C&& s)
-{
-  lua_createtable(L, s.size(), 0);
-
-  int j{};
-
-  auto const cend(s.cend());
-
-  for (auto i(s.cbegin()); i != cend; ++i)
-  {
-    set(L, *i);
-
-    lua_rawseti(L, -2, ++j);
   }
 
   return 1;
@@ -891,7 +845,7 @@ get(lua_State* const L)
 
   auto const len(::std::min(lua_rawlen(L, I), result.size()));
 
-  for (decltype(lua_rawlen(L, I)) i(0); i != len; ++i)
+  for (decltype(lua_rawlen(L, I)) i{}; i != len; ++i)
   {
     lua_rawgeti(L, I, i + 1);
 
