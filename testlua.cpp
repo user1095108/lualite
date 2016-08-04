@@ -16,19 +16,19 @@ struct point
   int y;
 };
 
-inline int set_result(lua_State* const L, point p)
+inline int set(lua_State* const L, point p)
 {
   using namespace ::lualite::detail;
 
   lua_createtable(L, 2, 0);
 
   lua_pushliteral(L, "x");
-  set_result(L, const_cast<decltype(p.x) const&>(p.x));
+  set(L, const_cast<decltype(p.x) const&>(p.x));
   assert(lua_istable(L, -3));
   lua_rawset(L, -3);
 
   lua_pushliteral(L, "y");
-  set_result(L, const_cast<decltype(p.y) const&>(p.y));
+  set(L, const_cast<decltype(p.y) const&>(p.y));
   assert(lua_istable(L, -3));
   lua_rawset(L, -3);
 
@@ -36,9 +36,10 @@ inline int set_result(lua_State* const L, point p)
 }
 
 template <std::size_t I, typename T>
-inline typename std::enable_if<
-  std::is_same<T, point>::value, point>::type
-get_arg(lua_State* const L)
+inline std::enable_if_t<
+  ::std::is_same<T, point>{}, point
+>
+get(lua_State* const L)
 {
   using namespace ::lualite::detail;
 

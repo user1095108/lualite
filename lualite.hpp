@@ -352,7 +352,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<T>{},
   int
 >
-set_result(lua_State* const L, T&& v) noexcept
+set(lua_State* const L, T&& v) noexcept
 {
   lua_pushnumber(L, v);
 
@@ -366,7 +366,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<T>{},
   int
 >
-set_result(lua_State* const L, T&& v) noexcept
+set(lua_State* const L, T&& v) noexcept
 {
   lua_pushinteger(L, v);
 
@@ -379,7 +379,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<T>{},
   int
 >
-set_result(lua_State* const L, T&& v) noexcept
+set(lua_State* const L, T&& v) noexcept
 {
   lua_pushboolean(L, v);
 
@@ -392,7 +392,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<T>{},
   int
 >
-set_result(lua_State* const L, T&& v) noexcept
+set(lua_State* const L, T&& v) noexcept
 {
   lua_pushstring(L, v);
 
@@ -405,7 +405,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<T>{},
   int
 >
-set_result(lua_State* const L, T&& v) noexcept
+set(lua_State* const L, T&& v) noexcept
 {
   lua_pushlightuserdata(L, const_cast<void*>(v));
 
@@ -419,7 +419,7 @@ inline ::std::enable_if_t<
   !::std::is_class<::std::remove_pointer_t<T>>{},
   int
 >
-set_result(lua_State* const L, T&& v) noexcept
+set(lua_State* const L, T&& v) noexcept
 {
   lua_pushlightuserdata(L, v);
 
@@ -432,7 +432,7 @@ inline ::std::enable_if_t<
   !::std::is_class<::std::decay_t<T>>{},
   int
 >
-set_result(lua_State* const L, T&& v) noexcept
+set(lua_State* const L, T&& v) noexcept
 {
   lua_pushlightuserdata(L, &v);
 
@@ -446,7 +446,7 @@ inline ::std::enable_if_t<
   ::std::is_class<::std::remove_pointer_t<::std::decay_t<T>>>{},
   int
 >
-set_result(lua_State* const L, T&& v) noexcept
+set(lua_State* const L, T&& v) noexcept
 {
   create_wrapper_table(L, v);
 
@@ -459,7 +459,7 @@ inline ::std::enable_if_t<
   ::std::is_class<::std::decay_t<T>>{},
   int
 >
-set_result(lua_State* const L, T&& v) noexcept
+set(lua_State* const L, T&& v) noexcept
 {
   create_wrapper_table(L, &v);
 
@@ -472,7 +472,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<T>{},
   int
 >
-set_result(lua_State* const, T&&) noexcept
+set(lua_State* const, T&&) noexcept
 {
   return 1;
 }
@@ -483,7 +483,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<T>{},
   ::std::decay_t<T>
 >
-get_arg(lua_State* const L) noexcept
+get(lua_State* const L) noexcept
 {
   assert(lua_isnumber(L, I));
   return lua_tonumber(L, I);
@@ -496,7 +496,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<T>{},
   ::std::decay_t<T>
 >
-get_arg(lua_State* const L) noexcept
+get(lua_State* const L) noexcept
 {
   assert(lua_isnumber(L, I));
   return lua_tointeger(L, I);
@@ -508,7 +508,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<T>{},
   ::std::decay_t<T>
 >
-get_arg(lua_State* const L) noexcept
+get(lua_State* const L) noexcept
 {
   assert(lua_isboolean(L, I));
   return lua_toboolean(L, I);
@@ -520,7 +520,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<T>{},
   ::std::decay_t<T>
 >
-get_arg(lua_State* const L) noexcept
+get(lua_State* const L) noexcept
 {
   assert(lua_isstring(L, I));
   return lua_tostring(L, I);
@@ -532,7 +532,7 @@ inline ::std::enable_if_t<
   !::std::is_same<::std::decay_t<T>, char const*>{},
   ::std::decay_t<T>
 >
-get_arg(lua_State* const L) noexcept
+get(lua_State* const L) noexcept
 {
   assert(lua_islightuserdata(L, I));
   return static_cast<T>(lua_touserdata(L, I));
@@ -543,7 +543,7 @@ inline ::std::enable_if_t<
   is_nc_reference<T>{},
   T
 >
-get_arg(lua_State* const L) noexcept
+get(lua_State* const L) noexcept
 {
   assert(lua_islightuserdata(L, I));
   return *static_cast<::std::decay_t<T>*>(lua_touserdata(L, I));
@@ -554,7 +554,7 @@ inline ::std::enable_if_t<
   ::std::is_same<::std::remove_const_t<T>, any>{},
   T
 >
-get_arg(lua_State* const) noexcept
+get(lua_State* const) noexcept
 {
   return {};
 }
@@ -635,7 +635,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<T>{},
   int
 >
-set_result(lua_State* const L, T&& s) noexcept
+set(lua_State* const L, T&& s) noexcept
 {
   lua_pushlstring(L, s.c_str(), s.size());
 
@@ -648,12 +648,12 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   int
 >
-set_result(lua_State* const L, C&& p) noexcept(
-  noexcept(set_result(L, p.first), set_result(L, p.second))
+set(lua_State* const L, C&& p) noexcept(
+  noexcept(set(L, p.first), set(L, p.second))
 )
 {
-  set_result(L, p.first);
-  set_result(L, p.second);
+  set(L, p.first);
+  set(L, p.second);
 
   return 2;
 }
@@ -661,10 +661,10 @@ set_result(lua_State* const L, C&& p) noexcept(
 template <typename ...Types, ::std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
   ::std::tuple<Types...> const& t, ::std::index_sequence<I...> const) noexcept(
-    noexcept(swallow{(set_result(L, ::std::get<I>(t)), 0)...})
+    noexcept(swallow{(set(L, ::std::get<I>(t)), 0)...})
   )
 {
-  swallow{(set_result(L, ::std::get<I>(t)), 0)...};
+  swallow{(set(L, ::std::get<I>(t)), 0)...};
 }
 
 template <typename C>
@@ -673,7 +673,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   int
 >
-set_result(lua_State* const L, C&& t) noexcept(
+set(lua_State* const L, C&& t) noexcept(
   noexcept(
     set_tuple_result(L, t,
       ::std::make_index_sequence<::std::tuple_size<C>{}>()
@@ -697,7 +697,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   int
 >
-set_result(lua_State* const L, C&& a)
+set(lua_State* const L, C&& a)
 {
   lua_createtable(L, a.size(), 0);
 
@@ -707,7 +707,7 @@ set_result(lua_State* const L, C&& a)
 
   for (auto i(a.cbegin()); i != cend; ++i)
   {
-    set_result(L, *i);
+    set(L, *i);
 
     lua_rawseti(L, -2, ++j);
   }
@@ -721,7 +721,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   int
 >
-set_result(lua_State* const L, C&& d)
+set(lua_State* const L, C&& d)
 {
   lua_createtable(L, d.size(), 0);
 
@@ -731,7 +731,7 @@ set_result(lua_State* const L, C&& d)
 
   for (auto i(d.cbegin); i != cend; ++i)
   {
-    set_result(L, *i);
+    set(L, *i);
 
     lua_rawseti(L, -2, ++j);
   }
@@ -745,7 +745,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   int
 >
-set_result(lua_State* const L, C&& l)
+set(lua_State* const L, C&& l)
 {
   lua_createtable(L, l.size(), 0);
 
@@ -755,7 +755,7 @@ set_result(lua_State* const L, C&& l)
 
   for (auto i(l.cbegin()); i != cend; ++i)
   {
-    set_result(L, *i);
+    set(L, *i);
 
     lua_rawseti(L, -2, ++j);
   }
@@ -769,7 +769,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   int
 >
-set_result(lua_State* const L, C&& l)
+set(lua_State* const L, C&& l)
 {
   lua_createtable(L, l.size(), 0);
 
@@ -779,7 +779,7 @@ set_result(lua_State* const L, C&& l)
 
   for (auto i(l.cbegin()); i != cend; ++i)
   {
-    set_result(L, *i);
+    set(L, *i);
 
     lua_rawseti(L, -2, ++j);
   }
@@ -789,11 +789,12 @@ set_result(lua_State* const L, C&& l)
 
 template <typename C>
 inline ::std::enable_if_t<
-  is_std_map<::std::decay_t<C>>{} &&
+  (is_std_map<::std::decay_t<C>>{} ||
+  is_std_unordered_map<::std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
   int
 >
-set_result(lua_State* const L, C&& m)
+set(lua_State* const L, C&& m)
 {
   lua_createtable(L, 0, m.size());
 
@@ -801,8 +802,8 @@ set_result(lua_State* const L, C&& m)
 
   for (auto i(m.cbegin()); i != cend; ++i)
   {
-    set_result(L, i->first);
-    set_result(L, i->second);
+    set(L, i->first);
+    set(L, i->second);
 
     lua_rawset(L, -3);
   }
@@ -812,11 +813,12 @@ set_result(lua_State* const L, C&& m)
 
 template <typename C>
 inline ::std::enable_if_t<
-  is_std_set<::std::decay_t<C>>{} &&
+  (is_std_set<::std::decay_t<C>>{} ||
+  is_std_unordered_set<::std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
   int
 >
-set_result(lua_State* const L, C&& s)
+set(lua_State* const L, C&& s)
 {
   lua_createtable(L, s.size(), 0);
 
@@ -826,54 +828,7 @@ set_result(lua_State* const L, C&& s)
 
   for (auto i(s.cbegin()); i != cend; ++i)
   {
-    set_result(L, *i);
-
-    lua_rawseti(L, -2, ++j);
-  }
-
-  return 1;
-}
-
-template <typename C>
-inline ::std::enable_if_t<
-  is_std_unordered_map<::std::decay_t<C>>{} &&
-  !is_nc_reference<C>{},
-  int
->
-set_result(lua_State* const L, C&& m)
-{
-  lua_createtable(L, 0, m.size());
-
-  auto const cend(m.cend());
-
-  for (auto i(m.cbegin()); i != cend; ++i)
-  {
-    set_result(L, i->first);
-    set_result(L, i->second);
-
-    lua_rawset(L, -3);
-  }
-
-  return 1;
-}
-
-template <typename C>
-inline ::std::enable_if_t<
-  is_std_unordered_set<::std::decay_t<C>>{} &&
-  !is_nc_reference<C>{},
-  int
->
-set_result(lua_State* const L, C&& s)
-{
-  lua_createtable(L, s.size(), 0);
-
-  int j{};
-
-  auto const cend(s.cend());
-
-  for (auto i(s.cbegin()); i != cend; ++i)
-  {
-    set_result(L, *i);
+    set(L, *i);
 
     lua_rawseti(L, -2, ++j);
   }
@@ -887,7 +842,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   int
 >
-set_result(lua_State* const L, C&& v)
+set(lua_State* const L, C&& v)
 {
   lua_createtable(L, v.size(), 0);
 
@@ -897,7 +852,7 @@ set_result(lua_State* const L, C&& v)
 
   for (auto i(v.cbegin()); i != cend; ++i)
   {
-    set_result(L, *i);
+    set(L, *i);
 
     lua_rawseti(L, -2, ++j);
   }
@@ -911,7 +866,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
-get_arg(lua_State* const L)
+get(lua_State* const L)
 {
   assert(lua_isstring(L, I));
 
@@ -928,7 +883,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
-get_arg(lua_State* const L)
+get(lua_State* const L)
 {
   assert(lua_istable(L, I));
  
@@ -938,8 +893,8 @@ get_arg(lua_State* const L)
   lua_rawgeti(L, -2, 2);
 
   result_type const result(
-    get_arg<-2, typename result_type::first_type>(L),
-    get_arg<-1, typename result_type::second_type>(L)
+    get<-2, typename result_type::first_type>(L),
+    get<-1, typename result_type::second_type>(L)
   );
 
   lua_pop(L, 2);
@@ -950,14 +905,14 @@ get_arg(lua_State* const L)
 template <::std::size_t O, class C, ::std::size_t ...I>
 inline C get_tuple_arg(lua_State* const L,
   ::std::index_sequence<I...> const) noexcept(
-    noexcept(::std::make_tuple(get_arg<int(I - sizeof...(I)),
+    noexcept(::std::make_tuple(get<int(I - sizeof...(I)),
       ::std::tuple_element_t<I, C>>(L)...)
     )
   )
 {
   swallow{(lua_rawgeti(L, O, I + 1), 0)...};
 
-  C result(::std::make_tuple(get_arg<int(I - sizeof...(I)),
+  C result(::std::make_tuple(get<int(I - sizeof...(I)),
     ::std::tuple_element_t<I, C>>(L)...));
 
   lua_pop(L, int(sizeof...(I)));
@@ -971,7 +926,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
-get_arg(lua_State* const L) noexcept(
+get(lua_State* const L) noexcept(
   noexcept(get_tuple_arg<I,
     ::std::decay_t<C>>(L,
       ::std::make_index_sequence<
@@ -996,23 +951,23 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
-get_arg(lua_State* const L)
+get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
   using result_type = ::std::decay_t<C>;
   result_type result;
 
-  auto const end(::std::min(lua_rawlen(L, I), result.size()) + 1);
+  auto const cend(::std::min(lua_rawlen(L, I), result.size()) + 1);
 
-  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  for (decltype(lua_rawlen(L, I)) i(1); i != cend; ++i)
   {
     lua_rawgeti(L, I, i);
 
-    result[i - 1] = get_arg<-1, typename result_type::value_type>(L);
+    result[i - 1] = get<-1, typename result_type::value_type>(L);
   }
 
-  lua_pop(L, end - 1);
+  lua_pop(L, cend - 1);
 
   return result;
 }
@@ -1023,7 +978,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
-get_arg(lua_State* const L)
+get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -1036,7 +991,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_back(get_arg<-1, typename result_type::value_type>(L));
+    result.emplace_back(get<-1, typename result_type::value_type>(L));
   }
 
   lua_pop(L, end - 1);
@@ -1050,7 +1005,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
-get_arg(lua_State* const L)
+get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -1063,7 +1018,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_front(get_arg<-1, typename result_type::value_type>(L));
+    result.emplace_front(get<-1, typename result_type::value_type>(L));
   }
 
   lua_pop(L, len);
@@ -1077,23 +1032,23 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
-get_arg(lua_State* const L)
+get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
   using result_type = ::std::decay_t<C>;
   result_type result;
 
-  auto const end(lua_rawlen(L, I) + 1);
+  auto const cend(lua_rawlen(L, I) + 1);
 
-  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
+  for (decltype(lua_rawlen(L, I)) i(1); i != cend; ++i)
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_back(get_arg<-1, typename result_type::value_type>(L));
+    result.emplace_back(get<-1, typename result_type::value_type>(L));
   }
 
-  lua_pop(L, end - 1);
+  lua_pop(L, cend - 1);
 
   return result;
 }
@@ -1104,7 +1059,7 @@ inline ::std::enable_if_t<
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
-get_arg(lua_State* const L)
+get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -1119,7 +1074,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace_back(get_arg<-1, typename result_type::value_type>(L));
+    result.emplace_back(get<-1, typename result_type::value_type>(L));
   }
 
   lua_pop(L, end - 1);
@@ -1129,11 +1084,12 @@ get_arg(lua_State* const L)
 
 template <int I, class C>
 inline ::std::enable_if_t<
-  is_std_map<::std::decay_t<C>>{} &&
+  (is_std_map<::std::decay_t<C>>{} ||
+  is_std_unordered_map<::std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
-get_arg(lua_State* const L)
+get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -1144,8 +1100,8 @@ get_arg(lua_State* const L)
 
   while (lua_next(L, I))
   {
-    result.emplace(get_arg<-2, typename result_type::key_type>(L),
-      get_arg<-1, typename result_type::mapped_type>(L)
+    result.emplace(get<-2, typename result_type::key_type>(L),
+      get<-1, typename result_type::mapped_type>(L)
     );
 
     lua_pop(L, 1);
@@ -1156,11 +1112,12 @@ get_arg(lua_State* const L)
 
 template <int I, class C>
 inline ::std::enable_if_t<
-  is_std_set<::std::decay_t<C>>{} &&
+  (is_std_set<::std::decay_t<C>>{} ||
+  is_std_unordered_set<::std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
-get_arg(lua_State* const L)
+get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
@@ -1173,60 +1130,7 @@ get_arg(lua_State* const L)
   {
     lua_rawgeti(L, I, i);
 
-    result.emplace(get_arg<-1, typename result_type::value_type>(L));
-  }
-
-  lua_pop(L, end - 1);
-
-  return result;
-}
-
-template <int I, class C>
-inline ::std::enable_if_t<
-  is_std_unordered_map<::std::decay_t<C>>{} &&
-  !is_nc_reference<C>{},
-  ::std::decay_t<C>
->
-get_arg(lua_State* const L)
-{
-  assert(lua_istable(L, I));
-
-  using result_type = ::std::decay_t<C>;
-  result_type result;
-
-  lua_pushnil(L);
-
-  while (lua_next(L, I))
-  {
-    result.emplace(get_arg<-2, typename result_type::key_type>(L),
-      get_arg<-1, typename result_type::mapped_type>(L));
-
-    lua_pop(L, 1);
-  }
-
-  return result;
-}
-
-template <int I, class C>
-inline ::std::enable_if_t<
-  is_std_unordered_set<::std::decay_t<C>>{} &&
-  !is_nc_reference<C>{},
-  ::std::decay<C>
->
-get_arg(lua_State* const L)
-{
-  assert(lua_istable(L, I));
-
-  using result_type = ::std::decay_t<C>;
-  result_type result;
-
-  auto const end(lua_rawlen(L, I) + 1);
-
-  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
-  {
-    lua_rawgeti(L, I, i);
-
-    result.emplace(get_arg<-1, typename result_type::value_type>(L));
+    result.emplace(get<-1, typename result_type::value_type>(L));
   }
 
   lua_pop(L, end - 1);
@@ -1257,10 +1161,10 @@ forward(lua_State* const, ::std::index_sequence<I...> const) noexcept(
 template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
 inline ::std::enable_if_t<bool(sizeof...(A)), C*>
 forward(lua_State* const L, ::std::index_sequence<I...> const) noexcept(
-  noexcept(C(get_arg<I + O, A>(L)...))
+  noexcept(C(get<I + O, A>(L)...))
 )
 {
-  return new C(get_arg<I + O, A>(L)...);
+  return new C(get<I + O, A>(L)...);
 }
 
 template <::std::size_t O, class C, class ...A>
@@ -1346,10 +1250,10 @@ template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
 inline ::std::enable_if_t<bool(sizeof...(A)), R>
 forward(lua_State* const L, R (* const f)(A...),
   ::std::index_sequence<I...> const) noexcept(
-  noexcept((*f)(get_arg<I + O, A>(L)...))
+  noexcept((*f)(get<I + O, A>(L)...))
 )
 {
-  return (*f)(get_arg<I + O, A>(L)...);
+  return (*f)(get<I + O, A>(L)...);
 }
 
 template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
@@ -1371,22 +1275,22 @@ template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
 inline ::std::enable_if_t<!::std::is_void<R>{}, int>
 func_stub(lua_State* const L) noexcept(
   noexcept(
-    set_result(L, forward<O, R, A...>(L, fp,
+    set(L, forward<O, R, A...>(L, fp,
     ::std::make_index_sequence<sizeof...(A)>()))
   )
 )
 {
-  return set_result(L, forward<O, R, A...>(L, fp,
+  return set(L, forward<O, R, A...>(L, fp,
     ::std::make_index_sequence<sizeof...(A)>()));
 }
 
 template <typename FP, FP fp, class R>
 inline ::std::enable_if_t<!::std::is_void<R>{}, int>
 vararg_func_stub(lua_State* const L) noexcept(
-  noexcept(set_result(fp(L)))
+  noexcept(set(fp(L)))
 )
 {
-  return set_result(fp(L));
+  return set(fp(L));
 }
 
 template <typename FP, FP fp, class R>
@@ -1416,10 +1320,10 @@ inline ::std::enable_if_t<bool(sizeof...(A)), R>
 forward(lua_State* const L, C* const c,
   R (C::* const ptr_to_member)(A...) const,
   ::std::index_sequence<I...> const) noexcept(
-  noexcept((c->*ptr_to_member)(get_arg<I + O, A>(L)...))
+  noexcept((c->*ptr_to_member)(get<I + O, A>(L)...))
 )
 {
-  return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
+  return (c->*ptr_to_member)(get<I + O, A>(L)...);
 }
 
 template <::std::size_t O, typename C, typename R, typename ...A,
@@ -1439,15 +1343,15 @@ template <::std::size_t O, typename C, typename R,
 inline ::std::enable_if_t<bool(sizeof...(A)), R>
 forward(lua_State* const L, C* const c,
   R (C::* const ptr_to_member)(A...), ::std::index_sequence<I...> const)
-  noexcept(noexcept((c->*ptr_to_member)(get_arg<I + O, A>(L)...)))
+  noexcept(noexcept((c->*ptr_to_member)(get<I + O, A>(L)...)))
 {
-  return (c->*ptr_to_member)(get_arg<I + O, A>(L)...);
+  return (c->*ptr_to_member)(get<I + O, A>(L)...);
 }
 
 template <typename FP, FP fp, ::std::size_t O, class C, class R, class ...A>
 inline ::std::enable_if_t<!::std::is_void<R>{}, int>
 member_stub(lua_State* const L) noexcept(
-  noexcept(set_result(L,
+  noexcept(set(L,
     forward<O, C, R, A...>(L,
       static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
       fp,
@@ -1458,7 +1362,7 @@ member_stub(lua_State* const L) noexcept(
 //::std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << ::std::endl;
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
 
-  return set_result(L,
+  return set(L,
     forward<O, C, R, A...>(L,
       static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
       fp,
@@ -1488,13 +1392,13 @@ member_stub(lua_State* const L) noexcept(
 template <typename FP, FP fp, class C, class R>
 inline ::std::enable_if_t<!::std::is_void<R>{}, int>
 vararg_member_stub(lua_State* const L) noexcept(
-  noexcept(set_result(L, (static_cast<C*>(
+  noexcept(set(L, (static_cast<C*>(
     lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L))
   )
 )
 {
 //::std::cout << lua_gettop(L) << ::std::endl;
-  return set_result(L, (static_cast<C*>(
+  return set(L, (static_cast<C*>(
     lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L));
 }
 
@@ -1587,12 +1491,12 @@ constexpr inline auto get_property_type(R (C::* const)(A...) const) noexcept
 
 template <typename ...A>
 inline void call(lua_State* const L, int const nresults, A&& ...args)
-  noexcept(noexcept(swallow{(set_result(L, ::std::forward<A>(args)))...}))
+  noexcept(noexcept(swallow{(set(L, ::std::forward<A>(args)))...}))
 {
   int ac{};
 
   swallow{
-    (ac += set_result(L, ::std::forward<A>(args)))...
+    (ac += set(L, ::std::forward<A>(args)))...
   };
   assert(ac >= int(sizeof...(A)));
 
