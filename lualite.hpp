@@ -172,7 +172,7 @@ public:
 };
 
 template <typename T>
-inline scope_exit<T> make_scope_exit(T&& f)
+inline scope_exit<T> make_scope_exit(T&& f) noexcept
 {
   return scope_exit<T>(::std::forward<T>(f));
 }
