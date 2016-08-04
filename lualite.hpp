@@ -1119,9 +1119,7 @@ func_stub(lua_State* const L) noexcept(
 
 template <typename FP, FP fp, class R>
 inline ::std::enable_if_t<!::std::is_void<R>{}, int>
-vararg_func_stub(lua_State* const L) noexcept(
-  noexcept(set(fp(L)))
-)
+vararg_func_stub(lua_State* const L) noexcept(noexcept(set(fp(L))))
 {
   return set(fp(L));
 }
@@ -1149,18 +1147,6 @@ forward(lua_State* const, C* const c,
 
 template <::std::size_t O, typename C, typename R, typename ...A,
   ::std::size_t ...I>
-inline ::std::enable_if_t<bool(sizeof...(A)), R>
-forward(lua_State* const L, C* const c,
-  R (C::* const ptr_to_member)(A...) const,
-  ::std::index_sequence<I...> const) noexcept(
-  noexcept((c->*ptr_to_member)(get<I + O, A>(L)...))
-)
-{
-  return (c->*ptr_to_member)(get<I + O, A>(L)...);
-}
-
-template <::std::size_t O, typename C, typename R, typename ...A,
-  ::std::size_t ...I>
 inline ::std::enable_if_t<bool(!sizeof...(A)), R>
 forward(lua_State* const, C* const c,
   R (C::* const ptr_to_member)(A...),
@@ -1169,6 +1155,18 @@ forward(lua_State* const, C* const c,
 )
 {
   return (c->*ptr_to_member)();
+}
+
+template <::std::size_t O, typename C, typename R, typename ...A,
+  ::std::size_t ...I>
+inline ::std::enable_if_t<bool(sizeof...(A)), R>
+forward(lua_State* const L, C* const c,
+  R (C::* const ptr_to_member)(A...) const,
+  ::std::index_sequence<I...> const) noexcept(
+  noexcept((c->*ptr_to_member)(get<I + O, A>(L)...))
+)
+{
+  return (c->*ptr_to_member)(get<I + O, A>(L)...);
 }
 
 template <::std::size_t O, typename C, typename R,
@@ -1230,9 +1228,9 @@ vararg_member_stub(lua_State* const L) noexcept(
   )
 )
 {
-//::std::cout << lua_gettop(L) << ::std::endl;
-  return set(L, (static_cast<C*>(
-    lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L));
+  return set(L,
+    (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L)
+  );
 }
 
 template <typename FP, FP fp, class C, class R>
@@ -1243,43 +1241,37 @@ vararg_member_stub(lua_State* const L) noexcept(
   )
 )
 {
-//::std::cout << lua_gettop(L) << ::std::endl;
   (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L);
 
   return {};
 }
 
 template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-constexpr inline lua_CFunction func_stub(
-  R (*)(A...)) noexcept
+constexpr inline lua_CFunction func_stub(R (*)(A...)) noexcept
 {
   return &detail::func_stub<FP, fp, O, R, A...>;
 }
 
 template <typename FP, FP fp, ::std::size_t O, class R, class C, class ...A>
-constexpr inline lua_CFunction member_stub(
-  R (C::* const)(A...)) noexcept
+constexpr inline lua_CFunction member_stub(R (C::*)(A...)) noexcept
 {
   return &detail::member_stub<FP, fp, O, C, R, A...>;
 }
 
 template <typename FP, FP fp, ::std::size_t O, class R, class C, class ...A>
-constexpr inline lua_CFunction member_stub(
-  R (C::* const)(A...) const) noexcept
+constexpr inline lua_CFunction member_stub(R (C::*)(A...) const) noexcept
 {
   return &detail::member_stub<FP, fp, O, C, R, A...>;
 }
 
 template <typename FP, FP fp, class R, class C>
-constexpr inline lua_CFunction vararg_member_stub(
-  R (C::* const)(lua_State*)) noexcept
+constexpr inline lua_CFunction vararg_member_stub(R (C::*)(lua_State*)) noexcept
 {
   return &detail::vararg_member_stub<FP, fp, C, R>;
 }
 
 template <typename FP, FP fp, class R, class C>
-constexpr inline lua_CFunction vararg_member_stub(
-  R (C::* const)(lua_State*) const) noexcept
+constexpr inline lua_CFunction vararg_member_stub(R (C::*)(lua_State*) const) noexcept
 {
   return &detail::vararg_member_stub<FP, fp, C, R>;
 }
