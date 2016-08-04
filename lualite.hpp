@@ -1045,7 +1045,7 @@ get_arg(lua_State* const L)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if_t<
+inline ::std::enable_if_t<
   is_std_forward_list<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
   ::std::decay_t<C>
@@ -1099,7 +1099,7 @@ get_arg(lua_State* const L)
 }
 
 template <int I, class C>
-inline typename ::std::enable_if_t<
+inline ::std::enable_if_t<
   is_std_vector<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
   ::std::decay_t<C>
@@ -1145,7 +1145,8 @@ get_arg(lua_State* const L)
   while (lua_next(L, I))
   {
     result.emplace(get_arg<-2, typename result_type::key_type>(L),
-      get_arg<-1, typename result_type::mapped_type>(L));
+      get_arg<-1, typename result_type::mapped_type>(L)
+    );
 
     lua_pop(L, 1);
   }
@@ -1255,8 +1256,9 @@ forward(lua_State* const, ::std::index_sequence<I...> const) noexcept(
 
 template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
 inline ::std::enable_if_t<bool(sizeof...(A)), C*>
-forward(lua_State* const L, ::std::index_sequence<I...> const)
-  noexcept(noexcept(C(get_arg<I + O, A>(L)...)))
+forward(lua_State* const L, ::std::index_sequence<I...> const) noexcept(
+  noexcept(C(get_arg<I + O, A>(L)...))
+)
 {
   return new C(get_arg<I + O, A>(L)...);
 }
@@ -1344,7 +1346,8 @@ template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
 inline ::std::enable_if_t<bool(sizeof...(A)), R>
 forward(lua_State* const L, R (* const f)(A...),
   ::std::index_sequence<I...> const) noexcept(
-  noexcept((*f)(get_arg<I + O, A>(L)...)))
+  noexcept((*f)(get_arg<I + O, A>(L)...))
+)
 {
   return (*f)(get_arg<I + O, A>(L)...);
 }
@@ -1421,7 +1424,7 @@ forward(lua_State* const L, C* const c,
 
 template <::std::size_t O, typename C, typename R, typename ...A,
   ::std::size_t ...I>
-inline typename ::std::enable_if_t<bool(!sizeof...(A)), R>
+inline ::std::enable_if_t<bool(!sizeof...(A)), R>
 forward(lua_State* const, C* const c,
   R (C::* const ptr_to_member)(A...),
   ::std::index_sequence<I...> const) noexcept(
