@@ -717,67 +717,22 @@ set(lua_State* const L, C&& a)
 
 template <typename C>
 inline ::std::enable_if_t<
-  is_std_deque<::std::decay_t<C>>{} &&
+  (is_std_deque<::std::decay_t<C>>{} ||
+  is_std_forward_list<::std::decay_t<C>>{} ||
+  is_std_list<::std::decay_t<C>>{} ||
+  is_std_vector<::std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
   int
 >
-set(lua_State* const L, C&& d)
+set(lua_State* const L, C&& c)
 {
-  lua_createtable(L, d.size(), 0);
+  lua_createtable(L, c.size(), 0);
 
   int j{};
 
-  auto const cend(d.cend());
+  auto const cend(c.cend());
 
-  for (auto i(d.cbegin); i != cend; ++i)
-  {
-    set(L, *i);
-
-    lua_rawseti(L, -2, ++j);
-  }
-
-  return 1;
-}
-
-template <typename C>
-inline ::std::enable_if_t<
-  is_std_forward_list<::std::decay_t<C>>{} &&
-  !is_nc_reference<C>{},
-  int
->
-set(lua_State* const L, C&& l)
-{
-  lua_createtable(L, l.size(), 0);
-
-  int j{};
-
-  auto const cend(l.cend());
-
-  for (auto i(l.cbegin()); i != cend; ++i)
-  {
-    set(L, *i);
-
-    lua_rawseti(L, -2, ++j);
-  }
-
-  return 1;
-}
-
-template <typename C>
-inline ::std::enable_if_t<
-  is_std_list<::std::decay_t<C>>{} &&
-  !is_nc_reference<C>{},
-  int
->
-set(lua_State* const L, C&& l)
-{
-  lua_createtable(L, l.size(), 0);
-
-  int j{};
-
-  auto const cend(l.cend());
-
-  for (auto i(l.cbegin()); i != cend; ++i)
+  for (auto i(c.cbegin()); i != cend; ++i)
   {
     set(L, *i);
 
@@ -827,30 +782,6 @@ set(lua_State* const L, C&& s)
   auto const cend(s.cend());
 
   for (auto i(s.cbegin()); i != cend; ++i)
-  {
-    set(L, *i);
-
-    lua_rawseti(L, -2, ++j);
-  }
-
-  return 1;
-}
-
-template <typename C>
-inline ::std::enable_if_t<
-  is_std_vector<::std::decay_t<C>>{} &&
-  !is_nc_reference<C>{},
-  int
->
-set(lua_State* const L, C&& v)
-{
-  lua_createtable(L, v.size(), 0);
-
-  int j{};
-
-  auto const cend(v.cend());
-
-  for (auto i(v.cbegin()); i != cend; ++i)
   {
     set(L, *i);
 
@@ -958,50 +889,25 @@ get(lua_State* const L)
   using result_type = ::std::decay_t<C>;
   result_type result;
 
-  auto const cend(::std::min(lua_rawlen(L, I), result.size()) + 1);
+  auto const len(::std::min(lua_rawlen(L, I), result.size()));
 
-  for (decltype(lua_rawlen(L, I)) i(1); i != cend; ++i)
+  for (decltype(lua_rawlen(L, I)) i(0); i != len; ++i)
   {
-    lua_rawgeti(L, I, i);
+    lua_rawgeti(L, I, i + 1);
 
-    result[i - 1] = get<-1, typename result_type::value_type>(L);
+    result[i] = get<-1, typename result_type::value_type>(L);
   }
 
-  lua_pop(L, cend - 1);
+  lua_pop(L, len);
 
   return result;
 }
 
 template <int I, class C>
 inline ::std::enable_if_t<
-  is_std_deque<::std::decay_t<C>>{} &&
-  !is_nc_reference<C>{},
-  ::std::decay_t<C>
->
-get(lua_State* const L)
-{
-  assert(lua_istable(L, I));
-
-  using result_type = ::std::decay_t<C>;
-  result_type result;
-
-  auto const end(lua_rawlen(L, I) + 1);
-
-  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
-  {
-    lua_rawgeti(L, I, i);
-
-    result.emplace_back(get<-1, typename result_type::value_type>(L));
-  }
-
-  lua_pop(L, end - 1);
-
-  return result;
-}
-
-template <int I, class C>
-inline ::std::enable_if_t<
-  is_std_forward_list<::std::decay_t<C>>{} &&
+  (is_std_deque<::std::decay_t<C>>{} ||
+  is_std_forward_list<::std::decay_t<C>>{} ||
+  is_std_list<::std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
@@ -1028,7 +934,7 @@ get(lua_State* const L)
 
 template <int I, class C>
 inline ::std::enable_if_t<
-  is_std_list<::std::decay_t<C>>{} &&
+  is_std_vector<::std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
   ::std::decay_t<C>
 >
@@ -1041,6 +947,8 @@ get(lua_State* const L)
 
   auto const cend(lua_rawlen(L, I) + 1);
 
+  result.reserve(cend - 1);
+
   for (decltype(lua_rawlen(L, I)) i(1); i != cend; ++i)
   {
     lua_rawgeti(L, I, i);
@@ -1049,35 +957,6 @@ get(lua_State* const L)
   }
 
   lua_pop(L, cend - 1);
-
-  return result;
-}
-
-template <int I, class C>
-inline ::std::enable_if_t<
-  is_std_vector<::std::decay_t<C>>{} &&
-  !is_nc_reference<C>{},
-  ::std::decay_t<C>
->
-get(lua_State* const L)
-{
-  assert(lua_istable(L, I));
-
-  using result_type = ::std::decay_t<C>;
-  result_type result;
-
-  auto const end(lua_rawlen(L, I) + 1);
-
-  result.reserve(end - 1);
-
-  for (decltype(lua_rawlen(L, I)) i(1); i != end; ++i)
-  {
-    lua_rawgeti(L, I, i);
-
-    result.emplace_back(get<-1, typename result_type::value_type>(L));
-  }
-
-  lua_pop(L, end - 1);
 
   return result;
 }
