@@ -1,25 +1,28 @@
 /*
-** The MIT License (MIT)
-** 
-** Copyright (c) 2013-2016 Janez Žemva
-** 
-** Permission is hereby granted, free of charge, to any person obtaining a copy
-** of this software and associated documentation files (the "Software"), to deal
-** in the Software without restriction, including without limitation the rights
-** to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-** copies of the Software, and to permit persons to whom the Software is
-** furnished to do so, subject to the following conditions:
-** 
-** The above copyright notice and this permission notice shall be included in all
-** copies or substantial portions of the Software.
-** 
-** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-** IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-** FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-** AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-** LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-** OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-** SOFTWARE.
+** This is free and unencumbered software released into the public domain.
+
+** Anyone is free to copy, modify, publish, use, compile, sell, or
+** distribute this software, either in source code form or as a compiled
+** binary, for any purpose, commercial or non-commercial, and by any
+** means.
+
+** In jurisdictions that recognize copyright laws, the author or authors
+** of this software dedicate any and all copyright interest in the
+** software to the public domain. We make this dedication for the benefit
+** of the public at large and to the detriment of our heirs and
+** successors. We intend this dedication to be an overt act of
+** relinquishment in perpetuity of all present and future rights to this
+** software under copyright law.
+
+** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+** IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+** OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+** ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+** OTHER DEALINGS IN THE SOFTWARE.
+
+** For more information, please refer to <http://unlicense.org/>
 */
 
 #ifndef LUALITE_HPP
@@ -79,10 +82,10 @@ class scope;
 
 template <class C> class class_;
 
-namespace detail
-{
-
 static constexpr auto const default_nrec = 10;
+
+namespace
+{
 
 template<typename T>
 constexpr inline T const& as_const(T& t) noexcept
@@ -92,16 +95,16 @@ constexpr inline T const& as_const(T& t) noexcept
 
 template <typename T>
 using is_function_pointer =
-  ::std::integral_constant<bool,
-    ::std::is_pointer<T>{} &&
-    ::std::is_function<::std::remove_pointer_t<T>>{}
+  std::integral_constant<bool,
+    std::is_pointer<T>{} &&
+    std::is_function<std::remove_pointer_t<T>>{}
   >;
 
 template <typename T>
 using is_nc_reference =
-  ::std::integral_constant<bool,
-    ::std::is_reference<T>{} &&
-    !::std::is_const<::std::remove_reference_t<T>>{}
+  std::integral_constant<bool,
+    std::is_reference<T>{} &&
+    !std::is_const<std::remove_reference_t<T>>{}
   >;
 
 struct swallow
@@ -131,7 +134,7 @@ inline void rawsetfield(lua_State* const L, int const index,
   lua_rawset(L, i);
 }
 
-constexpr inline auto hash(char const* s, ::std::size_t h = {}) noexcept
+constexpr inline auto hash(char const* s, std::size_t h = {}) noexcept
 {
   while (*s)
   {
@@ -145,13 +148,13 @@ struct str_eq
 {
   bool operator()(char const* const s1, char const* const s2) const noexcept
   {
-    return !::std::strcmp(s1, s2);
+    return !std::strcmp(s1, s2);
   }
 };
 
 struct str_hash
 {
-  constexpr ::std::size_t operator()(char const* s) const noexcept
+  constexpr std::size_t operator()(char const* s) const noexcept
   {
     return hash(s);
   }
@@ -163,7 +166,7 @@ class scope_exit
   T const f_;
 
 public:
-  explicit scope_exit(T&& f) noexcept : f_(::std::forward<T>(f))
+  explicit scope_exit(T&& f) noexcept : f_(std::forward<T>(f))
   {
     static_assert(noexcept(f_()), "throwing functors are unsupported");
   }
@@ -174,7 +177,9 @@ public:
 template <typename T>
 inline scope_exit<T> make_scope_exit(T&& f) noexcept
 {
-  return scope_exit<T>(::std::forward<T>(f));
+  return scope_exit<T>(std::forward<T>(f));
+}
+
 }
 
 enum property_type : unsigned
@@ -199,7 +204,7 @@ struct constant_info_type
   } u;
 };
 
-using constants_type = ::std::vector<::std::pair<char const* const,
+using constants_type = std::vector<std::pair<char const* const,
   struct constant_info_type> >;
 
 struct func_info_type
@@ -230,7 +235,7 @@ int getter(lua_State* const L)
     void* p(lua_touserdata(L, uvi));
     auto const q(p);
 
-    for (auto const f: ::std::get<0>(i->second))
+    for (auto const f: std::get<0>(i->second))
     {
       p = f(p);
     }
@@ -246,7 +251,7 @@ int getter(lua_State* const L)
       )
     );
 
-    return ::std::get<1>(i->second)(L);
+    return std::get<1>(i->second)(L);
   }
 }
 
@@ -263,7 +268,7 @@ int setter(lua_State* const L)
     void* p(lua_touserdata(L, uvi));
     auto const q(p);
 
-    for (auto const f: ::std::get<0>(i->second))
+    for (auto const f: std::get<0>(i->second))
     {
       p = f(p);
     }
@@ -275,7 +280,7 @@ int setter(lua_State* const L)
       lua_pushlightuserdata(L, q); lua_replace(L, uvi);})
     );
 
-    ::std::get<1>(i->second)(L);
+    std::get<1>(i->second)(L);
   }
   // else do nothing
 
@@ -347,8 +352,8 @@ inline void create_wrapper_table(lua_State* const L, C* const instance)
 }
 
 template <typename T>
-inline ::std::enable_if_t<
-  ::std::is_floating_point<::std::decay_t<T>>{} &&
+inline std::enable_if_t<
+  std::is_floating_point<std::decay_t<T>>{} &&
   !is_nc_reference<T>{},
   int
 >
@@ -360,9 +365,9 @@ set(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline ::std::enable_if_t<
-  ::std::is_integral<::std::decay_t<T>>{} &&
-  !::std::is_same<::std::decay_t<T>, bool>{} &&
+inline std::enable_if_t<
+  std::is_integral<std::decay_t<T>>{} &&
+  !std::is_same<std::decay_t<T>, bool>{} &&
   !is_nc_reference<T>{},
   int
 >
@@ -374,8 +379,8 @@ set(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline ::std::enable_if_t<
-  ::std::is_same<::std::decay_t<T>, bool>{} &&
+inline std::enable_if_t<
+  std::is_same<std::decay_t<T>, bool>{} &&
   !is_nc_reference<T>{},
   int
 >
@@ -387,8 +392,8 @@ set(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline ::std::enable_if_t<
-  ::std::is_same<::std::decay_t<T>, char const*>{} &&
+inline std::enable_if_t<
+  std::is_same<std::decay_t<T>, char const*>{} &&
   !is_nc_reference<T>{},
   int
 >
@@ -400,8 +405,8 @@ set(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline ::std::enable_if_t<
-  ::std::is_same<::std::decay_t<T>, void const*>{} &&
+inline std::enable_if_t<
+  std::is_same<std::decay_t<T>, void const*>{} &&
   !is_nc_reference<T>{},
   int
 >
@@ -413,10 +418,10 @@ set(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline ::std::enable_if_t<
-  ::std::is_pointer<T>{} &&
-  !::std::is_const<::std::remove_pointer_t<T>>{} &&
-  !::std::is_class<::std::remove_pointer_t<T>>{},
+inline std::enable_if_t<
+  std::is_pointer<T>{} &&
+  !std::is_const<std::remove_pointer_t<T>>{} &&
+  !std::is_class<std::remove_pointer_t<T>>{},
   int
 >
 set(lua_State* const L, T&& v) noexcept
@@ -427,9 +432,9 @@ set(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline ::std::enable_if_t<
+inline std::enable_if_t<
   is_nc_reference<T>{} &&
-  !::std::is_class<::std::decay_t<T>>{},
+  !std::is_class<std::decay_t<T>>{},
   int
 >
 set(lua_State* const L, T&& v) noexcept
@@ -440,10 +445,10 @@ set(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline ::std::enable_if_t<
-  ::std::is_pointer<::std::decay_t<T>>{} &&
-  !::std::is_const<::std::remove_pointer_t<T>>{} &&
-  ::std::is_class<::std::remove_pointer_t<::std::decay_t<T>>>{},
+inline std::enable_if_t<
+  std::is_pointer<std::decay_t<T>>{} &&
+  !std::is_const<std::remove_pointer_t<T>>{} &&
+  std::is_class<std::remove_pointer_t<std::decay_t<T>>>{},
   int
 >
 set(lua_State* const L, T&& v) noexcept
@@ -454,9 +459,9 @@ set(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline ::std::enable_if_t<
+inline std::enable_if_t<
   is_nc_reference<T>{} &&
-  ::std::is_class<::std::decay_t<T>>{},
+  std::is_class<std::decay_t<T>>{},
   int
 >
 set(lua_State* const L, T&& v) noexcept
@@ -467,8 +472,8 @@ set(lua_State* const L, T&& v) noexcept
 }
 
 template <typename T>
-inline ::std::enable_if_t<
-  ::std::is_same<::std::decay_t<T>, any>{} &&
+inline std::enable_if_t<
+  std::is_same<std::decay_t<T>, any>{} &&
   !is_nc_reference<T>{},
   int
 >
@@ -478,10 +483,10 @@ set(lua_State* const, T&&) noexcept
 }
 
 template <int I, typename T>
-inline ::std::enable_if_t<
-  ::std::is_floating_point<::std::decay_t<T>>{} &&
+inline std::enable_if_t<
+  std::is_floating_point<std::decay_t<T>>{} &&
   !is_nc_reference<T>{},
-  ::std::decay_t<T>
+  std::decay_t<T>
 >
 get(lua_State* const L) noexcept
 {
@@ -490,11 +495,11 @@ get(lua_State* const L) noexcept
 }
 
 template <int I, typename T>
-inline ::std::enable_if_t<
-  ::std::is_integral<::std::decay_t<T>>{} &&
-  !::std::is_same<::std::decay_t<T>, bool>{} &&
+inline std::enable_if_t<
+  std::is_integral<std::decay_t<T>>{} &&
+  !std::is_same<std::decay_t<T>, bool>{} &&
   !is_nc_reference<T>{},
-  ::std::decay_t<T>
+  std::decay_t<T>
 >
 get(lua_State* const L) noexcept
 {
@@ -503,10 +508,10 @@ get(lua_State* const L) noexcept
 }
 
 template <int I, typename T>
-inline ::std::enable_if_t<
-  ::std::is_same<::std::decay_t<T>, bool>{} &&
+inline std::enable_if_t<
+  std::is_same<std::decay_t<T>, bool>{} &&
   !is_nc_reference<T>{},
-  ::std::decay_t<T>
+  std::decay_t<T>
 >
 get(lua_State* const L) noexcept
 {
@@ -515,10 +520,10 @@ get(lua_State* const L) noexcept
 }
 
 template <int I, typename T>
-inline ::std::enable_if_t<
-  ::std::is_same<::std::decay_t<T>, char const*>{} &&
+inline std::enable_if_t<
+  std::is_same<std::decay_t<T>, char const*>{} &&
   !is_nc_reference<T>{},
-  ::std::decay_t<T>
+  std::decay_t<T>
 >
 get(lua_State* const L) noexcept
 {
@@ -527,10 +532,10 @@ get(lua_State* const L) noexcept
 }
 
 template <int I, typename T>
-inline ::std::enable_if_t<
-  ::std::is_pointer<T>{} &&
-  !::std::is_same<::std::decay_t<T>, char const*>{},
-  ::std::decay_t<T>
+inline std::enable_if_t<
+  std::is_pointer<T>{} &&
+  !std::is_same<std::decay_t<T>, char const*>{},
+  std::decay_t<T>
 >
 get(lua_State* const L) noexcept
 {
@@ -539,19 +544,19 @@ get(lua_State* const L) noexcept
 }
 
 template <int I, typename T>
-inline ::std::enable_if_t<
+inline std::enable_if_t<
   is_nc_reference<T>{},
   T
 >
 get(lua_State* const L) noexcept
 {
   assert(lua_islightuserdata(L, I));
-  return *static_cast<::std::decay_t<T>*>(lua_touserdata(L, I));
+  return *static_cast<std::decay_t<T>*>(lua_touserdata(L, I));
 }
 
 template <int I, typename T>
-inline ::std::enable_if_t<
-  ::std::is_same<::std::remove_const_t<T>, any>{},
+inline std::enable_if_t<
+  std::is_same<std::remove_const_t<T>, any>{},
   T
 >
 get(lua_State* const) noexcept
@@ -562,76 +567,76 @@ get(lua_State* const) noexcept
 #ifndef LUALITE_NO_STD_CONTAINERS
 
 template <typename>
-struct is_std_pair : ::std::false_type { };
+struct is_std_pair : std::false_type { };
 
 template <class T1, class T2>
-struct is_std_pair<::std::pair<T1, T2> > : ::std::true_type { };
+struct is_std_pair<std::pair<T1, T2> > : std::true_type { };
 
 template <typename>
-struct is_std_array : ::std::false_type { };
+struct is_std_array : std::false_type { };
 
-template <typename T, ::std::size_t N>
-struct is_std_array<::std::array<T, N> > : ::std::true_type { };
+template <typename T, std::size_t N>
+struct is_std_array<std::array<T, N> > : std::true_type { };
 
 template <typename>
-struct is_std_deque : ::std::false_type { };
+struct is_std_deque : std::false_type { };
 
 template <typename T, class Alloc>
-struct is_std_deque<::std::deque<T, Alloc> > : ::std::true_type { };
+struct is_std_deque<std::deque<T, Alloc> > : std::true_type { };
 
 template <typename>
-struct is_std_forward_list : ::std::false_type { };
+struct is_std_forward_list : std::false_type { };
 
 template <typename T, class Alloc>
-struct is_std_forward_list<::std::forward_list<T, Alloc> > : ::std::true_type { };
+struct is_std_forward_list<std::forward_list<T, Alloc> > : std::true_type { };
 
 template <typename>
-struct is_std_list : ::std::false_type { };
+struct is_std_list : std::false_type { };
 
 template <typename T, class Alloc>
-struct is_std_list<::std::list<T, Alloc> > : ::std::true_type { };
+struct is_std_list<std::list<T, Alloc> > : std::true_type { };
 
 template <typename>
-struct is_std_map : ::std::false_type { };
+struct is_std_map : std::false_type { };
 
 template <class Key, class T, class Compare, class Alloc>
-struct is_std_map<::std::map<Key, T, Compare, Alloc> > : ::std::true_type { };
+struct is_std_map<std::map<Key, T, Compare, Alloc> > : std::true_type { };
 
 template <typename>
-struct is_std_set : ::std::false_type { };
+struct is_std_set : std::false_type { };
 
 template <class Key, class Compare, class Alloc>
-struct is_std_set<::std::set<Key, Compare, Alloc> > : ::std::true_type { };
+struct is_std_set<std::set<Key, Compare, Alloc> > : std::true_type { };
 
 template <typename>
-struct is_std_unordered_map : ::std::false_type { };
+struct is_std_unordered_map : std::false_type { };
 
 template <class Key, class T, class Hash, class P, class Alloc>
-struct is_std_unordered_map<::std::unordered_map<Key, T, Hash, P, Alloc> > :
-  ::std::true_type { };
+struct is_std_unordered_map<std::unordered_map<Key, T, Hash, P, Alloc> > :
+  std::true_type { };
 
 template <typename>
-struct is_std_unordered_set : ::std::false_type { };
+struct is_std_unordered_set : std::false_type { };
 
 template <class Key, class Hash, class Equal, class Alloc>
-struct is_std_unordered_set<::std::unordered_set<Key, Hash, Equal, Alloc> > :
-  ::std::true_type { };
+struct is_std_unordered_set<std::unordered_set<Key, Hash, Equal, Alloc> > :
+  std::true_type { };
 
 template <typename>
-struct is_std_tuple : ::std::false_type { };
+struct is_std_tuple : std::false_type { };
 
 template <class ...Types>
-struct is_std_tuple<::std::tuple<Types...> > : ::std::true_type { };
+struct is_std_tuple<std::tuple<Types...> > : std::true_type { };
 
 template <typename>
-struct is_std_vector : ::std::false_type { };
+struct is_std_vector : std::false_type { };
 
 template <typename T, class Alloc>
-struct is_std_vector<::std::vector<T, Alloc> > : ::std::true_type { };
+struct is_std_vector<std::vector<T, Alloc> > : std::true_type { };
 
 template <typename T>
-inline ::std::enable_if_t<
-  ::std::is_same<::std::decay_t<T>, ::std::string>{} &&
+inline std::enable_if_t<
+  std::is_same<std::decay_t<T>, std::string>{} &&
   !is_nc_reference<T>{},
   int
 >
@@ -643,8 +648,8 @@ set(lua_State* const L, T&& s) noexcept
 }
 
 template <typename C>
-inline ::std::enable_if_t<
-  is_std_pair<::std::decay_t<C>>{} &&
+inline std::enable_if_t<
+  is_std_pair<std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
   int
 >
@@ -658,48 +663,48 @@ set(lua_State* const L, C&& p) noexcept(
   return 2;
 }
 
-template <typename ...Types, ::std::size_t ...I>
+template <typename ...Types, std::size_t ...I>
 inline void set_tuple_result(lua_State* const L,
-  ::std::tuple<Types...> const& t, ::std::index_sequence<I...> const) noexcept(
-    noexcept(swallow{(set(L, ::std::get<I>(t)), 0)...})
+  std::tuple<Types...> const& t, std::index_sequence<I...> const) noexcept(
+    noexcept(swallow{(set(L, std::get<I>(t)), 0)...})
   )
 {
-  swallow{(set(L, ::std::get<I>(t)), 0)...};
+  swallow{(set(L, std::get<I>(t)), 0)...};
 }
 
 template <typename C>
-inline ::std::enable_if_t<
-  is_std_tuple<::std::decay_t<C>>{} &&
+inline std::enable_if_t<
+  is_std_tuple<std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
   int
 >
 set(lua_State* const L, C&& t) noexcept(
   noexcept(
     set_tuple_result(L, t,
-      ::std::make_index_sequence<::std::tuple_size<C>{}>()
+      std::make_index_sequence<std::tuple_size<C>{}>()
     )
   )
 )
 {
-  using result_type = ::std::decay_t<C>;
+  using result_type = std::decay_t<C>;
 
   set_tuple_result(L,
     t,
-    ::std::make_index_sequence<::std::tuple_size<C>{}>()
+    std::make_index_sequence<std::tuple_size<C>{}>()
   );
 
-  return ::std::tuple_size<result_type>{};
+  return std::tuple_size<result_type>{};
 }
 
 template <typename C>
-inline ::std::enable_if_t<
-  (is_std_array<::std::decay_t<C>>{} ||
-  is_std_deque<::std::decay_t<C>>{} ||
-  is_std_forward_list<::std::decay_t<C>>{} ||
-  is_std_list<::std::decay_t<C>>{} ||
-  is_std_vector<::std::decay_t<C>>{} ||
-  is_std_set<::std::decay_t<C>>{} ||
-  is_std_unordered_set<::std::decay_t<C>>{}) &&
+inline std::enable_if_t<
+  (is_std_array<std::decay_t<C>>{} ||
+  is_std_deque<std::decay_t<C>>{} ||
+  is_std_forward_list<std::decay_t<C>>{} ||
+  is_std_list<std::decay_t<C>>{} ||
+  is_std_vector<std::decay_t<C>>{} ||
+  is_std_set<std::decay_t<C>>{} ||
+  is_std_unordered_set<std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
   int
 >
@@ -722,9 +727,9 @@ set(lua_State* const L, C&& c)
 }
 
 template <typename C>
-inline ::std::enable_if_t<
-  (is_std_map<::std::decay_t<C>>{} ||
-  is_std_unordered_map<::std::decay_t<C>>{}) &&
+inline std::enable_if_t<
+  (is_std_map<std::decay_t<C>>{} ||
+  is_std_unordered_map<std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
   int
 >
@@ -746,16 +751,16 @@ set(lua_State* const L, C&& m)
 }
 
 template <int I, class C>
-inline ::std::enable_if_t<
-  ::std::is_same<::std::decay_t<C>, ::std::string>{} &&
+inline std::enable_if_t<
+  std::is_same<std::decay_t<C>, std::string>{} &&
   !is_nc_reference<C>{},
-  ::std::decay_t<C>
+  std::decay_t<C>
 >
 get(lua_State* const L)
 {
   assert(lua_isstring(L, I));
 
-  ::std::size_t len;
+  std::size_t len;
 
   auto const s(lua_tolstring(L, I, &len));
 
@@ -763,16 +768,16 @@ get(lua_State* const L)
 }
 
 template<int I, class C>
-inline ::std::enable_if_t<
-  is_std_pair<::std::decay_t<C>>{} &&
+inline std::enable_if_t<
+  is_std_pair<std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  ::std::decay_t<C>
+  std::decay_t<C>
 >
 get(lua_State* const L)
 {
   assert(lua_istable(L, I));
  
-  using result_type = ::std::decay_t<C>;
+  using result_type = std::decay_t<C>;
 
   lua_rawgeti(L, -1, 1);
   lua_rawgeti(L, -2, 2);
@@ -787,18 +792,18 @@ get(lua_State* const L)
   return result;
 }
 
-template <::std::size_t O, class C, ::std::size_t ...I>
+template <std::size_t O, class C, std::size_t ...I>
 inline C get_tuple_arg(lua_State* const L,
-  ::std::index_sequence<I...> const) noexcept(
-    noexcept(::std::make_tuple(get<int(I - sizeof...(I)),
-      ::std::tuple_element_t<I, C>>(L)...)
+  std::index_sequence<I...> const) noexcept(
+    noexcept(std::make_tuple(get<int(I - sizeof...(I)),
+      std::tuple_element_t<I, C>>(L)...)
     )
   )
 {
   swallow{(lua_rawgeti(L, O, I + 1), 0)...};
 
-  C result(::std::make_tuple(get<int(I - sizeof...(I)),
-    ::std::tuple_element_t<I, C>>(L)...));
+  C result(std::make_tuple(get<int(I - sizeof...(I)),
+    std::tuple_element_t<I, C>>(L)...));
 
   lua_pop(L, int(sizeof...(I)));
 
@@ -806,16 +811,16 @@ inline C get_tuple_arg(lua_State* const L,
 }
 
 template <int I, class C>
-inline ::std::enable_if_t<
-  is_std_tuple<::std::decay_t<C>>{} &&
+inline std::enable_if_t<
+  is_std_tuple<std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  ::std::decay_t<C>
+  std::decay_t<C>
 >
 get(lua_State* const L) noexcept(
   noexcept(get_tuple_arg<I,
-    ::std::decay_t<C>>(L,
-      ::std::make_index_sequence<
-        ::std::tuple_size<::std::decay_t<C>>{}
+    std::decay_t<C>>(L,
+      std::make_index_sequence<
+        std::tuple_size<std::decay_t<C>>{}
       >()
     )
   )
@@ -823,27 +828,27 @@ get(lua_State* const L) noexcept(
 {
   assert(lua_istable(L, I));
 
-  using result_type = ::std::decay_t<C>;
+  using result_type = std::decay_t<C>;
 
   return get_tuple_arg<I, result_type>(L,
-    ::std::make_index_sequence<::std::tuple_size<result_type>{}>()
+    std::make_index_sequence<std::tuple_size<result_type>{}>()
   );
 }
 
 template<int I, class C>
-inline ::std::enable_if_t<
-  is_std_array<::std::decay_t<C>>{} &&
+inline std::enable_if_t<
+  is_std_array<std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  ::std::decay_t<C>
+  std::decay_t<C>
 >
 get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = ::std::decay_t<C>;
+  using result_type = std::decay_t<C>;
   result_type result;
 
-  auto const len(::std::min(lua_rawlen(L, I), result.size()));
+  auto const len(std::min(lua_rawlen(L, I), result.size()));
 
   for (decltype(lua_rawlen(L, I)) i{}; i != len; ++i)
   {
@@ -858,18 +863,18 @@ get(lua_State* const L)
 }
 
 template <int I, class C>
-inline ::std::enable_if_t<
-  (is_std_deque<::std::decay_t<C>>{} ||
-  is_std_forward_list<::std::decay_t<C>>{} ||
-  is_std_list<::std::decay_t<C>>{}) &&
+inline std::enable_if_t<
+  (is_std_deque<std::decay_t<C>>{} ||
+  is_std_forward_list<std::decay_t<C>>{} ||
+  is_std_list<std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
-  ::std::decay_t<C>
+  std::decay_t<C>
 >
 get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = ::std::decay_t<C>;
+  using result_type = std::decay_t<C>;
   result_type result;
 
   auto const len(lua_rawlen(L, I));
@@ -887,16 +892,16 @@ get(lua_State* const L)
 }
 
 template <int I, class C>
-inline ::std::enable_if_t<
-  is_std_vector<::std::decay_t<C>>{} &&
+inline std::enable_if_t<
+  is_std_vector<std::decay_t<C>>{} &&
   !is_nc_reference<C>{},
-  ::std::decay_t<C>
+  std::decay_t<C>
 >
 get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = ::std::decay_t<C>;
+  using result_type = std::decay_t<C>;
   result_type result;
 
   auto const cend(lua_rawlen(L, I) + 1);
@@ -916,17 +921,17 @@ get(lua_State* const L)
 }
 
 template <int I, class C>
-inline ::std::enable_if_t<
-  (is_std_map<::std::decay_t<C>>{} ||
-  is_std_unordered_map<::std::decay_t<C>>{}) &&
+inline std::enable_if_t<
+  (is_std_map<std::decay_t<C>>{} ||
+  is_std_unordered_map<std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
-  ::std::decay_t<C>
+  std::decay_t<C>
 >
 get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = ::std::decay_t<C>;
+  using result_type = std::decay_t<C>;
   result_type result;
 
   lua_pushnil(L);
@@ -944,17 +949,17 @@ get(lua_State* const L)
 }
 
 template <int I, class C>
-inline ::std::enable_if_t<
-  (is_std_set<::std::decay_t<C>>{} ||
-  is_std_unordered_set<::std::decay_t<C>>{}) &&
+inline std::enable_if_t<
+  (is_std_set<std::decay_t<C>>{} ||
+  is_std_unordered_set<std::decay_t<C>>{}) &&
   !is_nc_reference<C>{},
-  ::std::decay_t<C>
+  std::decay_t<C>
 >
 get(lua_State* const L)
 {
   assert(lua_istable(L, I));
 
-  using result_type = ::std::decay_t<C>;
+  using result_type = std::decay_t<C>;
   result_type result;
 
   auto const end(lua_rawlen(L, I) + 1);
@@ -975,41 +980,41 @@ get(lua_State* const L)
 
 template <class C>
 int default_finalizer(lua_State* const L)
-  noexcept(noexcept(::std::declval<C>().~C()))
+  noexcept(noexcept(std::declval<C>().~C()))
 {
   delete static_cast<C*>(lua_touserdata(L, lua_upvalueindex(1)));
 
   return {};
 }
 
-template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
-inline ::std::enable_if_t<bool(!sizeof...(A)), C*>
-forward(lua_State* const, ::std::index_sequence<I...> const) noexcept(
+template <std::size_t O, typename C, typename ...A, std::size_t ...I>
+inline std::enable_if_t<bool(!sizeof...(A)), C*>
+forward(lua_State* const, std::index_sequence<I...> const) noexcept(
   noexcept(C())
 )
 {
   return new C();
 }
 
-template <::std::size_t O, typename C, typename ...A, ::std::size_t ...I>
-inline ::std::enable_if_t<bool(sizeof...(A)), C*>
-forward(lua_State* const L, ::std::index_sequence<I...> const) noexcept(
+template <std::size_t O, typename C, typename ...A, std::size_t ...I>
+inline std::enable_if_t<bool(sizeof...(A)), C*>
+forward(lua_State* const L, std::index_sequence<I...> const) noexcept(
   noexcept(C(get<I + O, A>(L)...))
 )
 {
   return new C(get<I + O, A>(L)...);
 }
 
-template <::std::size_t O, class C, class ...A>
+template <std::size_t O, class C, class ...A>
 int constructor_stub(lua_State* const L)
   noexcept(noexcept(
-    forward<O, C, A...>(L, ::std::make_index_sequence<sizeof...(A)>()))
+    forward<O, C, A...>(L, std::make_index_sequence<sizeof...(A)>()))
   )
 {
   assert(sizeof...(A) == lua_gettop(L));
 
   auto const instance(forward<O, C, A...>(L,
-    ::std::make_index_sequence<sizeof...(A)>())
+    std::make_index_sequence<sizeof...(A)>())
   );
 
   // table
@@ -1071,61 +1076,61 @@ int constructor_stub(lua_State* const L)
   return 1;
 }
 
-template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
-inline ::std::enable_if_t<bool(!sizeof...(A)), R>
+template <std::size_t O, typename R, typename ...A, std::size_t ...I>
+inline std::enable_if_t<bool(!sizeof...(A)), R>
 forward(lua_State* const, R (* const f)(A...),
-  ::std::index_sequence<I...> const) noexcept(noexcept((*f)()))
+  std::index_sequence<I...> const) noexcept(noexcept((*f)()))
 {
   return (*f)();
 }
 
-template <::std::size_t O, typename R, typename ...A, ::std::size_t ...I>
-inline ::std::enable_if_t<bool(sizeof...(A)), R>
+template <std::size_t O, typename R, typename ...A, std::size_t ...I>
+inline std::enable_if_t<bool(sizeof...(A)), R>
 forward(lua_State* const L, R (* const f)(A...),
-  ::std::index_sequence<I...> const) noexcept(
+  std::index_sequence<I...> const) noexcept(
   noexcept((*f)(get<I + O, A>(L)...))
 )
 {
   return (*f)(get<I + O, A>(L)...);
 }
 
-template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-inline ::std::enable_if_t<::std::is_void<R>{}, int>
+template <typename FP, FP fp, std::size_t O, class R, class ...A>
+inline std::enable_if_t<std::is_void<R>{}, int>
 func_stub(lua_State* const L) noexcept(
   noexcept(
-    forward<O, R, A...>(L, fp, ::std::make_index_sequence<sizeof...(A)>())
+    forward<O, R, A...>(L, fp, std::make_index_sequence<sizeof...(A)>())
   )
 )
 {
   assert(sizeof...(A) == lua_gettop(L));
 
-  forward<O, R, A...>(L, fp, ::std::make_index_sequence<sizeof...(A)>());
+  forward<O, R, A...>(L, fp, std::make_index_sequence<sizeof...(A)>());
 
   return {};
 }
 
-template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
-inline ::std::enable_if_t<!::std::is_void<R>{}, int>
+template <typename FP, FP fp, std::size_t O, class R, class ...A>
+inline std::enable_if_t<!std::is_void<R>{}, int>
 func_stub(lua_State* const L) noexcept(
   noexcept(
     set(L, forward<O, R, A...>(L, fp,
-    ::std::make_index_sequence<sizeof...(A)>()))
+    std::make_index_sequence<sizeof...(A)>()))
   )
 )
 {
   return set(L, forward<O, R, A...>(L, fp,
-    ::std::make_index_sequence<sizeof...(A)>()));
+    std::make_index_sequence<sizeof...(A)>()));
 }
 
 template <typename FP, FP fp, class R>
-inline ::std::enable_if_t<!::std::is_void<R>{}, int>
+inline std::enable_if_t<!std::is_void<R>{}, int>
 vararg_func_stub(lua_State* const L) noexcept(noexcept(set(fp(L))))
 {
   return set(fp(L));
 }
 
 template <typename FP, FP fp, class R>
-inline ::std::enable_if_t<::std::is_void<R>{}, int>
+inline std::enable_if_t<std::is_void<R>{}, int>
 vararg_func_stub(lua_State* const L) noexcept(noexcept(fp(L)))
 {
   fp(L);
@@ -1133,80 +1138,80 @@ vararg_func_stub(lua_State* const L) noexcept(noexcept(fp(L)))
   return {};
 }
 
-template <::std::size_t O, typename C, typename R, typename ...A,
-  ::std::size_t ...I>
-inline ::std::enable_if_t<bool(!sizeof...(A)), R>
+template <std::size_t O, typename C, typename R, typename ...A,
+  std::size_t ...I>
+inline std::enable_if_t<bool(!sizeof...(A)), R>
 forward(lua_State* const, C* const c,
   R (C::* const ptr_to_member)(A...) const,
-  ::std::index_sequence<I...> const) noexcept(
+  std::index_sequence<I...> const) noexcept(
   noexcept((c->*ptr_to_member)())
 )
 {
   return (c->*ptr_to_member)();
 }
 
-template <::std::size_t O, typename C, typename R, typename ...A,
-  ::std::size_t ...I>
-inline ::std::enable_if_t<bool(!sizeof...(A)), R>
+template <std::size_t O, typename C, typename R, typename ...A,
+  std::size_t ...I>
+inline std::enable_if_t<bool(!sizeof...(A)), R>
 forward(lua_State* const, C* const c,
   R (C::* const ptr_to_member)(A...),
-  ::std::index_sequence<I...> const) noexcept(
+  std::index_sequence<I...> const) noexcept(
   noexcept((c->*ptr_to_member)())
 )
 {
   return (c->*ptr_to_member)();
 }
 
-template <::std::size_t O, typename C, typename R, typename ...A,
-  ::std::size_t ...I>
-inline ::std::enable_if_t<bool(sizeof...(A)), R>
+template <std::size_t O, typename C, typename R, typename ...A,
+  std::size_t ...I>
+inline std::enable_if_t<bool(sizeof...(A)), R>
 forward(lua_State* const L, C* const c,
   R (C::* const ptr_to_member)(A...) const,
-  ::std::index_sequence<I...> const) noexcept(
+  std::index_sequence<I...> const) noexcept(
   noexcept((c->*ptr_to_member)(get<I + O, A>(L)...))
 )
 {
   return (c->*ptr_to_member)(get<I + O, A>(L)...);
 }
 
-template <::std::size_t O, typename C, typename R,
-  typename ...A, ::std::size_t ...I>
-inline ::std::enable_if_t<bool(sizeof...(A)), R>
+template <std::size_t O, typename C, typename R,
+  typename ...A, std::size_t ...I>
+inline std::enable_if_t<bool(sizeof...(A)), R>
 forward(lua_State* const L, C* const c,
-  R (C::* const ptr_to_member)(A...), ::std::index_sequence<I...> const)
+  R (C::* const ptr_to_member)(A...), std::index_sequence<I...> const)
   noexcept(noexcept((c->*ptr_to_member)(get<I + O, A>(L)...)))
 {
   return (c->*ptr_to_member)(get<I + O, A>(L)...);
 }
 
-template <typename FP, FP fp, ::std::size_t O, class C, class R, class ...A>
-inline ::std::enable_if_t<!::std::is_void<R>{}, int>
+template <typename FP, FP fp, std::size_t O, class C, class R, class ...A>
+inline std::enable_if_t<!std::is_void<R>{}, int>
 member_stub(lua_State* const L) noexcept(
   noexcept(set(L,
     forward<O, C, R, A...>(L,
       static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
       fp,
-      ::std::make_index_sequence<sizeof...(A)>()))
+      std::make_index_sequence<sizeof...(A)>()))
   )
 )
 {
-//::std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << ::std::endl;
+//std::cout << lua_gettop(L) << " " << sizeof...(A) + O - 1 << std::endl;
   assert(sizeof...(A) + O - 1 == lua_gettop(L));
 
   return set(L,
     forward<O, C, R, A...>(L,
       static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
       fp,
-      ::std::make_index_sequence<sizeof...(A)>()));
+      std::make_index_sequence<sizeof...(A)>()));
 }
 
-template <typename FP, FP fp, ::std::size_t O, class C, class R, class ...A>
-inline ::std::enable_if_t<::std::is_void<R>{}, int>
+template <typename FP, FP fp, std::size_t O, class C, class R, class ...A>
+inline std::enable_if_t<std::is_void<R>{}, int>
 member_stub(lua_State* const L) noexcept(
   noexcept(forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
     fp,
-    ::std::make_index_sequence<sizeof...(A)>())
+    std::make_index_sequence<sizeof...(A)>())
   )
 )
 {
@@ -1215,13 +1220,13 @@ member_stub(lua_State* const L) noexcept(
   forward<O, C, R, A...>(L,
     static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2))),
     fp,
-    ::std::make_index_sequence<sizeof...(A)>());
+    std::make_index_sequence<sizeof...(A)>());
 
   return {};
 }
 
 template <typename FP, FP fp, class C, class R>
-inline ::std::enable_if_t<!::std::is_void<R>{}, int>
+inline std::enable_if_t<!std::is_void<R>{}, int>
 vararg_member_stub(lua_State* const L) noexcept(
   noexcept(set(L, (static_cast<C*>(
     lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L))
@@ -1234,7 +1239,7 @@ vararg_member_stub(lua_State* const L) noexcept(
 }
 
 template <typename FP, FP fp, class C, class R>
-inline ::std::enable_if_t<::std::is_void<R>{}, int>
+inline std::enable_if_t<std::is_void<R>{}, int>
 vararg_member_stub(lua_State* const L) noexcept(
   noexcept(
     (static_cast<C*>(lua_touserdata(L, lua_upvalueindex(2)))->*fp)(L)
@@ -1246,59 +1251,59 @@ vararg_member_stub(lua_State* const L) noexcept(
   return {};
 }
 
-template <typename FP, FP fp, ::std::size_t O, class R, class ...A>
+template <typename FP, FP fp, std::size_t O, class R, class ...A>
 constexpr inline lua_CFunction func_stub(R (*)(A...)) noexcept
 {
-  return &detail::func_stub<FP, fp, O, R, A...>;
+  return &func_stub<FP, fp, O, R, A...>;
 }
 
-template <typename FP, FP fp, ::std::size_t O, class R, class C, class ...A>
+template <typename FP, FP fp, std::size_t O, class R, class C, class ...A>
 constexpr inline lua_CFunction member_stub(R (C::*)(A...)) noexcept
 {
-  return &detail::member_stub<FP, fp, O, C, R, A...>;
+  return &member_stub<FP, fp, O, C, R, A...>;
 }
 
-template <typename FP, FP fp, ::std::size_t O, class R, class C, class ...A>
+template <typename FP, FP fp, std::size_t O, class R, class C, class ...A>
 constexpr inline lua_CFunction member_stub(R (C::*)(A...) const) noexcept
 {
-  return &detail::member_stub<FP, fp, O, C, R, A...>;
+  return &member_stub<FP, fp, O, C, R, A...>;
 }
 
 template <typename FP, FP fp, class R, class C>
 constexpr inline lua_CFunction vararg_member_stub(R (C::*)(lua_State*)) noexcept
 {
-  return &detail::vararg_member_stub<FP, fp, C, R>;
+  return &vararg_member_stub<FP, fp, C, R>;
 }
 
 template <typename FP, FP fp, class R, class C>
 constexpr inline lua_CFunction vararg_member_stub(R (C::*)(lua_State*) const) noexcept
 {
-  return &detail::vararg_member_stub<FP, fp, C, R>;
+  return &vararg_member_stub<FP, fp, C, R>;
 }
 
 template <typename R>
 constexpr inline enum property_type get_property_type() noexcept
 {
-  if (::std::is_same<::std::decay_t<R>, bool>{})
+  if (std::is_same<std::decay_t<R>, bool>{})
   {
-    return detail::BOOLEAN;
+    return BOOLEAN;
   }
-  else if (::std::is_integral<R>{})
+  else if (std::is_integral<R>{})
   {
-    return detail::INTEGER;
+    return INTEGER;
   }
-  else if (::std::is_floating_point<R>{})
+  else if (std::is_floating_point<R>{})
   {
-    return detail::NUMBER;
+    return NUMBER;
   }
-  else if (::std::is_same<R, ::std::string const&>{} ||
-    ::std::is_same<::std::decay_t<R>, char const*>{})
+  else if (std::is_same<R, std::string const&>{} ||
+    std::is_same<std::decay_t<R>, char const*>{})
   {
-    return detail::STRING;
+    return STRING;
   }
   else
   {
-    return detail::OTHER;
+    return OTHER;
   }
 }
 
@@ -1316,25 +1321,16 @@ constexpr inline auto get_property_type(R (C::* const)(A...) const) noexcept
 
 template <typename ...A>
 inline void call(lua_State* const L, int const nresults, A&& ...args)
-  noexcept(noexcept(swallow{(set(L, ::std::forward<A>(args)))...}))
+  noexcept(noexcept(swallow{(set(L, std::forward<A>(args)))...}))
 {
   int ac{};
 
   swallow{
-    (ac += set(L, ::std::forward<A>(args)))...
+    (ac += set(L, std::forward<A>(args)))...
   };
   assert(ac >= int(sizeof...(A)));
 
   lua_call(L, ac, nresults);
-}
-
-} // detail
-
-template <typename ...A>
-inline void call(lua_State* const L, int const nresults, A&& ...args)
-  noexcept(noexcept(detail::call(L, nresults, ::std::forward<A>(args)...)))
-{
-  detail::call(L, nresults, ::std::forward<A>(args)...);
 }
 
 class scope
@@ -1345,7 +1341,7 @@ public:
   template <typename ...A>
   scope(char const* const name, A&&... args) : name_(name)
   {
-    detail::swallow((args.set_parent_scope(this), 0)...);
+    swallow((args.set_parent_scope(this), 0)...);
   }
 
   scope(scope const&) = delete;
@@ -1353,14 +1349,14 @@ public:
   scope& operator=(scope const&) = delete;
 
   template <typename T>
-  ::std::enable_if_t<
-    ::std::is_same<::std::decay_t<T>, bool>{},
+  std::enable_if_t<
+    std::is_same<std::decay_t<T>, bool>{},
     scope&
   >
   constant(char const* const name, T const value)
   {
-    struct detail::constant_info_type const ci {
-      detail::BOOLEAN,
+    struct constant_info_type const ci {
+      BOOLEAN,
       {value}
     };
 
@@ -1370,14 +1366,14 @@ public:
   }
 
   template <typename T>
-  ::std::enable_if_t<
-    ::std::is_floating_point<::std::decay_t<T>>{},
+  std::enable_if_t<
+    std::is_floating_point<std::decay_t<T>>{},
     scope&
   >
   constant(char const* const name, T const value)
   {
-    struct detail::constant_info_type ci;
-    ci.type = detail::NUMBER;
+    struct constant_info_type ci;
+    ci.type = NUMBER;
     ci.u.number = value;
 
     constants_.emplace_back(name, ci);
@@ -1386,15 +1382,15 @@ public:
   }
 
   template <typename T>
-  ::std::enable_if_t<
-    ::std::is_integral<::std::decay_t<T>>{} &&
-    !::std::is_same<::std::decay_t<T>, bool>{},
+  std::enable_if_t<
+    std::is_integral<std::decay_t<T>>{} &&
+    !std::is_same<std::decay_t<T>, bool>{},
     scope&
   >
   constant(char const* const name, T const value)
   {
-    struct detail::constant_info_type ci;
-    ci.type = detail::INTEGER;
+    struct constant_info_type ci;
+    ci.type = INTEGER;
     ci.u.integer = value;
 
     constants_.emplace_back(name, ci);
@@ -1404,8 +1400,8 @@ public:
 
   scope& constant(char const* const name, char const* const value)
   {
-    struct detail::constant_info_type ci;
-    ci.type = detail::STRING;
+    struct constant_info_type ci;
+    ci.type = STRING;
     ci.u.string = value;
 
     constants_.emplace_back(name, ci);
@@ -1449,22 +1445,22 @@ protected:
           default:
             assert(0);
 
-          case detail::BOOLEAN:
+          case BOOLEAN:
             lua_pushboolean(L, i.second.u.boolean);
 
             break;
 
-          case detail::INTEGER:
+          case INTEGER:
             lua_pushinteger(L, i.second.u.integer);
 
             break;
 
-          case detail::NUMBER:
+          case NUMBER:
             lua_pushnumber(L, i.second.u.number);
 
             break;
 
-          case detail::STRING:
+          case STRING:
             lua_pushstring(L, i.second.u.string);
         }
       }
@@ -1475,15 +1471,15 @@ protected:
       scope::get_scope(L);
       assert(lua_istable(L, -1));
 
-      for (auto& i: detail::as_const(constants_))
+      for (auto& i: as_const(constants_))
       {
         assert(lua_istable(L, -1));
         S::push_constant(L, i);
 
-        detail::rawsetfield(L, -2, i.first);
+        rawsetfield(L, -2, i.first);
       }
 
-      for (auto& i: detail::as_const(functions_))
+      for (auto& i: as_const(functions_))
       {
         assert(lua_istable(L, -1));
 
@@ -1491,14 +1487,14 @@ protected:
 
         lua_pushcclosure(L, i.callback, 1);
 
-        detail::rawsetfield(L, -2, i.name);
+        rawsetfield(L, -2, i.name);
       }
 
       lua_pop(L, 1);
     }
     else
     {
-      for (auto& i: detail::as_const(constants_))
+      for (auto& i: as_const(constants_))
       {
         assert(lua_istable(L, -1));
         S::push_constant(L, i);
@@ -1506,7 +1502,7 @@ protected:
         lua_setglobal(L, i.first);
       }
 
-      for (auto& i: detail::as_const(functions_))
+      for (auto& i: as_const(functions_))
       {
         lua_pushnil(L);
         lua_pushcclosure(L, i.callback, 1);
@@ -1567,12 +1563,12 @@ protected:
         if (lua_gettop(L))
         {
           assert(lua_istable(L, -1));
-          lua_createtable(L, 0, detail::default_nrec);
-          detail::rawsetfield(L, -2, name_);
+          lua_createtable(L, 0, default_nrec);
+          rawsetfield(L, -2, name_);
         }
         else
         {
-          lua_createtable(L, 0, detail::default_nrec);
+          lua_createtable(L, 0, default_nrec);
           lua_setglobal(L, name_);
         }
       }
@@ -1594,7 +1590,7 @@ protected:
       {
         scope_create_ = false;
 
-        lua_createtable(L, 0, detail::default_nrec);
+        lua_createtable(L, 0, default_nrec);
         lua_setglobal(L, name_);
       }
       // else do nothing
@@ -1609,25 +1605,25 @@ protected:
 
   scope* parent_scope_{};
 
-  ::std::vector<detail::func_info_type> functions_;
+  std::vector<func_info_type> functions_;
 
 private:
   template <typename FP, FP fp, typename R, typename ...A>
   void push_function(char const* const name, R (* const)(A...))
   {
-    functions_.push_back({name, detail::func_stub<FP, fp, 1, R, A...>});
+    functions_.push_back({name, func_stub<FP, fp, 1, R, A...>});
   }
 
   template <typename FP, FP fp, typename R>
   void push_vararg_function(char const* const name, R (* const)(lua_State*))
   {
-    functions_.push_back({name, detail::vararg_func_stub<FP, fp, R>});
+    functions_.push_back({name, vararg_func_stub<FP, fp, R>});
   }
 
 private:
   friend class module;
 
-  detail::constants_type constants_;
+  constants_type constants_;
 
   scope* next_{};
 
@@ -1644,7 +1640,7 @@ public:
     scope(nullptr),
     L_(L)
   {
-    detail::swallow((args.set_parent_scope(this), 0)...);
+    swallow((args.set_parent_scope(this), 0)...);
 
     scope::apply(L);
   }
@@ -1654,14 +1650,14 @@ public:
     scope(name),
     L_(L)
   {
-    detail::swallow((args.set_parent_scope(this), 0)...);
+    swallow((args.set_parent_scope(this), 0)...);
 
     scope::apply(L);
   }
 
   template <typename T>
-  ::std::enable_if_t<
-    ::std::is_same<::std::decay_t<T>, bool>{},
+  std::enable_if_t<
+    std::is_same<std::decay_t<T>, bool>{},
     module&
   >
   constant(char const* const name, T const value)
@@ -1672,7 +1668,7 @@ public:
       assert(lua_istable(L_, -1));
 
       lua_pushboolean(L_, value);
-      detail::rawsetfield(L_, -2, name);
+      rawsetfield(L_, -2, name);
 
       lua_pop(L_, 1);
     }
@@ -1687,8 +1683,8 @@ public:
   }
 
   template <typename T>
-  ::std::enable_if_t<
-    ::std::is_floating_point<::std::decay_t<T>>{},
+  std::enable_if_t<
+    std::is_floating_point<std::decay_t<T>>{},
     module&
   >
   constant(char const* const name, T const value)
@@ -1699,7 +1695,7 @@ public:
       assert(lua_istable(L_, -1));
 
       lua_pushnumber(L_, value);
-      detail::rawsetfield(L_, -2, name);
+      rawsetfield(L_, -2, name);
 
       lua_pop(L_, 1);
     }
@@ -1714,9 +1710,9 @@ public:
   }
 
   template <typename T>
-  ::std::enable_if_t<
-    ::std::is_integral<::std::decay_t<T>>{} &&
-    !::std::is_same<::std::decay_t<T>, bool>{},
+  std::enable_if_t<
+    std::is_integral<std::decay_t<T>>{} &&
+    !std::is_same<std::decay_t<T>, bool>{},
     module&
   >
   constant(char const* const name, T const value)
@@ -1727,7 +1723,7 @@ public:
       assert(lua_istable(L_, -1));
 
       lua_pushinteger(L_, value);
-      detail::rawsetfield(L_, -2, name);
+      rawsetfield(L_, -2, name);
 
       lua_pop(L_, 1);
     }
@@ -1749,7 +1745,7 @@ public:
       assert(lua_istable(L_, -1));
 
       lua_pushstring(L_, value);
-      detail::rawsetfield(L_, -2, name);
+      rawsetfield(L_, -2, name);
 
       lua_pop(L_, 1);
     }
@@ -1773,7 +1769,7 @@ public:
 
       push_function<FP, fp>(fp);
 
-      detail::rawsetfield(L_, -2, name);
+      rawsetfield(L_, -2, name);
 
       lua_pop(L_, 1);
     }
@@ -1802,7 +1798,7 @@ public:
 
       push_vararg_function<FP, fp>(fp);
 
-      detail::rawsetfield(L_, -2, name);
+      rawsetfield(L_, -2, name);
 
       lua_pop(L_, 1);
     }
@@ -1821,39 +1817,39 @@ private:
   void push_function(R (* const)(A...))
   {
     lua_pushnil(L_);
-    lua_pushcclosure(L_, detail::func_stub<FP, fp, 1, R, A...>, 1);
+    lua_pushcclosure(L_, func_stub<FP, fp, 1, R, A...>, 1);
   }
 
   template <typename FP, FP fp, typename R>
   void push_vararg_function(R (* const)(lua_State*))
   {
     lua_pushnil(L_);
-    lua_pushcclosure(L_, detail::vararg_func_stub<FP, fp, R>, 1);
+    lua_pushcclosure(L_, vararg_func_stub<FP, fp, R>, 1);
   }
 };
 
-using accessor_type = ::std::tuple<
-  ::std::vector<void* (*)(void*) noexcept>,
-  detail::map_member_info_type,
-  enum detail::property_type
+using accessor_type = std::tuple<
+  std::vector<void* (*)(void*) noexcept>,
+  map_member_info_type,
+  enum property_type
 >;
 
-using accessors_type = ::std::unordered_map<char const*,
+using accessors_type = std::unordered_map<char const*,
   accessor_type,
-  detail::str_hash,
-  detail::str_eq
+  str_hash,
+  str_eq
 >;
 
-using accessors_info_type = ::std::unordered_map<char const*,
+using accessors_info_type = std::unordered_map<char const*,
   unsigned,
-  detail::str_hash,
-  detail::str_eq
+  str_hash,
+  str_eq
 >;
 
-using defs_type = ::std::vector<
-  ::std::pair<
-    ::std::vector<void* (*)(void*) noexcept>,
-    detail::member_info_type
+using defs_type = std::vector<
+  std::pair<
+    std::vector<void* (*)(void*) noexcept>,
+    member_info_type
   >
 >;
 
@@ -1862,9 +1858,9 @@ class class_ : public scope
 {
   static char const* class_name_;
 
-  static ::std::vector<bool(*)(char const*) noexcept> inherits_;
+  static std::vector<bool(*)(char const*) noexcept> inherits_;
 
-  static ::std::vector<detail::func_info_type> constructors_;
+  static std::vector<func_info_type> constructors_;
 
   static defs_type defs_;
 
@@ -1880,7 +1876,7 @@ public:
   template <typename T>
   class_& constant(char const* const name, T&& value)
   {
-    scope::constant(name, ::std::forward<T>(value));
+    scope::constant(name, std::forward<T>(value));
 
     return *this;
   }
@@ -1893,7 +1889,7 @@ public:
   template <class ...A>
   class_& constructor(char const* const name = "new")
   {
-    constructors_.push_back({name, detail::constructor_stub<1, C, A...>});
+    constructors_.push_back({name, constructor_stub<1, C, A...>});
 
     return *this;
   }
@@ -1901,21 +1897,21 @@ public:
   template <class ...A>
   class_& inherits()
   {
-    detail::swallow{
+    swallow{
       (S<A>::copy_accessors(class_<A>::getters(), getters_), 0)...
     };
 
-    detail::swallow{
+    swallow{
       (S<A>::copy_accessors(class_<A>::setters(), setters_), 0)...
     };
 
-    detail::swallow{
+    swallow{
       (S<A>::copy_defs(class_<A>::defs(), defs_), 0)...
     };
 
     assert(inherits_.empty());
     inherits_.reserve(sizeof...(A));
-    detail::swallow{
+    swallow{
       (inherits_.push_back(class_<A>::inherits), 0)...
     };
 
@@ -1936,7 +1932,7 @@ public:
 
     for (auto& g: getters_)
     {
-      r.emplace(g.first, ::std::get<2>(g.second));
+      r.emplace(g.first, std::get<2>(g.second));
     }
 
     return r;
@@ -1948,7 +1944,7 @@ public:
 
     for (auto& s: setters_)
     {
-      r.emplace(s.first, ::std::get<2>(s.second));
+      r.emplace(s.first, std::get<2>(s.second));
     }
 
     return r;
@@ -1957,7 +1953,7 @@ public:
   static bool inherits(char const* const name) noexcept
   {
     assert(class_name_ && name);
-    if (::std::strcmp(name, class_name_))
+    if (std::strcmp(name, class_name_))
     {
       for (auto const f: inherits_)
       {
@@ -1977,8 +1973,8 @@ public:
   }
 
   template <typename FP, FP fp>
-  ::std::enable_if_t<
-    detail::is_function_pointer<FP>{},
+  std::enable_if_t<
+    is_function_pointer<FP>{},
     class_&
   >
   def(char const* const name)
@@ -1989,8 +1985,8 @@ public:
   }
 
   template <typename FP, FP fp>
-  ::std::enable_if_t<
-    !detail::is_function_pointer<FP>{},
+  std::enable_if_t<
+    !is_function_pointer<FP>{},
     class_&
   >
   def(char const* const name)
@@ -1998,9 +1994,9 @@ public:
     defs_.push_back(
       {
         {},
-        detail::member_info_type {
+        member_info_type {
           name,
-          detail::member_stub<FP, fp, 2>(fp)
+          member_stub<FP, fp, 2>(fp)
         }
       }
     );
@@ -2009,8 +2005,8 @@ public:
   }
 
   template <typename FP, FP fp>
-  ::std::enable_if_t<
-    !detail::is_function_pointer<FP>{},
+  std::enable_if_t<
+    !is_function_pointer<FP>{},
     class_&
   >
   def_func(char const* const name)
@@ -2018,9 +2014,9 @@ public:
     defs_.push_back(
       {
         {},
-        detail::member_info_type {
+        member_info_type {
           name,
-          detail::member_stub<FP, fp, 1>(fp)
+          member_stub<FP, fp, 1>(fp)
         }
       }
     );
@@ -2029,8 +2025,8 @@ public:
   }
 
   template <typename FP, FP fp>
-  ::std::enable_if_t<
-    detail::is_function_pointer<FP>{},
+  std::enable_if_t<
+    is_function_pointer<FP>{},
     class_&
   >
   def_func(char const* const name)
@@ -2038,9 +2034,9 @@ public:
     defs_.push_back(
       {
         {},
-        detail::member_info_type {
+        member_info_type {
           name,
-          detail::func_stub<FP, fp, 1>(fp)
+          func_stub<FP, fp, 1>(fp)
         }
       }
     );
@@ -2061,12 +2057,12 @@ public:
     getters_.emplace(name,
       accessors_type::mapped_type {
         {},
-        detail::member_stub<FP, fp, 3>(fp),
-        detail::get_property_type<FP, fp>(fp)
+        member_stub<FP, fp, 3>(fp),
+        get_property_type<FP, fp>(fp)
       }
     );
 
-    assert(::std::get<1>(getters_[name]));
+    assert(std::get<1>(getters_[name]));
 
     return *this;
   }
@@ -2077,29 +2073,29 @@ public:
     getters_.emplace(name,
       accessors_type::mapped_type {
         {},
-        detail::member_stub<FPA, fpa, 3>(fpa),
-        detail::get_property_type<FPA, fpa>(fpa)
+        member_stub<FPA, fpa, 3>(fpa),
+        get_property_type<FPA, fpa>(fpa)
       }
     );
 
-    assert(::std::get<1>(getters_[name]));
+    assert(std::get<1>(getters_[name]));
 
     setters_.emplace(name,
       accessors_type::mapped_type {
         {},
-        detail::member_stub<FPB, fpb, 3>(fpb),
-        detail::get_property_type<FPA, fpa>(fpa)
+        member_stub<FPB, fpb, 3>(fpb),
+        get_property_type<FPA, fpa>(fpa)
       }
     );
 
-    assert(::std::get<1>(setters_[name]));
+    assert(std::get<1>(setters_[name]));
 
     return *this;
   }
 
   template <typename FP, FP fp>
-  ::std::enable_if_t<
-    !detail::is_function_pointer<FP>{},
+  std::enable_if_t<
+    !is_function_pointer<FP>{},
     class_&
   >
   vararg_def(char const* const name)
@@ -2107,9 +2103,9 @@ public:
     defs_.push_back(
       {
         {},
-        detail::member_info_type {
+        member_info_type {
           name,
-          detail::vararg_member_stub<FP, fp>(fp)
+          vararg_member_stub<FP, fp>(fp)
         }
       }
     );
@@ -2128,8 +2124,8 @@ private:
       {
         auto& n(dst[a.first] = a.second);
 
-        ::std::get<0>(n).emplace_back(convert<A>);
-        ::std::get<0>(n).shrink_to_fit();
+        std::get<0>(n).emplace_back(convert<A>);
+        std::get<0>(n).shrink_to_fit();
       }
     }
 
@@ -2155,12 +2151,12 @@ private:
     scope::get_scope(L);
     assert(lua_istable(L, -1));
 
-    for (auto& i: detail::as_const(constructors_))
+    for (auto& i: as_const(constructors_))
     {
       assert(lua_istable(L, -1));
       lua_pushcfunction(L, i.callback);
 
-      detail::rawsetfield(L, -2, i.name);
+      rawsetfield(L, -2, i.name);
     }
 
     assert(inherits_.capacity() == inherits_.size());
@@ -2183,10 +2179,10 @@ template <class C>
 char const* class_<C>::class_name_;
 
 template <class C>
-::std::vector<bool(*)(char const*) noexcept> class_<C>::inherits_;
+std::vector<bool(*)(char const*) noexcept> class_<C>::inherits_;
 
 template <class C>
-::std::vector<detail::func_info_type> class_<C>::constructors_;
+std::vector<func_info_type> class_<C>::constructors_;
 
 template <class C>
 defs_type class_<C>::defs_;

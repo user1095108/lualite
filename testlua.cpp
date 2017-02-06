@@ -18,7 +18,7 @@ struct point
 
 inline int set(lua_State* const L, point p)
 {
-  using namespace ::lualite::detail;
+  using namespace ::lualite;
 
   lua_createtable(L, 2, 0);
 
@@ -41,7 +41,7 @@ inline std::enable_if_t<
 >
 get(lua_State* const L)
 {
-  using namespace ::lualite::detail;
+  using namespace ::lualite;
 
   assert(lua_istable(L, I));
 
@@ -230,9 +230,9 @@ int main(int argc, char* argv[])
   lua_getglobal(L, "print");
   ::lualite::call(L, 0, "--test--");
 
-  ::std::cout << ::lualite::detail::hash("test") <<
+  ::std::cout << ::lualite::hash("test") <<
     " " <<
-    ::lualite::detail::hash("test") <<
+    ::lualite::hash("test") <<
     ::std::endl;
 
   lua_close(L);
