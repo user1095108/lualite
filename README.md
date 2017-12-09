@@ -1,4 +1,4 @@
-##Description##
+# Description
 A C++ library for generating Lua bindings.
 
 Supported features:
@@ -10,7 +10,7 @@ Supported features:
  * standard containers,
  * user types.
 
-##Example##
+# Example
 ```c++
   lualite::module{L,
     lualite::class_<testbase>("testbase")
@@ -81,7 +81,7 @@ Supported features:
 
 Try it [online](http://lualitedemo.square7.ch/).
 
-##FAQ##
+# FAQ
 
 **Q:** Why is there no support for introspection in lualite:
 
@@ -89,11 +89,11 @@ Try it [online](http://lualitedemo.square7.ch/).
 ```
 void Object::init()
 {
-  ::lualite::module(L,
-    ::lualite::class_<Object>("Object")
+  lualite::module(L,
+    lualite::class_<Object>("Object")
       .constructor<Object*>()
       .def_func<bool(*)(char const*) noexcept,
-        &::lualite::class_<Object>::inherits>("inherits")
+        &lualite::class_<Object>::inherits>("inherits")
   );
 }
 ```
