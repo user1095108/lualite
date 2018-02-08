@@ -79,7 +79,7 @@ Supported features:
   );
 ```
 
-Try it [online](http://lualitedemo.square7.ch/).
+Try it [online](http://htmlpreview.github.io/?https://github.com/user1095108/examples/blob/master/testlualite.html).
 
 # FAQ
 
