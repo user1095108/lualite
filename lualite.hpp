@@ -67,7 +67,11 @@
 
 #endif // LUALITE_NO_STD_CONTAINERS
 
-#include "lua/lua.hpp"
+extern "C" {
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+}
 
 namespace lualite
 {
@@ -848,7 +852,7 @@ get(lua_State* const L)
   using result_type = std::decay_t<C>;
   result_type result;
 
-  auto const len(std::min(lua_rawlen(L, I), result.size()));
+  auto const len(std::min(lua_rawlen(L, I), lua_Unsigned(result.size())));
 
   for (decltype(lua_rawlen(L, I)) i{}; i != len; ++i)
   {
