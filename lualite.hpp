@@ -91,12 +91,6 @@ static constexpr auto const default_nrec = 10;
 namespace
 {
 
-template<typename T>
-constexpr inline T const& as_const(T& t) noexcept
-{
-  return t;
-}
-
 template <typename T>
 using is_function_pointer =
   std::integral_constant<bool,
@@ -1475,7 +1469,7 @@ protected:
       scope::get_scope(L);
       assert(lua_istable(L, -1));
 
-      for (auto& i: as_const(constants_))
+      for (auto& i: constants_)
       {
         assert(lua_istable(L, -1));
         S::push_constant(L, i);
@@ -1483,7 +1477,7 @@ protected:
         rawsetfield(L, -2, i.first);
       }
 
-      for (auto& i: as_const(functions_))
+      for (auto& i: functions_)
       {
         assert(lua_istable(L, -1));
 
@@ -1498,7 +1492,7 @@ protected:
     }
     else
     {
-      for (auto& i: as_const(constants_))
+      for (auto& i: constants_)
       {
         assert(lua_istable(L, -1));
         S::push_constant(L, i);
@@ -1506,7 +1500,7 @@ protected:
         lua_setglobal(L, i.first);
       }
 
-      for (auto& i: as_const(functions_))
+      for (auto& i: functions_)
       {
         lua_pushnil(L);
         lua_pushcclosure(L, i.callback, 1);
@@ -2155,7 +2149,7 @@ private:
     scope::get_scope(L);
     assert(lua_istable(L, -1));
 
-    for (auto& i: as_const(constructors_))
+    for (auto& i: constructors_)
     {
       assert(lua_istable(L, -1));
       lua_pushcfunction(L, i.callback);
