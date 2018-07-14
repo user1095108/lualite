@@ -78,13 +78,9 @@ Supported features:
     "print(a:test_array(r))\n"
   );
 ```
-
 Try it [online](http://htmlpreview.github.io/?https://github.com/user1095108/examples/blob/master/testlualite.html), or in [dosbox](http://htmlpreview.github.io/?https://github.com/user1095108/examples/blob/master/testll.html).
-
 # FAQ
-
 **Q:** Why is there no support for introspection in lualite:
-
 **A:** there is, but it is not exposed to lua by default. The idea is not to pollute the lua namespace and not to make users pay for something they potentially don't want. Example:
 ```
 void Object::init()
@@ -100,7 +96,6 @@ void Object::init()
 Adds the ability to query whether an object's class inherits from another class. By default, an object's class always inherits from itself. That is, `obj.inherits("Object")` always returns true. Similar mechanisms can be implemented for querying property names and the types of objects they expose.
 
 **Q:** Why can't I return `char*`:
-
 **A:** try returning `char const*`. Don't return references or pointers to non-const objects, if you don't provide wrappers for them (returning a non-const reference or pointer implies the ability to change the referred-to object within a Lua script, which is not possible without also writing a wrapper class for the type of the referred-to object).
 
 **Q:** Why am I getting:
