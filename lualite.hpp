@@ -679,7 +679,7 @@ inline std::enable_if_t<
 set(lua_State* const L, C&& t) noexcept(
   noexcept(
     set_tuple_result(L, t,
-      std::make_index_sequence<std::tuple_size<C>{}>()
+      std::make_index_sequence<std::size_t(std::tuple_size<C>{})>()
     )
   )
 )
@@ -818,7 +818,7 @@ get(lua_State* const L) noexcept(
   noexcept(get_tuple_arg<I,
     std::decay_t<C>>(L,
       std::make_index_sequence<
-        std::tuple_size<std::decay_t<C>>{}
+        std::size_t(std::tuple_size<std::decay_t<C>>{})
       >()
     )
   )
