@@ -78,7 +78,7 @@ Supported features:
     "print(a:test_array(r))\n"
   );
 ```
-Try it [online](http://htmlpreview.github.io/?https://github.com/user1095108/examples/blob/master/testlualite.html), or in [dosbox](http://htmlpreview.github.io/?https://github.com/user1095108/examples/blob/master/testll.html).
+Try it [online](http://htmlpreview.github.io/?https://github.com/user1095108/examples/blob/master/testlualite.html).
 # FAQ
 **Q:** Why is there no support for introspection in lualite:
 
