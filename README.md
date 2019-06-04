@@ -80,7 +80,7 @@ Supported features:
 ```
 Try it [online](http://htmlpreview.github.io/?https://github.com/user1095108/examples/blob/master/testlualite.html).
 # FAQ
-**Q:** Why is there no support for introspection in lualite:
+**Q:** How to build this?
 
 **A:** I maintain a working [example](https://github.com/user1095108/examples/tree/master/llexample) on how to build with the latest development version of lua.
 
