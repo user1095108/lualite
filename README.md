@@ -10,7 +10,7 @@ Supported features:
  * standard containers,
  * user types.
 
-`lualite` is now the stuff of legends. I'll keep a copy here and keep maintaining it, should there be bug reports. History became legend. Legend became myth.
+`lualite` is now the stuff of legends. History became legend. Legend became myth.
 
 # Example
 ```c++
