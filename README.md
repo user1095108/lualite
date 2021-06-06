@@ -10,6 +10,8 @@ Supported features:
  * standard containers,
  * user types.
 
+`lualite` is now the stuff of legends. I'll keep a copy here and keep maintaining it, should there be bug reports. History became legend. Legend became myth.
+
 # Example
 ```c++
   lualite::module{L,
@@ -78,12 +80,7 @@ Supported features:
     "print(a:test_array(r))\n"
   );
 ```
-Try it [online](http://htmlpreview.github.io/?https://github.com/user1095108/examples/blob/master/testlualite.html).
 # FAQ
-**Q:** How to build this?
-
-**A:** I maintain a working [example](https://github.com/user1095108/examples/tree/master/llexample) on how to build with the latest development version of lua.
-
 **Q:** Why is there no support for introspection in lualite:
 
 **A:** There is, but it is not exposed to lua by default. The idea is not to pollute the lua namespace and not to make users pay for something they potentially don't want. Example:
